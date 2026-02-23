@@ -8,7 +8,7 @@ use alcamo\rdfa\LiteralInterface;
 
 abstract class AbstractSerializer implements SerializerInterface
 {
-    public const SUPPORTED_DATA_TYPE_XNAMES = [];
+    public const SUPPORTED_DATATYPE_XNAMES = [];
 
     public const SUPPORTED_LITERAL_CLASSES = [];
 
@@ -22,12 +22,12 @@ abstract class AbstractSerializer implements SerializerInterface
         ?int $flags = null
     ) {
         /* First check primitive types since in most cases
-         * SUPPORTED_DATA_TYPE_XNAMES conatins primitive types. */
+         * SUPPORTED_DATATYPE_XNAMES conatins primitive types. */
         if (
             !in_array(
                 $dataElement->getType()->getPrimitiveType()->getXName()
                     ->getPair(),
-                static::SUPPORTED_DATA_TYPE_XNAMES
+                static::SUPPORTED_DATATYPE_XNAMES
             )
         ) {
             $supported = false;
@@ -40,7 +40,7 @@ abstract class AbstractSerializer implements SerializerInterface
                 if (
                     in_array(
                         $type->getXName()->getPair(),
-                        static::SUPPORTED_DATA_TYPE_XNAMES
+                        static::SUPPORTED_DATATYPE_XNAMES
                     )
                 ) {
                     $supported = true;
@@ -51,7 +51,7 @@ abstract class AbstractSerializer implements SerializerInterface
             if (!$supported) {
                 throw (new InvalidType())->setMessageContext(
                     'value' => $dataElement->getType()->getXName(),
-                    'expectedOneOf' => static::SUPPORTED_DATA_TYPE_XNAMES
+                    'expectedOneOf' => static::SUPPORTED_DATATYPE_XNAMES
                 );
             }
         }

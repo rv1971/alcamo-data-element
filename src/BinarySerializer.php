@@ -2,11 +2,12 @@
 
 namespace alcamo\data_element;
 
+use alcamo\range\NonNegativeRange;
 use alcamo\rdfa\LiteralInterface;
 
 class BinarySerializer extends AbstractSerializer
 {
-    public const SUPPORTED_DATA_TYPE_XNAMES = [
+    public const SUPPORTED_DATATYPE_XNAMES = [
         [ self::XSD_NS, 'anyURI' ],
         [ self::XSD_NS, 'base64Binary' ],
         [ self::XSD_NS, 'hexBinary' ],
@@ -22,14 +23,19 @@ class BinarySerializer extends AbstractSerializer
         StringLiteral::class
     ];
 
+    public const DEFAULT_DATATYPE_URI = HexBinaryLiteral::DATATYPE_URI;
+
     public function __construct(
-        DataElementInterface $dataElement,
+        ?DataElementInterface $dataElement = null,
         ?NonNegativeRange $lengthRange = null
         ?int $flags = null
     ) {
         parent::__construct(
-            $dataElement,
-            ExtentRange::newFromNonNegativeRange($lengthRange),
+            $dataElement ?? new DataElement(
+                (new SchemaFactory())
+                    ->createTypeFromUri(static::DEFAULT_DATATYPE_URI)
+            ),
+            $lengthRange,
             $flags
         );
     }

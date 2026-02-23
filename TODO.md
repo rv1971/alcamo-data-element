@@ -1,14 +1,11 @@
-* create interface alcamo\rdfa\ConvertibleToInt
-  * simplifies LiteralFactoryTest
-* allow to call AbstractSerializer::__construct() with `null` data
-  element, createing a default one fot the literal's favorite datatype
+* Serializer should contain only type URI, not type
 * implement other serializer classes
   * DateSerializer family with POSIX format for output and encodings
     ASCII, BCD, EBCDIC
-* implement new literal classes (in WEAT repo?)
-  * NumericStringLiteral
-  * FourBitStringLiteral
 * implement further serializers
-  * NumericStringSerializer (encoding like
+  * DigitsStringSerializer (encoding like
     NonNegativeIntegerSerializer plus COMPRESSED-BCD)
   * FourBitStringSerializer (encodings ASCII, FOUR-BIT)
+* check in weat/core/tlv for further needed features
+* model bitmaps as union of enumeration and hexBinary of given length
+* tag the current version of alcamo-rdfa

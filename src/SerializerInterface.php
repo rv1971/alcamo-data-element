@@ -2,6 +2,7 @@
 
 namespace alcamo\data_element;
 
+use alcamo\range\NonNegativeRange;
 use alcamo\rdfa\LiteralInterface;
 use alcamo\xml\NamespaceConstantsInterface;
 
@@ -15,7 +16,7 @@ interface SerializerInterface extends NamespaceConstantsInterface
 
     public function getDataElement(): DataElementInterface;
 
-    public function getExtentRange(): ?ExtentRange;
+    public function getLengthRange(): ?NonNegativeRange;
 
     public function getFlags(): int;
 

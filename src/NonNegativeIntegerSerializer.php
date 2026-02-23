@@ -3,16 +3,17 @@
 namespace alcamo\data_element;
 
 use alcamo\binary_data\{Bcd, BinaryString};
-use alcamo\exception\{InvalidEnumerator, OutOfRange};
+use alcamo\exception\InvalidEnumerator;
+use alcamo\range\NonNegativeRange;
 use alcamo\rdfa\LiteralInterface;
 
 class NonNegativeIntegerSerializer extends AbstractSerializer
 {
-    public const SUPPORTED_DATA_TYPE_XNAMES = [
+    public const SUPPORTED_DATATYPE_XNAMES = [
         [ self::XSD_NS, 'boolean' ],
         [ self::XSD_NS, 'gDay' ],
         [ self::XSD_NS, 'gMonth' ],
-        [ self::XSD_NS, 'gYear' ],
+        [ PositiveGYearLiteral::DATATYPE_URI ],
         [ self::XSD_NS, 'nonNegativeInteger' ]
     ];
 
@@ -20,23 +21,18 @@ class NonNegativeIntegerSerializer extends AbstractSerializer
         BooleanLiteral::class,
         GDayLiteral::class,
         GMonthLiteral::class,
-        GYearLiteral::class,
+        PositiveGYearLiteral::class,
         IntegerLiteral::class
     ];
 
-    public const ENCODING_TO_X12_UNIT = [
-        'ASCII'      => 'AD',
-        'BCD'        => '06',
-        'BIG-ENDIAN' => 'AD',
-        'EBCDIC'     => 'AD'
-    ];
+    public const DEFAULT_DATATYPE_URI = NonNegativeIntegerLiteral::DATATYPE_URI;
 
     public const DEFAULT_ENCODING = 'ASCII';
 
     priuvate $encoding_; ///< string
 
     public function __construct(
-        DataElementInterface $dataElement,
+        ?DataElementInterface $dataElement = null,
         ?NonNegativeRange $lengthRange = null
         ?int $flags = null,
         ?string $encoding = null,
@@ -58,11 +54,11 @@ class NonNegativeIntegerSerializer extends AbstractSerializer
         }
 
         parent::__construct(
-            $dataElement,
-            ExtentRange::newFromNonNegativeRange(
-                $lengthRange,
-                static::ENCODING_TO_X12_UNIT[$encoding]
+            $dataElement ?? new DataElement(
+                (new SchemaFactory())
+                    ->createTypeFromUri(static::DEFAULT_DATATYPE_URI)
             ),
+            $lengthRange,
             $flags
         );
 
@@ -83,10 +79,6 @@ class NonNegativeIntegerSerializer extends AbstractSerializer
         }
 
         $value = $literal->toInt();
-
-        if ($literal instanceof IntegerLiteral) {
-            OutOfRange::throwIfOutside($value, 0);
-        }
 
         [ $minLength, $maxLength ] = isset($this->extentRange_)
             ? $this->extentRange_->getMinMax()
