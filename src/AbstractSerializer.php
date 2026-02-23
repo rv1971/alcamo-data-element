@@ -10,20 +10,36 @@ abstract class AbstractSerializer implements SerializerInterface
 {
     public const SUPPORTED_DATATYPE_XNAMES = [];
 
+    public const DEFAULT_DATATYPE_URI = '';
+
     public const SUPPORTED_LITERAL_CLASSES = [];
 
+    private static $schemaFactory_;
+
+    public static function getSchemaFactory(): SchemaFactory
+    {
+        return self::$schemaFactory_
+            ?? (self::$schemaFactory_ = new SchemaFactory());
+    }
+
     protected $dataElement_;
-    protected $extentRange_;
+    protected $lengthRange_;
     protected $flags_;
 
     public function __construct(
-        DataElementInterface $dataElement,
+        ?DataElementInterface $dataElement = null,
         ?NonNegativeRange $lengthRange = null
         ?int $flags = null
     ) {
-        /* First check primitive types since in most cases
-         * SUPPORTED_DATATYPE_XNAMES conatins primitive types. */
-        if (
+        if (!isset($dataElement)) {
+            $dataElement = new DataElement(
+                static::getSchemaFactory()
+                    ->createTypeFromUri(static::DEFAULT_DATATYPE_URI)
+            )
+        } elseif (
+            /* First check primitive types since in most cases
+             * SUPPORTED_DATATYPE_XNAMES contains primitive types. */
+
             !in_array(
                 $dataElement->getType()->getPrimitiveType()->getXName()
                     ->getPair(),
@@ -50,14 +66,14 @@ abstract class AbstractSerializer implements SerializerInterface
 
             if (!$supported) {
                 throw (new InvalidType())->setMessageContext(
-                    'value' => $dataElement->getType()->getXName(),
+                    'type' => $dataElement->getType()->getXName(),
                     'expectedOneOf' => static::SUPPORTED_DATATYPE_XNAMES
                 );
             }
         }
 
         $this->dataElement_ = $dataElement;
-        $this->extentRange_ = $extentRange;
+        $this->lengthRange_ = $lengthRange;
         $this->flags_ = (int)$flags;
     }
 
@@ -66,9 +82,9 @@ abstract class AbstractSerializer implements SerializerInterface
         return $this->dataElement_;
     }
 
-    public function getExtentRange(): ?ExtentRange
+    public function getLengthRange(): ?LengthRange
     {
-        return $this->extentRange_;
+        return $this->lengthRange_;
     }
 
     public function getFlags(): int
@@ -82,6 +98,13 @@ abstract class AbstractSerializer implements SerializerInterface
 
     protected function validateLiteralClass(LiteralInterface $literal): void
     {
+        /* First check whether the class of $literal is supported, then
+         * whether it is derived from a supported class. */
+
+        if (in_array(get_class($literal), static::SUPPORTED_LITERAL_CLASSES)) {
+            return;
+        }
+
         foreach (static::SUPPORTED_LITERAL_CLASSES as $class) {
             if ($literal instanceof $class) {
                 return;
@@ -89,7 +112,7 @@ abstract class AbstractSerializer implements SerializerInterface
         }
 
         throw (new InvalidType())->setMessageContext(
-            'value' => $literal,
+            'object' => $literal,
             'expectedOneOf' => static::SUPPORTED_LITERAL_CLASSES
         );
     }
@@ -99,12 +122,12 @@ abstract class AbstractSerializer implements SerializerInterface
         string $padString,
         ?int $padType = null
     ): string {
-        if (isset($this->extentRange_)) {
+        if (isset($this->lengthRange_)) {
             if (!isset($padType)) {
                 $padType = STR_PAD_RIGHT;
             }
 
-            [ $minLength, $maxLength ] = $this->extentRange_->getMinMax();
+            [ $minLength, $maxLength ] = $this->lengthRange_->getMinMax();
 
             if (isset($maxLength) && strlen($value) > $maxLength) {
                 if ($this->flags_ & self::TRUNCATE_SILENTLY) {
@@ -119,18 +142,18 @@ abstract class AbstractSerializer implements SerializerInterface
             } elseif (isset($minLength)) {
                 return str_pad($value, $minLength, $padString, $padType);
             }
-
-            return $value;
         }
+
+        return $value;
     }
 
     protected function validateInputLength(string $input): void
     {
         if (
-            isset($this->extentRange_)
+            isset($this->lengthRange_)
                 && !($this->flags_ & self::SKIP_LENGTH_CHECK)
         ) {
-            [ $minLength, $maxLength ] = $this->extentRange_->getMinMax();
+            [ $minLength, $maxLength ] = $this->lengthRange_->getMinMax();
 
             LengthOutOfRange::throwIfOutside($input, $minLength, $maxLength);
         }

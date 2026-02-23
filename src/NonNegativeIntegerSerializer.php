@@ -3,11 +3,18 @@
 namespace alcamo\data_element;
 
 use alcamo\binary_data\{Bcd, BinaryString};
-use alcamo\exception\InvalidEnumerator;
+use alcamo\dom\schema\component\AbstractSimpleType;
 use alcamo\range\NonNegativeRange;
-use alcamo\rdfa\LiteralInterface;
+use alcamo\rdfa\{
+    BooleanLiteral,
+    GDayLiteral,
+    GDayLiteral
+    PositiveGYearLiteral,
+    NonNegativeIntegerLiteral,
+    LiteralInterface
+};
 
-class NonNegativeIntegerSerializer extends AbstractSerializer
+class NonNegativeIntegerSerializer extends AbstractSerializerWithEncoding
 {
     public const SUPPORTED_DATATYPE_XNAMES = [
         [ self::XSD_NS, 'boolean' ],
@@ -17,19 +24,22 @@ class NonNegativeIntegerSerializer extends AbstractSerializer
         [ self::XSD_NS, 'nonNegativeInteger' ]
     ];
 
+    public const DEFAULT_DATATYPE_URI = NonNegativeIntegerLiteral::DATATYPE_URI;
+
     public const SUPPORTED_LITERAL_CLASSES = [
         BooleanLiteral::class,
         GDayLiteral::class,
         GMonthLiteral::class,
-        PositiveGYearLiteral::class,
-        IntegerLiteral::class
+        NonNegativeIntegerLiteral::class,
+        PositiveGYearLiteral::class
     ];
 
-    public const DEFAULT_DATATYPE_URI = NonNegativeIntegerLiteral::DATATYPE_URI;
+    public const SUPPORTED_ENCODINGS =
+        [ 'ASCII', 'BCD', 'BIG-ENDIAN', 'EBCDIC' ];
 
     public const DEFAULT_ENCODING = 'ASCII';
 
-    priuvate $encoding_; ///< string
+    private $literalFactory_; ///< LiteralFactory
 
     public function __construct(
         ?DataElementInterface $dataElement = null,
@@ -38,29 +48,7 @@ class NonNegativeIntegerSerializer extends AbstractSerializer
         ?string $encoding = null,
         ?LiteralFactory $literalFactory = null;
     ) {
-        if (!isset($encoding)) {
-            $encoding = static::DEFAULT_ENCODING;
-        }
-
-        if (!isset(static::ENCODING_TO_X12_UNIT[$encoding])) {
-            /** @throw alcamo::exception::InvalidEnumerator if $encoding is
-             *  not a valid encoding. */
-            throw (new InvalidEnumerator())->setMessageContext(
-                [
-                    'value' => $encoding,
-                    'expectedOneOf' => static::ENCODINGS
-                ]
-            );
-        }
-
-        parent::__construct(
-            $dataElement ?? new DataElement(
-                (new SchemaFactory())
-                    ->createTypeFromUri(static::DEFAULT_DATATYPE_URI)
-            ),
-            $lengthRange,
-            $flags
-        );
+        parent::__construct($dataElement, $lengthRange, $flags, $encoding);
 
         $this->literalFactory_ = $literalFactory ?? new LiteralFactory()
     }
@@ -80,15 +68,16 @@ class NonNegativeIntegerSerializer extends AbstractSerializer
 
         $value = $literal->toInt();
 
-        [ $minLength, $maxLength ] = isset($this->extentRange_)
-            ? $this->extentRange_->getMinMax()
-            : [ null, null ];
+        $minLength =
+            isset($this->lengthRange_) ? $this->lengthRange_->getMin() : null;
 
         switch ($this->encoding_) {
             case 'ASCII':
                 return $this->adjustOutputLength($value, '0', STR_PAD_LEFT);
 
             case 'BCD':
+                /* adjustOutputLength() only checks the maximum length since
+                 * the minimum length is already guaranteed. */
                 return hex2bin(
                     $this->adjustOutputLength(
                         Bcd::newFromInt($value, $minLength)
@@ -96,6 +85,8 @@ class NonNegativeIntegerSerializer extends AbstractSerializer
                 );
 
             case 'BIG-ENDIAN':
+                /* adjustOutputLength() only checks the maximum length since
+                 * the minimum length is already guaranteed. */
                 return $this->adjustOutputLength(
                     BinaryString::newFromInt($value, $minLength)->getData()
                 );
@@ -141,11 +132,24 @@ class NonNegativeIntegerSerializer extends AbstractSerializer
                 break;
         }
 
-        $literalClass = $this->literalFactory_::DATATYPE_URI_TO_CLASS[
-            $this->dataElement_->getDatatype()->getPrimitiveType()->getUri()
-        ] ?? IntegerLiteral::class;
+        for (
+            $type = $this->dataElement_->getDatatype();
+            $type instanceof AbstractSimpleType;
+            $type = $type->getBaseType()
+        ) {
+            $literalClass =
+                $this->literalFactory_::DATATYPE_URI_TO_CLASS[$type->getUri()]
+            ?? null;
 
-        return new $literalClass(
+            if (isset($literalClass)) {
+                return new $literalClass(
+                    $value,
+                    $this->dataElement_->getDatatype()->getUri()
+                );
+            }
+        }
+
+        return new NonNegativeIntegerLiteral(
             $value,
             $this->dataElement_->getDatatype()->getUri()
         );

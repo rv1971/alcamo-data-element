@@ -16,29 +16,14 @@ class BinarySerializer extends AbstractSerializer
         [ self::XSD_NS, 'string' ]
     ];
 
+    public const DEFAULT_DATATYPE_URI = HexBinaryLiteral::DATATYPE_URI;
+
     public const SUPPORTED_LITERAL_CLASSES = [
         Base64BinaryLiteral::class,
         HexBinaryLiteral::class,
         LangStringLiteral::class,
         StringLiteral::class
     ];
-
-    public const DEFAULT_DATATYPE_URI = HexBinaryLiteral::DATATYPE_URI;
-
-    public function __construct(
-        ?DataElementInterface $dataElement = null,
-        ?NonNegativeRange $lengthRange = null
-        ?int $flags = null
-    ) {
-        parent::__construct(
-            $dataElement ?? new DataElement(
-                (new SchemaFactory())
-                    ->createTypeFromUri(static::DEFAULT_DATATYPE_URI)
-            ),
-            $lengthRange,
-            $flags
-        );
-    }
 
     public function serialize(?LiteralInterface $literal = null): string
     {
