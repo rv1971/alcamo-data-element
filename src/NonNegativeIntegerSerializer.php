@@ -8,9 +8,10 @@ use alcamo\range\NonNegativeRange;
 use alcamo\rdfa\{
     BooleanLiteral,
     GDayLiteral,
-    GDayLiteral
-    PositiveGYearLiteral,
+    GMonthLiteral
+    LiteralFactory,
     NonNegativeIntegerLiteral,
+    PositiveGYearLiteral,
     LiteralInterface
 };
 
@@ -92,16 +93,12 @@ class NonNegativeIntegerSerializer extends AbstractSerializerWithEncoding
                 );
 
             case 'EBCDIC':
-                $result = '';
-
-                $value = (string)$value;
-
-                for ($i = 0; isset($value[$i]); $i++) {
-                    $result .= "F{$value[$i]}";
-                }
-
                 return $this->adjustOutputLength(
-                    hex2bin($result),
+                    strtr(
+                        $value,
+                        '0123456789',
+                        "\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9"
+                    ),
                     "\xF0",
                     STR_PAD_LEFT
                 );
@@ -128,7 +125,11 @@ class NonNegativeIntegerSerializer extends AbstractSerializerWithEncoding
                 break;
 
             case 'EBCDIC':
-                $value = (int)hex2bin(strtr(bin2hex($input), 'f', '3'));
+                $value = (int)strtr(
+                    $input,
+                    "\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9",
+                    '0123456789'
+                );
                 break;
         }
 
