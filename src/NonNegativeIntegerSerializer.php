@@ -9,7 +9,6 @@ use alcamo\rdfa\{
     BooleanLiteral,
     GDayLiteral,
     GMonthLiteral
-    LiteralFactory,
     NonNegativeIntegerLiteral,
     PositiveGYearLiteral,
     LiteralInterface
@@ -44,7 +43,7 @@ class NonNegativeIntegerSerializer extends AbstractSerializerWithEncoding
 
     public function __construct(
         ?DataElementInterface $dataElement = null,
-        ?NonNegativeRange $lengthRange = null
+        ?NonNegativeRange $lengthRange = null,
         ?int $flags = null,
         ?string $encoding = null,
         ?LiteralFactory $literalFactory = null;
@@ -59,13 +58,9 @@ class NonNegativeIntegerSerializer extends AbstractSerializerWithEncoding
         return $this->literalFactory_;
     }
 
-    public function serialize(?LiteralInterface $literal = null): string
+    public function serialize(LiteralInterface $literal): string
     {
-        if (isset($literal)) {
-            $this->validateLiteralClass($literal);
-        } else {
-            $literal = $this->dataElement_->createLiteral();
-        }
+        $this->validateLiteralClass($literal);
 
         $value = $literal->toInt();
 
@@ -116,9 +111,11 @@ class NonNegativeIntegerSerializer extends AbstractSerializerWithEncoding
         switch ($this->encoding_) {
             case 'ASCII':
                 $value = (int)$input;
+                break;
 
             case 'BCD':
                 $value = Bcd::newFromString($input)->toInt();
+                break;
 
             case 'BIG-ENDIAN':
                 $value = (new BinaryString($input))->toInt();
@@ -133,26 +130,7 @@ class NonNegativeIntegerSerializer extends AbstractSerializerWithEncoding
                 break;
         }
 
-        for (
-            $type = $this->dataElement_->getDatatype();
-            $type instanceof AbstractSimpleType;
-            $type = $type->getBaseType()
-        ) {
-            $literalClass =
-                $this->literalFactory_::DATATYPE_URI_TO_CLASS[$type->getUri()]
-            ?? null;
-
-            if (isset($literalClass)) {
-                return new $literalClass(
-                    $value,
-                    $this->dataElement_->getDatatype()->getUri()
-                );
-            }
-        }
-
-        return new NonNegativeIntegerLiteral(
-            $value,
-            $this->dataElement_->getDatatype()->getUri()
-        );
+        return $this->literalFactory_
+            ->createLiteralForDataElement($this->dataElement_, $value);
     }
 }

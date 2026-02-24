@@ -2,9 +2,13 @@
 
 namespace alcamo\data_element;
 
-use alcamo\range\NonNegativeRange;
 use alcamo\rdfa\{FourBitStringLiteral, LiteralInterface};
 
+/**
+ * @brief (De)Serializer for four-bit string data
+ *
+ * @date Last reviewed 2026-02-24
+ */
 class FourBitStringSerializer extends AbstractSerializerWithEncoding
 {
     public const SUPPORTED_DATATYPE_XNAMES =
@@ -14,25 +18,27 @@ class FourBitStringSerializer extends AbstractSerializerWithEncoding
 
     public const SUPPORTED_LITERAL_CLASSES = [ FourBitStringLiteral::class ];
 
-    public const SUPPORTED_ENCODINGS = [ 'ASCII', 'FOUR-BIT' ];
+    public const ENCODINGS_TO_BITS = [ 'ASCII' => 8, 'FOUR-BIT' => 4 ];
 
     public const DEFAULT_ENCODING = 'ASCII';
 
-    public function serialize(?LiteralInterface $literal = null): string
+    public function serialize(LiteralInterface $literal): string
     {
-        if (isset($literal)) {
-            $this->validateLiteralClass($literal);
-        } else {
-            $literal = $this->dataElement_->createLiteral();
-        }
+        $this->validateLiteralClass($literal);
 
         switch ($this->encoding_) {
             case 'ASCII':
-                return $this->adjustOutputLength($literal);
+                return $this->adjustOutputLength($literal, ' ');
 
             case 'FOUR-BIT':
-                return
-                    hex2bin($this->adjustOutputLength($literal->toHex(), 'F'));
+                $output = $this->adjustOutputLength($literal->toHex(), 'F');
+
+                if (strlen($output) & 1) {
+                    $output .= 'F';
+                }
+
+                return hex2bin($output);
+        }
     }
 
     public function deserialize(string $input): LiteralInterface
@@ -49,7 +55,7 @@ class FourBitStringSerializer extends AbstractSerializerWithEncoding
                 $this->dataElement_->getDatatype()->getUri()
             )
             : new FourBitStringLiteral(
-                $input,
+                rtrim($input),
                 $this->dataElement_->getDatatype()->getUri()
             );
     }

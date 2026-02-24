@@ -5,6 +5,11 @@ namespace alcamo\data_element;
 use alcamo\range\NonNegativeRange;
 use alcamo\rdfa\{DigitsStringLiteral, LiteralInterface};
 
+/**
+ * @brief (De)Serializer for digits string data
+ *
+ * @date Last reviewed 2026-02-24
+ */
 class DigitsStringSerializer extends AbstractSerializerWithEncoding
 {
     public const SUPPORTED_DATATYPE_XNAMES =
@@ -14,24 +19,27 @@ class DigitsStringSerializer extends AbstractSerializerWithEncoding
 
     public const SUPPORTED_LITERAL_CLASSES = [ DigitsStringLiteral::class ];
 
-    public const SUPPORTED_ENCODINGS = [ 'ASCII', 'COMPRESSED-BCD' ];
+    public const ENCODINGS_TO_BITS = [ 'ASCII' => 8, 'COMPRESSED-BCD' => 4 ];
 
     public const DEFAULT_ENCODING = 'ASCII';
 
-    public function serialize(?LiteralInterface $literal = null): string
+    public function serialize(LiteralInterface $literal): string
     {
-        if (isset($literal)) {
-            $this->validateLiteralClass($literal);
-        } else {
-            $literal = $this->dataElement_->createLiteral();
-        }
+        $this->validateLiteralClass($literal);
 
         switch ($this->encoding_) {
             case 'ASCII':
-                return $this->adjustOutputLength($literal);
+                return $this->adjustOutputLength($literal, ' ');
 
             case 'COMPRESSED-BCD':
-                return hex2bin($this->adjustOutputLength($literal, 'F'));
+                $output = $this->adjustOutputLength($literal, 'F');
+
+                if (strlen($output) & 1) {
+                    $output .= 'F';
+                }
+
+                return hex2bin($output);
+        }
     }
 
     public function deserialize(string $input): LiteralInterface
@@ -43,7 +51,7 @@ class DigitsStringSerializer extends AbstractSerializerWithEncoding
         $this->validateInputLength($input);
 
         return new DigitsStringLiteral(
-            rtrim($input, ' F'),
+            rtrim($input, ' f'),
             $this->dataElement_->getDatatype()->getUri()
         );
     }

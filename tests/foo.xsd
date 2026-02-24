@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE xsd:schema [
+<!ATTLIST xsd:simpleType id ID #IMPLIED>
+]>
+
+<xsd:schema
+    xmlns="http://foo.example.org/"
+    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    targetNamespace="http://foo.example.org/">
+  <xsd:simpleType name="MyString" id="MyString" rdfs:label="My string">
+    <xsd:restriction base="xsd:string"/>
+  </xsd:simpleType>
+</xsd:schema>

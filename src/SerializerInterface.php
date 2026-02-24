@@ -6,6 +6,11 @@ use alcamo\range\NonNegativeRange;
 use alcamo\rdfa\LiteralInterface;
 use alcamo\xml\NamespaceConstantsInterface;
 
+/**
+ * @brief (De)Serializer based on data element information
+ *
+ * @date Last reviewed 2026-02-24
+ */
 interface SerializerInterface extends NamespaceConstantsInterface
 {
     /// Whether to truncate silently upon serialization if needed
@@ -20,7 +25,7 @@ interface SerializerInterface extends NamespaceConstantsInterface
 
     public function getFlags(): int;
 
-    public function serialize(?LiteralInterface $literal = null): string;
+    public function serialize(LiteralInterface $literal): string;
 
     public function deserialize(string $input): LiteralInterface;
 }

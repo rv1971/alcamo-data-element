@@ -69,13 +69,9 @@ abstract class AbstractDateTimeSerializer extends AbstractSerializerWithEncoding
         );
     }
 
-    public function serialize(?LiteralInterface $literal = null): string
+    public function serialize(LiteralInterface): string
     {
-        if (isset($literal)) {
-            $this->validateLiteralClass($literal);
-        } else {
-            $literal = $this->dataElement_->createLiteral();
-        }
+        $this->validateLiteralClass($literal);
 
         $value = $literal->format($this->phpFormat_);
 
@@ -108,9 +104,11 @@ abstract class AbstractDateTimeSerializer extends AbstractSerializerWithEncoding
         switch ($this->encoding_) {
             case 'ASCII':
                 $value = $input;
+                break;
 
             case 'BCD':
                 $value = bin2hex($input);
+                break;
 
             case 'EBCDIC':
                 $value = strtr(
