@@ -4,6 +4,7 @@ namespace alcamo\data_element;
 
 use alcamo\range\NonNegativeRange;
 use alcamo\rdfa\LiteralInterface;
+use alcamo\time\PosixFormat;
 
 class DateTimeSerializer extends AbstractSerializerWithEncoding
 {
@@ -53,34 +54,11 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
         ],
     ];
 
-    /// Map of Posix format specifiers to text of appropriate length
-    public const POSIX_FORMAT_SPECS_TO_TEXT = [
-        '%Y' => 'YYYY',
-        '%m' => 'mm',
-        '%y' => 'yy',
-        '%d' => 'dd',
-        '%H' => 'HH',
-        '%M' => 'ii',
-        '%S' => 'ss'
-    ];
-
-    /// Map of Posix format specifiers to PHP format specifiers
-    public const POSIX_FORMAT_SPECS_TO_PHP_FORMAT_SPECS = [
-        '%Y' => 'Y',
-        '%m' => 'm',
-        '%y' => 'y',
-        '%d' => 'd',
-        '%H' => 'H',
-        '%M' => 'i',
-        '%S' => 's'
-    ];
-
-    private $posixFormat_; ///< string
-    private $phpFormat_;   ///< string
+    private $format_; ///< PosixFormat
 
     public function __construct(
         ?DataElementInterface $dataElement = null,
-        ?string $posixFormat = null,
+        $format = null,
         ?int $flags = null,
         ?string $encoding = null,
         ?LiteralFactory $literalFactory = null
@@ -95,27 +73,35 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
 
         $supportedDatatypeXName = (string)$this->supportedDatatype_->getXName();
 
-        $this->posixFormat_ = $posixFormat
-            ?? static::DEFAULT_POSIX_FORMATS[$supportedDatatypeXName][$this->encoding_]
-            ?? static::DEFAULT_POSIX_FORMATS[$supportedDatatypeXName]['*'];
+        $this->format_ = $format instanceof PosixFormat
+            ? $format
+            : new PosixFormat(
+                $format
+                    ?? static::DEFAULT_POSIX_FORMATS[$supportedDatatypeXName][
+                        $this->encoding_
+                    ]
+                    ?? static::DEFAULT_POSIX_FORMATS[$supportedDatatypeXName][
+                        '*'
+                    ]
+            );
 
-        $this->phpFormat_ = strtr(
-            $this->posixFormat_,
-            static::POSIX_FORMAT_SPECS_TO_PHP_FORMAT_SPECS
-        );
+        $length = $this->format_->getLength();
 
-        $length = strlen(
-            strtr($this->posixFormat_, static::POSIX_FORMAT_SPECS_TO_TEXT)
-        );
+        if (isset($length)) {
+            $this->lengthRange_ = new NonNegativeRange($length, $length);
+        }
+    }
 
-        $this->lengthRange_ = new NonNegativeRange($length, $length);
+    public function getFormat(): PosixFormat
+    {
+        return $this->format_;
     }
 
     public function serialize(LiteralInterface): string
     {
         $this->validateLiteralClass($literal);
 
-        $value = $literal->format($this->phpFormat_);
+        $value = $literal->format($this->format_);
 
         switch ($this->encoding_) {
             case 'ASCII':
@@ -164,7 +150,7 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
         $literalClass = static::SUPPORTED_LITERAL_CLASSES[0];
 
         return new $literalClass(
-            DateTime::createFromFormat($this->phpFormat_, $value),
+            DateTime::createFromFormat($this->format_, $value),
             $this->dataElement_->getDatatype()->getUri()
         );
     }
