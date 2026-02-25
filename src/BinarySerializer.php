@@ -3,15 +3,27 @@
 namespace alcamo\data_element;
 
 use alcamo\binary_data\BinaryString;
-use alcamo\rdfa\LiteralInterface;
+use alcamo\rdfa\{Base64BinaryLiteral, HexBinaryLiteral, LiteralInterface};
 
 /**
  * @brief (De)Serializer for binary data
  *
  * @date Last reviewed 2026-02-24
  */
-abstract class AbstractBinarySerializer extends AbstractSerializer
+class BinarySerializer extends AbstractSerializer
 {
+    public const SUPPORTED_DATATYPE_XNAMES = [
+        [ self::XSD_NS, 'base64Binary' ],
+        [ self::XSD_NS, 'hexBinary' ]
+    ];
+
+    public const DEFAULT_DATATYPE_URI = HexBinaryLiteral::DATATYPE_URI;
+
+    public const SUPPORTED_LITERAL_CLASSES = [
+        Base64BinaryLiteral::class,
+        HexBinaryLiteral::class
+    ];
+
     public function serialize(LiteralInterface $literal): string
     {
         $this->validateLiteralClass($literal);
@@ -28,11 +40,9 @@ abstract class AbstractBinarySerializer extends AbstractSerializer
     {
         $this->validateInputLength($input);
 
-        $class = static::SUPPORTED_LITERAL_CLASSES[0];
-
-        return new $class(
-            new BinaryString($input),
-            $this->dataElement_->getDatatype()->getUri()
+        return $this->literalFactory_->createLiteralForDataElement(
+            $this->dataElement_,
+            new BinaryString($input)
         );
     }
 }

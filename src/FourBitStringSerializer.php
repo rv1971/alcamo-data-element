@@ -43,20 +43,17 @@ class FourBitStringSerializer extends AbstractSerializerWithEncoding
 
     public function deserialize(string $input): LiteralInterface
     {
-        if ($this->encoding_ == 'FOUR-BIT') {
+        if (static::ENCODINGS_TO_BITS[$this->encoding_] == 4) {
             $input = bin2hex($input);
         }
 
         $this->validateInputLength($input);
 
-        return $this->encoding_ == 'FOUR-BIT'
-            ? FourBitStringLiteral::newFromHex(
-                $input,
-                $this->dataElement_->getDatatype()->getUri()
-            )
-            : new FourBitStringLiteral(
-                rtrim($input),
-                $this->dataElement_->getDatatype()->getUri()
-            );
+        return $this->literalFactory_->createLiteralForDataElement(
+            $this->dataElement_,
+            $this->encoding_ == 'FOUR-BIT'
+                ? strtr($input, 'ABCDEFabcdef', ':;<=>?:;<=>?')
+                : rtrim($input)
+        );
     }
 }

@@ -53,9 +53,15 @@ class StringSerializer extends AbstractSerializer
         ?DataElementInterface $dataElement = null,
         ?NonNegativeRange $lengthRange = null,
         ?int $flags = null,
-        ?string $encoding = null
+        ?string $encoding = null,
+        ?LiteralFactory $literalFactory = null
     ) {
-        parent::__construct($dataElement, $lengthRange, $flags);
+        parent::__construct(
+            $dataElement,
+            $lengthRange,
+            $flags,
+            $literalFactory
+        );
 
         $this->encoding_ = $encoding ?? static::DEFAULT_ENCODING;
     }
@@ -86,7 +92,8 @@ class StringSerializer extends AbstractSerializer
         $this->validateInputLength($input);
 
         /** Remove trailing spaces from input. */
-        return new StringLiteral(
+        return $this->literalFactory_->createLiteralForDataElement(
+            $this->dataElement_,
             rtrim(
                 static::INTERNAL_ENCODING == $this->encoding_
                     ? $input
@@ -96,7 +103,6 @@ class StringSerializer extends AbstractSerializer
                         $input
                     )
             ),
-            $this->dataElement_->getDatatype()->getUri()
         );
     }
 }

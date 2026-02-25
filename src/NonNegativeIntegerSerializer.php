@@ -34,29 +34,10 @@ class NonNegativeIntegerSerializer extends AbstractSerializerWithEncoding
         PositiveGYearLiteral::class
     ];
 
-    public const SUPPORTED_ENCODINGS =
-        [ 'ASCII', 'BCD', 'BIG-ENDIAN', 'EBCDIC' ];
+    public const ENCODINGS_TO_BITS =
+        [ 'ASCII' => 8, 'BCD' => 4, 'BIG-ENDIAN' => 8, 'EBCDIC' => 8 ];
 
     public const DEFAULT_ENCODING = 'ASCII';
-
-    private $literalFactory_; ///< LiteralFactory
-
-    public function __construct(
-        ?DataElementInterface $dataElement = null,
-        ?NonNegativeRange $lengthRange = null,
-        ?int $flags = null,
-        ?string $encoding = null,
-        ?LiteralFactory $literalFactory = null;
-    ) {
-        parent::__construct($dataElement, $lengthRange, $flags, $encoding);
-
-        $this->literalFactory_ = $literalFactory ?? new LiteralFactory()
-    }
-
-    public function getLiteralFactory(): LiteralFactory
-    {
-        return $this->literalFactory_;
-    }
 
     public function serialize(LiteralInterface $literal): string
     {
@@ -102,7 +83,7 @@ class NonNegativeIntegerSerializer extends AbstractSerializerWithEncoding
 
     public function deserialize(string $input): LiteralInterface
     {
-        if ($this->encoding_ == 'BCD') {
+        if (static::ENCODINGS_TO_BITS[$this->encoding_] == 4) {
             $input = bin2hex($input);
         }
 

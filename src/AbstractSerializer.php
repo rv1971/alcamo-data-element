@@ -33,9 +33,11 @@ abstract class AbstractSerializer implements SerializerInterface
             ?? (self::$schemaFactory_ = new SchemaFactory());
     }
 
-    protected $dataElement_; ///< DataElementInterface
-    protected $lengthRange_; ///< ?NonNegativeRange
-    protected $flags_;       ///< int
+    protected $dataElement_;       ///< DataElementInterface
+    protected $supportedDatatype_; ///< SimpleTypeInterface
+    protected $lengthRange_;       ///< ?NonNegativeRange
+    protected $flags_;             ///< int
+    protected $literalFactory_;    ///< LiteralFactory
 
     /**
      * @param $dataElement Defaults to a data element f type
@@ -49,55 +51,65 @@ abstract class AbstractSerializer implements SerializerInterface
     public function __construct(
         ?DataElementInterface $dataElement = null,
         ?NonNegativeRange $lengthRange = null,
-        ?int $flags = null
+        ?int $flags = null,
+        ?LiteralFactory $literalFactory = null
     ) {
         if (!isset($dataElement)) {
-            $dataElement = new DataElement(
+            $this->dataElement_ = new DataElement(
                 static::getSchemaFactory()
                     ->createTypeFromUri(static::DEFAULT_DATATYPE_URI)
             );
-        } elseif (
+
+            $this->supportedDatatype_ = $this->dataElement_->getDatatype();
+        } else {
+            $this->dataElement_ = $dataElement;
+
             /* First check primitive types since in most cases
              * SUPPORTED_DATATYPE_XNAMES contains primitive types. */
-            !in_array(
-                $dataElement->getDatatype()->getPrimitiveType()->getXName()
-                    ->getPair(),
-                static::SUPPORTED_DATATYPE_XNAMES
-            )
-        ) {
-            $supported = false;
+            $this->supportedDatatype_ =
+                $dataElement->getDatatype()->getPrimitiveType();
 
-            for (
-                $type = $dataElement->getDatatype();
-                $type instanceof AbstractSimpleType;
-                $type = $type->getBaseType()
+            if (
+                !in_array(
+                    $this->supportedDatatype_->getXName()->getPair(),
+                    static::SUPPORTED_DATATYPE_XNAMES
+                )
             ) {
-                if (
-                    in_array(
-                        $type->getXName()->getPair(),
-                        static::SUPPORTED_DATATYPE_XNAMES
-                    )
-                ) {
-                    $supported = true;
-                    break;
-                }
-            }
+                $this->supportedDatatype_ = null;
 
-            if (!$supported) {
-                /** @throw alcamo::exception::InvalidType if $dataElement does
-                 *  not have a type supported by this serializer class. */
-                throw (new InvalidType())->setMessageContext(
-                    [
-                        'type' => $dataElement->getDatatype()->getXName(),
-                        'expectedOneOf' => static::SUPPORTED_DATATYPE_XNAMES
-                    ]
-                );
+                for (
+                    $type = $dataElement->getDatatype();
+                    $type instanceof AbstractSimpleType;
+                    $type = $type->getBaseType()
+                ) {
+                    if (
+                        in_array(
+                            $type->getXName()->getPair(),
+                            static::SUPPORTED_DATATYPE_XNAMES
+                        )
+                    ) {
+                        $this->supportedDatatype_ = $type;
+                        break;
+                    }
+                }
+
+                if (!isset($this->supportedDatatype_)) {
+                    /** @throw alcamo::exception::InvalidType if $dataElement
+                     *  does not have a type supported by this
+                     *  serializer class. */
+                    throw (new InvalidType())->setMessageContext(
+                        [
+                            'type' => $dataElement->getDatatype()->getXName(),
+                            'expectedOneOf' => static::SUPPORTED_DATATYPE_XNAMES
+                        ]
+                    );
+                }
             }
         }
 
-        $this->dataElement_ = $dataElement;
         $this->lengthRange_ = $lengthRange;
         $this->flags_ = (int)$flags;
+        $this->literalFactory_ = $literalFactory ?? new LiteralFactory();
     }
 
     public function getDataElement(): DataElementInterface
@@ -113,6 +125,11 @@ abstract class AbstractSerializer implements SerializerInterface
     public function getFlags(): int
     {
         return $this->flags_;
+    }
+
+    public function getLiteralFactory(): LiteralFactory
+    {
+        return $this->literalFactory_;
     }
 
     abstract public function serialize(LiteralInterface $literal): string;

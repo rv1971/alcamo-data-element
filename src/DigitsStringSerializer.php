@@ -44,15 +44,15 @@ class DigitsStringSerializer extends AbstractSerializerWithEncoding
 
     public function deserialize(string $input): LiteralInterface
     {
-        if ($this->encoding_ == 'COMPRESSED-BCD') {
+        if (static::ENCODINGS_TO_BITS[$this->encoding_] == 4) {
             $input = bin2hex($input);
         }
 
         $this->validateInputLength($input);
 
-        return new DigitsStringLiteral(
-            rtrim($input, ' f'),
-            $this->dataElement_->getDatatype()->getUri()
+        return $this->literalFactory_->createLiteralForDataElement(
+            $this->dataElement_,
+            rtrim($input, ' f')
         );
     }
 }

@@ -4,10 +4,10 @@ namespace alcamo\data_element;
 
 use alcamo\binary_data\BinaryString;
 use alcamo\range\NonNegativeRange;
-use alcamo\rdfa\Base64BinaryLiteral;
+use alcamo\rdfa\{Base64BinaryLiteral, HexBinaryLiteral};
 use PHPUnit\Framework\TestCase;
 
-class Base64BinarySerializerTest extends TestCase
+class BinarySerializerTest extends TestCase
 {
     public const XSD_NS = SerializerInterface::XSD_NS;
 
@@ -19,13 +19,12 @@ class Base64BinarySerializerTest extends TestCase
         $minLength,
         $maxLength,
         $literal,
-        $expectedOutput,
-        $expectedDeserialization
+        $expectedOutput
     ): void {
         $datatype = AbstractSerializer::getSchemaFactory()
             ->getMainSchema()->getGlobalType($datatypeXName);
 
-        $serializer = new Base64BinarySerializer(
+        $serializer = new BinarySerializer(
             new DataElement($datatype),
             new NonNegativeRange($minLength, $maxLength),
             SerializerInterface::TRUNCATE_SILENTLY
@@ -37,12 +36,14 @@ class Base64BinarySerializerTest extends TestCase
 
         $literal2 = $serializer->deserialize($output);
 
-        $this->assertInstanceOf(Base64BinaryLiteral::class, $literal2);
-
-        $this->assertEquals(
-            $expectedDeserialization,
-            $literal2->getValue()->getData()
+        $this->assertInstanceOf(
+            $datatype->getXName()->getLocalName() == 'base64Binary'
+            ? Base64BinaryLiteral::class
+            : HexBinaryLiteral::class,
+            $literal2
         );
+
+        $this->assertEquals($output, $literal2->getValue()->getData());
 
         $this->assertEquals($datatype->getUri(), $literal2->getDatatypeUri());
     }
@@ -55,7 +56,6 @@ class Base64BinarySerializerTest extends TestCase
                 5,
                 10,
                 new Base64BinaryLiteral('Zm9v'),
-                "foo\x00\x00",
                 "foo\x00\x00"
             ],
             [
@@ -63,8 +63,28 @@ class Base64BinarySerializerTest extends TestCase
                 null,
                 3,
                 new Base64BinaryLiteral(new BinaryString('dolor')),
-                "dol",
                 "dol"
+            ],
+            [
+                self::XSD_NS . ' hexBinary',
+                null,
+                null,
+                new HexBinaryLiteral('DE45'),
+                "\xDE\x45"
+            ],
+            [
+                self::XSD_NS . ' hexBinary',
+                4,
+                null,
+                new HexBinaryLiteral('A1'),
+                "\xA1\x00\x00\x00"
+            ],
+            [
+                self::XSD_NS . ' hexBinary',
+                2,
+                3,
+                new HexBinaryLiteral('A1A2A3A4'),
+                "\xA1\xA2\xA3"
             ]
         ];
     }

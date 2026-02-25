@@ -36,9 +36,15 @@ abstract class AbstractSerializerWithEncoding extends AbstractSerializer
         ?DataElementInterface $dataElement = null,
         ?NonNegativeRange $lengthRange = null,
         ?int $flags = null,
-        ?string $encoding = null
+        ?string $encoding = null,
+        ?LiteralFactory $literalFactory = null
     ) {
-        parent::__construct($dataElement, $lengthRange, $flags);
+        parent::__construct(
+            $dataElement,
+            $lengthRange,
+            $flags,
+            $literalFactory
+        );
 
         if (isset($encoding)) {
             if (!isset(static::ENCODINGS_TO_BITS[$encoding])) {
