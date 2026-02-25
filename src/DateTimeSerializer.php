@@ -6,6 +6,11 @@ use alcamo\range\NonNegativeRange;
 use alcamo\rdfa\LiteralInterface;
 use alcamo\time\PosixFormat;
 
+/**
+ * @brief (De)Serializer for date/time data
+ *
+ * @date Last reviewed 2026-02-24
+ */
 class DateTimeSerializer extends AbstractSerializerWithEncoding
 {
     public const SUPPORTED_DATATYPE_XNAMES = [
@@ -54,11 +59,11 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
         ],
     ];
 
-    private $format_; ///< PosixFormat
+    private $posixFormat_; ///< PosixFormat
 
     public function __construct(
         ?DataElementInterface $dataElement = null,
-        $format = null,
+        $posixFormat = null,
         ?int $flags = null,
         ?string $encoding = null,
         ?LiteralFactory $literalFactory = null
@@ -71,43 +76,47 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
             $literalFactory
         );
 
-        $supportedDatatypeXName = (string)$this->supportedDatatype_->getXName();
+        if (isset($posixFormat)) {
+            $this->posixFormat_ = $posixFormat instanceof PosixFormat
+                ? $posixFormat
+                : new PosixFormat($posixFormat);
+        } else {
+            $supportedDatatypeXName =
+                (string)$this->supportedDatatype_->getXName();
 
-        $this->format_ = $format instanceof PosixFormat
-            ? $format
-            : new PosixFormat(
-                $format
-                    ?? static::DEFAULT_POSIX_FORMATS[$supportedDatatypeXName][
-                        $this->encoding_
-                    ]
-                    ?? static::DEFAULT_POSIX_FORMATS[$supportedDatatypeXName][
-                        '*'
-                    ]
+            $this->posixFormat_ = new PosixFormat(
+                static::DEFAULT_POSIX_FORMATS[$supportedDatatypeXName][
+                    $this->encoding_
+                ]
+                ?? static::DEFAULT_POSIX_FORMATS[$supportedDatatypeXName]['*']
             );
+        }
 
-        $length = $this->format_->getLength();
+        $length = $this->posixFormat_->getLength();
 
         if (isset($length)) {
             $this->lengthRange_ = new NonNegativeRange($length, $length);
         }
     }
 
-    public function getFormat(): PosixFormat
+    public function getPosixFormat(): PosixFormat
     {
-        return $this->format_;
+        return $this->posixFormat_;
     }
 
     public function serialize(LiteralInterface): string
     {
         $this->validateLiteralClass($literal);
 
-        $value = $literal->format($this->format_);
+        $value = $this->posixFormat_->applyTo($literal->getValue());
 
         switch ($this->encoding_) {
             case 'ASCII':
                 return $value;
 
             case 'BCD':
+                /** @throw alcamo::exception::OutOfRange if encoding is BCD
+                 *  and the date is negative. */
                 OutOfRange::throwIfNegative($literal->format('Y'));
 
                 return hex2bin($value);
@@ -123,7 +132,7 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
 
     public function deserialize(string $input): LiteralInterface
     {
-        if ($this->encoding_ == 'BCD') {
+        if (static::ENCODINGS_TO_BITS[$this->encoding_] == 4) {
             $input = bin2hex($input);
         }
 
@@ -149,9 +158,12 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
 
         $literalClass = static::SUPPORTED_LITERAL_CLASSES[0];
 
-        return new $literalClass(
-            DateTime::createFromFormat($this->format_, $value),
-            $this->dataElement_->getDatatype()->getUri()
+        return $this->literalFactory_->createLiteralForDataElement(
+            $this->dataElement_,
+            \DateTime::createFromFormat(
+                $this->posixFormat_->getPhpFormat(),
+                $value
+            )
         );
     }
 }

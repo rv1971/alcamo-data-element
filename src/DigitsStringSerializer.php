@@ -29,7 +29,7 @@ class DigitsStringSerializer extends AbstractSerializerWithEncoding
 
         switch ($this->encoding_) {
             case 'ASCII':
-                return $this->adjustOutputLength($literal, ' ');
+                return $this->adjustOutputLength($literal);
 
             case 'COMPRESSED-BCD':
                 $output = $this->adjustOutputLength($literal, 'F');

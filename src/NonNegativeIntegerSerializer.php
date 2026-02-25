@@ -14,13 +14,18 @@ use alcamo\rdfa\{
     LiteralInterface
 };
 
+/**
+ * @brief (De)Serializer for nonnegative integers
+ *
+ * @date Last reviewed 2026-02-24
+ */
 class NonNegativeIntegerSerializer extends AbstractSerializerWithEncoding
 {
     public const SUPPORTED_DATATYPE_XNAMES = [
         [ self::XSD_NS, 'boolean' ],
         [ self::XSD_NS, 'gDay' ],
         [ self::XSD_NS, 'gMonth' ],
-        [ PositiveGYearLiteral::DATATYPE_URI ],
+        [ PositiveGYearLiteral::DATATYPE_XNAME ],
         [ self::XSD_NS, 'nonNegativeInteger' ]
     ];
 

@@ -82,8 +82,7 @@ class StringSerializer extends AbstractSerializer
                     static::INTERNAL_ENCODING,
                     $this->encoding_,
                     $literal->getValue()
-                ),
-            ' '
+                )
         );
     }
 

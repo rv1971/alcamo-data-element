@@ -171,7 +171,7 @@ abstract class AbstractSerializer implements SerializerInterface
      *
      * @param $value Data possibly subject to length constraints
      *
-     * @param $padString Padding string, as in str_pad.
+     * @param $padString Padding string, default space, as in str_pad.
      *
      * @param $padType STR_PAD_RIGHT or STR_PAD_LEFT, default STR_PAD_RIGHT,
      * as in str_pad.
@@ -209,7 +209,7 @@ abstract class AbstractSerializer implements SerializerInterface
                 }
             } elseif (isset($minLength)) {
                 /** Pad to the minimum length if necessary. */
-                return str_pad($value, $minLength, $padString, $padType);
+                return str_pad($value, $minLength, $padString ?? ' ', $padType);
             }
         }
 

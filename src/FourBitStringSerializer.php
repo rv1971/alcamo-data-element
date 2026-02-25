@@ -28,7 +28,7 @@ class FourBitStringSerializer extends AbstractSerializerWithEncoding
 
         switch ($this->encoding_) {
             case 'ASCII':
-                return $this->adjustOutputLength($literal, ' ');
+                return $this->adjustOutputLength($literal);
 
             case 'FOUR-BIT':
                 $output = $this->adjustOutputLength($literal->toHex(), 'F');
