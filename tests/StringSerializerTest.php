@@ -101,8 +101,9 @@ class StringSerializerTest extends TestCase
         $this->expectException(InvalidType::class);
 
         $this->expectExceptionMessage(
-            'Invalid type "alcamo\rdfa\NonNegativeIntegerLiteral", expected '
-                . 'one of ["alcamo\rdfa\LangStringLiteral", "alc...]'
+            'Invalid type "alcamo\rdfa\NonNegativeIntegerLiteral"; '
+                . 'incompatible with data element datatype '
+                . 'http://www.w3.org/2001/XMLSchema string'
         );
 
         (new StringSerializer())->serialize(new NonNegativeIntegerLiteral(42));

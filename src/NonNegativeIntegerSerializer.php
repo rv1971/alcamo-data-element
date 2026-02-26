@@ -31,14 +31,6 @@ class NonNegativeIntegerSerializer extends AbstractSerializerWithEncoding
 
     public const DEFAULT_DATATYPE_URI = NonNegativeIntegerLiteral::DATATYPE_URI;
 
-    public const SUPPORTED_LITERAL_CLASSES = [
-        BooleanLiteral::class,
-        GDayLiteral::class,
-        GMonthLiteral::class,
-        NonNegativeIntegerLiteral::class,
-        PositiveGYearLiteral::class
-    ];
-
     public const ENCODINGS_TO_BITS =
         [ 'ASCII' => 8, 'BCD' => 4, 'BIG-ENDIAN' => 8, 'EBCDIC' => 8 ];
 

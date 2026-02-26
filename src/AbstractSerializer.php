@@ -21,9 +21,6 @@ abstract class AbstractSerializer implements SerializerInterface
     /// URI of default datatype
     public const DEFAULT_DATATYPE_URI = '';
 
-    /// Supported classes of literals to serialize
-    public const SUPPORTED_LITERAL_CLASSES = [];
-
     private static $schemaFactory_;
 
     /// Schema factory used to create default data elements
@@ -143,27 +140,24 @@ abstract class AbstractSerializer implements SerializerInterface
     /// Check whether $literal is supported for this serializer class
     protected function validateLiteralClass(LiteralInterface $literal): void
     {
-        /* First check whether the class of $literal is supported, then
-         * whether it is derived from a supported class. */
+        $literalPrimitiveTypeXName = $this->literalFactory_->getSchemaFactory()
+            ->createTypeFromUri($literal::PRIMITIVE_DATATYPE_URI)->getXName();
 
-        if (in_array(get_class($literal), static::SUPPORTED_LITERAL_CLASSES)) {
-            return;
+        $dataElementPrimitiveTypeXName = $this->dataElement_->getDatatype()
+            ->getPrimitiveType()->getXName();
+
+        /* Check whether the literal data matches the data element's type. */
+        if ($literalPrimitiveTypeXName != $dataElementPrimitiveTypeXName) {
+            /** @throw alcamo::exception::InvalidType if $literal primitive type
+             *  does not match data element primitive type. */
+            throw (new InvalidType())->setMessageContext(
+                [
+                    'type' => get_class($literal),
+                    'extraMessage' => 'incompatible with data element datatype '
+                        . $this->dataElement_->getDatatype()->getXName()
+                ]
+            );
         }
-
-        foreach (static::SUPPORTED_LITERAL_CLASSES as $class) {
-            if ($literal instanceof $class) {
-                return;
-            }
-        }
-
-        /** @throw alcamo::exception::InvalidType if $literal is not supported
-         *  by this serializer class. */
-        throw (new InvalidType())->setMessageContext(
-            [
-                'type' => get_class($literal),
-                'expectedOneOf' => static::SUPPORTED_LITERAL_CLASSES
-            ]
-        );
     }
 
     /**

@@ -37,17 +37,6 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
 
     public const DEFAULT_DATATYPE_URI = DateTimeLiteral::DATATYPE_URI;
 
-    public const SUPPORTED_LITERAL_CLASSES = [
-        DateLiteral::class,
-        DateTimeLiteral::class,
-        GDayLiteral::class,
-        GMonthLiteral::class,
-        GMonthDayLiteral::class,
-        GYearMonthLiteral::class,
-        PositiveGYearLiteral::class,
-        TimeLiteral::class
-    ];
-
     public const ENCODINGS_TO_BITS =
         [ 'ASCII' => 8, 'BCD' => 4, 'EBCDIC' => 8 ];
 
@@ -173,8 +162,6 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
                 );
                 break;
         }
-
-        $literalClass = static::SUPPORTED_LITERAL_CLASSES[0];
 
         return $this->literalFactory_->createLiteralForDataElement(
             $this->dataElement_,

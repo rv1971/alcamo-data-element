@@ -19,11 +19,6 @@ class BinarySerializer extends AbstractSerializer
 
     public const DEFAULT_DATATYPE_URI = HexBinaryLiteral::DATATYPE_URI;
 
-    public const SUPPORTED_LITERAL_CLASSES = [
-        Base64BinaryLiteral::class,
-        HexBinaryLiteral::class
-    ];
-
     public function serialize(LiteralInterface $literal): string
     {
         $this->validateLiteralClass($literal);

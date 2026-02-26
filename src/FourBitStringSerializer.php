@@ -16,8 +16,6 @@ class FourBitStringSerializer extends AbstractSerializerWithEncoding
 
     public const DEFAULT_DATATYPE_URI = FourBitStringLiteral::DATATYPE_URI;
 
-    public const SUPPORTED_LITERAL_CLASSES = [ FourBitStringLiteral::class ];
-
     public const ENCODINGS_TO_BITS = [ 'ASCII' => 8, 'FOUR-BIT' => 4 ];
 
     public const DEFAULT_ENCODING = 'ASCII';

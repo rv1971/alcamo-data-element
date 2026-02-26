@@ -21,11 +21,6 @@ class StringSerializer extends AbstractSerializer
 
     public const DEFAULT_DATATYPE_URI = StringLiteral::DATATYPE_URI;
 
-    public const SUPPORTED_LITERAL_CLASSES = [
-        LangStringLiteral::class,
-        StringLiteral::class
-    ];
-
     /// String encoding used internally
     public const INTERNAL_ENCODING = 'UTF-8';
 
