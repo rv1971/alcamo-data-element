@@ -8,10 +8,10 @@ use alcamo\range\NonNegativeRange;
 use alcamo\rdfa\{
     BooleanLiteral,
     GDayLiteral,
-    GMonthLiteral
+    GMonthLiteral,
+    LiteralInterface,
     NonNegativeIntegerLiteral,
-    PositiveGYearLiteral,
-    LiteralInterface
+    PositiveGYearLiteral
 };
 
 /**
@@ -25,7 +25,7 @@ class NonNegativeIntegerSerializer extends AbstractSerializerWithEncoding
         [ self::XSD_NS, 'boolean' ],
         [ self::XSD_NS, 'gDay' ],
         [ self::XSD_NS, 'gMonth' ],
-        [ PositiveGYearLiteral::DATATYPE_XNAME ],
+        PositiveGYearLiteral::DATATYPE_XNAME,
         [ self::XSD_NS, 'nonNegativeInteger' ]
     ];
 
@@ -60,17 +60,25 @@ class NonNegativeIntegerSerializer extends AbstractSerializerWithEncoding
             case 'BCD':
                 /* adjustOutputLength() only checks the maximum length since
                  * the minimum length is already guaranteed. */
-                return hex2bin(
-                    $this->adjustOutputLength(
-                        Bcd::newFromInt($value, $minLength)
-                    )
+                $output = $this->adjustOutputLength(
+                    Bcd::newFromInt($value, $minLength),
+                    '0',
+                    STR_PAD_LEFT
                 );
+
+                if (strlen($output) & 1) {
+                    $output = "0$output";
+                }
+
+                return hex2bin($output);
 
             case 'BIG-ENDIAN':
                 /* adjustOutputLength() only checks the maximum length since
                  * the minimum length is already guaranteed. */
                 return $this->adjustOutputLength(
-                    BinaryString::newFromInt($value, $minLength)->getData()
+                    BinaryString::newFromInt($value, $minLength)->getData(),
+                    "\x00",
+                    STR_PAD_LEFT
                 );
 
             case 'EBCDIC':
@@ -96,11 +104,8 @@ class NonNegativeIntegerSerializer extends AbstractSerializerWithEncoding
 
         switch ($this->encoding_) {
             case 'ASCII':
-                $value = (int)$input;
-                break;
-
             case 'BCD':
-                $value = Bcd::newFromString($input)->toInt();
+                $value = (int)$input;
                 break;
 
             case 'BIG-ENDIAN':

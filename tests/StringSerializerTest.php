@@ -96,7 +96,7 @@ class StringSerializerTest extends TestCase
         );
     }
 
-    public function testInvalidLiteralClass(): void
+    public function testInvalidLiteralClassException(): void
     {
         $this->expectException(InvalidType::class);
 
@@ -108,7 +108,7 @@ class StringSerializerTest extends TestCase
         (new StringSerializer())->serialize(new NonNegativeIntegerLiteral(42));
     }
 
-    public function testOutputTooLong(): void
+    public function testOutputTooLongException(): void
     {
         $this->expectException(LengthOutOfRange::class);
 
@@ -120,7 +120,7 @@ class StringSerializerTest extends TestCase
             ->serialize(new StringLiteral('elitr'));
     }
 
-    public function testInputLengthWrong(): void
+    public function testInputLengthWrongException(): void
     {
         $this->expectException(LengthOutOfRange::class);
 

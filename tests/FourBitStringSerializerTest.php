@@ -15,7 +15,6 @@ class FourBitStringSerializerTest extends TestCase
      * @dataProvider serializeProvider
      */
     public function testSerialize(
-        $datatypeXName,
         $minLength,
         $maxLength,
         $encoding,
@@ -50,7 +49,6 @@ class FourBitStringSerializerTest extends TestCase
     {
         return [
             [
-                FourBitStringLiteral::DATATYPE_XNAME,
                 null,
                 null,
                 null,
@@ -59,7 +57,6 @@ class FourBitStringSerializerTest extends TestCase
                 ';1234=456<7:8>9?'
             ],
             [
-                FourBitStringLiteral::DATATYPE_URI,
                 5,
                 null,
                 'ASCII',
@@ -68,7 +65,6 @@ class FourBitStringSerializerTest extends TestCase
                 '42<<'
             ],
             [
-                FourBitStringLiteral::DATATYPE_URI,
                 null,
                 null,
                 'FOUR-BIT',
@@ -77,7 +73,6 @@ class FourBitStringSerializerTest extends TestCase
                 '1=2?'
             ],
             [
-                FourBitStringLiteral::DATATYPE_URI,
                 5,
                 null,
                 'FOUR-BIT',
@@ -86,7 +81,6 @@ class FourBitStringSerializerTest extends TestCase
                 '7==2??'
             ],
             [
-                FourBitStringLiteral::DATATYPE_URI,
                 6,
                 null,
                 'FOUR-BIT',
@@ -95,7 +89,6 @@ class FourBitStringSerializerTest extends TestCase
                 '7==2??'
             ],
             [
-                FourBitStringLiteral::DATATYPE_URI,
                 2,
                 3,
                 'FOUR-BIT',

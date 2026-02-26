@@ -16,7 +16,6 @@ class DigitsStringSerializerTest extends TestCase
      * @dataProvider serializeProvider
      */
     public function testSerialize(
-        $datatypeXName,
         $minLength,
         $maxLength,
         $encoding,
@@ -51,7 +50,6 @@ class DigitsStringSerializerTest extends TestCase
     {
         return [
             [
-                DigitsStringLiteral::DATATYPE_XNAME,
                 null,
                 null,
                 null,
@@ -60,7 +58,6 @@ class DigitsStringSerializerTest extends TestCase
                 '000123456789'
             ],
             [
-                DigitsStringLiteral::DATATYPE_URI,
                 5,
                 null,
                 'ASCII',
@@ -69,7 +66,6 @@ class DigitsStringSerializerTest extends TestCase
                 '42'
             ],
             [
-                DigitsStringLiteral::DATATYPE_URI,
                 null,
                 null,
                 'COMPRESSED-BCD',
@@ -78,7 +74,6 @@ class DigitsStringSerializerTest extends TestCase
                 '421'
             ],
             [
-                DigitsStringLiteral::DATATYPE_URI,
                 7,
                 null,
                 'COMPRESSED-BCD',
@@ -87,7 +82,6 @@ class DigitsStringSerializerTest extends TestCase
                 '002026'
             ],
             [
-                DigitsStringLiteral::DATATYPE_URI,
                 8,
                 null,
                 'COMPRESSED-BCD',
@@ -96,7 +90,6 @@ class DigitsStringSerializerTest extends TestCase
                 '002026'
             ],
             [
-                DigitsStringLiteral::DATATYPE_URI,
                 2,
                 3,
                 'COMPRESSED-BCD',

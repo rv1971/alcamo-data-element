@@ -68,27 +68,4 @@ abstract class AbstractSerializerWithEncoding extends AbstractSerializer
     {
         return $this->encoding_;
     }
-
-    /// Check the input length
-    protected function validateInputLength(string $input): void
-    {
-        if (
-            isset($this->lengthRange_)
-                && !($this->flags_ & self::SKIP_LENGTH_CHECK)
-        ) {
-            [ $minLength, $maxLength ] = $this->lengthRange_->getMinMax();
-
-            if (
-                $maxLength & 1
-                    && static::ENCODINGS_TO_BITS[$this->encoding_] == 4
-            ) {
-                $maxLength++;
-            }
-
-            /** @throw alcamo::exception::LengthOutOfRange is
-             *  SKIP_LENGTH_CHECK is not set in the flags and the value is too
-             *  short or too long. */
-            LengthOutOfRange::throwIfOutside($input, $minLength, $maxLength);
-        }
-    }
 }

@@ -178,7 +178,7 @@ abstract class AbstractSerializer implements SerializerInterface
      */
     protected function adjustOutputLength(
         string $value,
-        string $padString,
+        ?string $padString = null,
         ?int $padType = null
     ): string {
         if (isset($this->lengthRange_)) {
@@ -224,6 +224,14 @@ abstract class AbstractSerializer implements SerializerInterface
                 && !($this->flags_ & self::SKIP_LENGTH_CHECK)
         ) {
             [ $minLength, $maxLength ] = $this->lengthRange_->getMinMax();
+
+            if (
+                $this instanceof AbstractSerializerWithEncoding
+                    && $maxLength & 1
+                    && static::ENCODINGS_TO_BITS[$this->encoding_] == 4
+            ) {
+                $maxLength++;
+            }
 
             /** @throw alcamo::exception::LengthOutOfRange is
              *  SKIP_LENGTH_CHECK is not set in the flags and the value is too

@@ -2,8 +2,19 @@
 
 namespace alcamo\data_element;
 
+use alcamo\exception\OutOfRange;
 use alcamo\range\NonNegativeRange;
-use alcamo\rdfa\LiteralInterface;
+use alcamo\rdfa\{
+    DateLiteral,
+    DateTimeLiteral,
+    GDayLiteral,
+    GMonthLiteral,
+    GMonthDayLiteral,
+    GYearMonthLiteral,
+    LiteralInterface,
+    PositiveGYearLiteral,
+    TimeLiteral
+};
 use alcamo\time\PosixFormat;
 
 /**
@@ -16,7 +27,10 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
     public const SUPPORTED_DATATYPE_XNAMES = [
         [ self::XSD_NS, 'date' ],
         [ self::XSD_NS, 'dateTime' ],
+        [ self::XSD_NS, 'gDay' ],
+        [ self::XSD_NS, 'gMonth' ],
         [ self::XSD_NS, 'gMonthDay' ],
+        [ self::XSD_NS, 'gYear' ],
         [ self::XSD_NS, 'gYearMonth' ],
         [ self::XSD_NS, 'time' ]
     ];
@@ -26,8 +40,11 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
     public const SUPPORTED_LITERAL_CLASSES = [
         DateLiteral::class,
         DateTimeLiteral::class,
+        GDayLiteral::class,
+        GMonthLiteral::class,
         GMonthDayLiteral::class,
         GYearMonthLiteral::class,
+        PositiveGYearLiteral::class,
         TimeLiteral::class
     ];
 
@@ -45,6 +62,8 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
             'BCD' => '%Y%m%d%H%M%S',
             '*'   => '%Y-%m-%dT%H-%M-%S'
         ],
+        self::XSD_NS . ' gDay'   => [ '*' => '%d' ],
+        self::XSD_NS . ' gMonth' => [ '*' => '%m' ],
         self::XSD_NS . ' gMonthDay'  => [
             'BCD' => '%m%d',
             '*'   => '%m-%d'
@@ -53,6 +72,8 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
             'BCD' => '%Y%m',
             '*'   => '%Y-%m'
         ],
+        PositiveGYearLiteral::DATATYPE_XNAME[0] . ' '
+            . PositiveGYearLiteral::DATATYPE_XNAME[1] => [ '*' => '%Y' ],
         self::XSD_NS . ' time'  => [
             'BCD' => '%H%M%S',
             '*'   => '%H-%M-%S'
@@ -104,7 +125,7 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
         return $this->posixFormat_;
     }
 
-    public function serialize(LiteralInterface): string
+    public function serialize(LiteralInterface $literal): string
     {
         $this->validateLiteralClass($literal);
 
@@ -140,11 +161,8 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
 
         switch ($this->encoding_) {
             case 'ASCII':
-                $value = $input;
-                break;
-
             case 'BCD':
-                $value = bin2hex($input);
+                $value = $input;
                 break;
 
             case 'EBCDIC':
