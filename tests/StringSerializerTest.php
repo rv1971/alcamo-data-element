@@ -4,7 +4,7 @@ namespace alcamo\data_element;
 
 use alcamo\exception\{InvalidType, LengthOutOfRange};
 use alcamo\range\NonNegativeRange;
-use alcamo\rdfa\{NonNegativeIntegerLiteral, StringLiteral};
+use alcamo\rdfa\{QNameLiteral, StringLiteral};
 use PHPUnit\Framework\TestCase;
 
 class StringSerializerTest extends TestCase
@@ -61,11 +61,11 @@ class StringSerializerTest extends TestCase
                 'Lorem ipsum'
             ],
             [
-                self::XSD_NS . ' token',
+                self::XSD_NS . ' normalizedString',
                 11,
                 15,
                 'ISO-8859-1',
-                new StringLiteral('dolör sit'),
+                new StringLiteral('dolör sit', self::XSD_NS . '#token'),
                 "dol\xF6r sit  "
             ],
             [
@@ -73,7 +73,7 @@ class StringSerializerTest extends TestCase
                 null,
                 7,
                 'ISO-8859-1',
-                new StringLiteral('consätetur'),
+                new StringLiteral('consätetur', self::XSD_NS . '#NMTOKEN'),
                 "cons\xE4te"
             ]
         ];
@@ -101,12 +101,12 @@ class StringSerializerTest extends TestCase
         $this->expectException(InvalidType::class);
 
         $this->expectExceptionMessage(
-            'Invalid type "alcamo\rdfa\NonNegativeIntegerLiteral"; '
+            'Invalid type "alcamo\rdfa\QNameLiteral"; '
                 . 'incompatible with data element datatype '
                 . 'http://www.w3.org/2001/XMLSchema string'
         );
 
-        (new StringSerializer())->serialize(new NonNegativeIntegerLiteral(42));
+        (new StringSerializer())->serialize(new QNameLiteral('f:oo'));
     }
 
     public function testOutputTooLongException(): void

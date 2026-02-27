@@ -125,12 +125,15 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 5,
                 null,
                 'BCD',
-                new NonNegativeIntegerLiteral(42),
+                new NonNegativeIntegerLiteral(
+                    42,
+                    self::XSD_NS . '#unsignedShort'
+                ),
                 "\x00\x00\x42",
                 42
             ],
             [
-                self::XSD_NS . ' unsignedInt',
+                self::XSD_NS . ' nonNegativeInteger',
                 5,
                 null,
                 'BIG-ENDIAN',
@@ -143,7 +146,10 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 2,
                 null,
                 'EBCDIC',
-                new NonNegativeIntegerLiteral(7),
+                new NonNegativeIntegerLiteral(
+                    7,
+                    self::XSD_NS . '#unsignedByte'
+                ),
                 "\xF0\xF7",
                 7
             ],
@@ -161,16 +167,22 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 null,
                 2,
                 'BCD',
-                new NonNegativeIntegerLiteral(255),
+                new NonNegativeIntegerLiteral(
+                    255,
+                    self::XSD_NS . '#unsignedByte'
+                ),
                 "\x55",
                 55
             ],
             [
-                self::XSD_NS . ' unsignedShort',
+                self::XSD_NS . ' unsignedLong',
                 null,
                 3,
                 'BCD',
-                new NonNegativeIntegerLiteral(1234),
+                new NonNegativeIntegerLiteral(
+                    1234,
+                    self::XSD_NS . '#unsignedInt'
+                ),
                 "\x02\x34",
                 234
             ],

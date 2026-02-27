@@ -136,9 +136,9 @@ class LiteralTypeMapTest extends TestCase
         $this->expectException(DataValidationFailed::class);
 
         $this->expectExceptionMessage(
-        'Validation failed; literal datatype http://www.w3.org/2001/XMLSchema '
-            . 'integer not derived from type http://www.w3.org/2001/XMLSchema '
-            . 'nonNegativeInteger'
+            'Validation failed; literal datatype '
+                . 'http://www.w3.org/2001/XMLSchema integer not derived from '
+                . 'type http://www.w3.org/2001/XMLSchema nonNegativeInteger'
         );
 
         self::$literalTypeMap_->validateLiteral(

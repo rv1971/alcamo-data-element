@@ -35,6 +35,7 @@ abstract class AbstractSerializer implements SerializerInterface
     protected $lengthRange_;       ///< ?NonNegativeRange
     protected $flags_;             ///< int
     protected $literalFactory_;    ///< LiteralFactory
+    protected $literalTypeMap_;    ///< LiteralTypeMap
 
     /**
      * @param $dataElement Defaults to a data element f type
@@ -107,6 +108,9 @@ abstract class AbstractSerializer implements SerializerInterface
         $this->lengthRange_ = $lengthRange;
         $this->flags_ = (int)$flags;
         $this->literalFactory_ = $literalFactory ?? new LiteralFactory();
+        $this->literalTypeMap_ = new LiteralTypeMap(
+            $this->literalFactory_->getSchemaFactory()
+        );
     }
 
     public function getDataElement(): DataElementInterface
@@ -140,16 +144,15 @@ abstract class AbstractSerializer implements SerializerInterface
     /// Check whether $literal is supported for this serializer class
     protected function validateLiteralClass(LiteralInterface $literal): void
     {
-        $literalPrimitiveTypeXName = $this->literalFactory_->getSchemaFactory()
-            ->createTypeFromUri($literal::PRIMITIVE_DATATYPE_URI)->getXName();
+        $literalDatatype = $this->literalTypeMap_->validateLiteral($literal);
 
-        $dataElementPrimitiveTypeXName = $this->dataElement_->getDatatype()
-            ->getPrimitiveType()->getXName();
-
-        /* Check whether the literal data matches the data element's type. */
-        if ($literalPrimitiveTypeXName != $dataElementPrimitiveTypeXName) {
-            /** @throw alcamo::exception::InvalidType if $literal primitive type
-             *  does not match data element primitive type. */
+        if (
+            !$literalDatatype->isEqualToOrDerivedFrom(
+                $this->dataElement_->getDatatype()->getXName()
+            )
+        ) {
+            /** @throw alcamo::exception::InvalidType if $literal primitive
+             *  type does not match data element type. */
             throw (new InvalidType())->setMessageContext(
                 [
                     'type' => get_class($literal),

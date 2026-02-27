@@ -49,7 +49,8 @@ class LiteralTypeMap extends ReadonlyCollection
         return $this->schemaFactory_->createTypeFromUri(
             $datatypeUri == LangStringLiteral::DATATYPE_URI
                 ? StringLiteral::DATATYPE_URI
-                : $datatypeUri);
+                : $datatypeUri
+        );
     }
 
     /**
