@@ -21,13 +21,28 @@ abstract class AbstractSerializer implements SerializerInterface
     /// URI of default datatype
     public const DEFAULT_DATATYPE_URI = '';
 
-    private static $schemaFactory_;
-
     /// Schema factory used to create default data elements
     public static function getSchemaFactory(): SchemaFactory
     {
-        return self::$schemaFactory_
-            ?? (self::$schemaFactory_ = new SchemaFactory());
+        static $schemaFactory;
+
+        return $schemaFactory ?? ($schemaFactory = new SchemaFactory());
+    }
+
+    public static function getStaticLiteralFactory(): LiteralFactory
+    {
+        static $literalFactory;
+
+        return $literalFactory ??
+            ($literalFactory = new LiteralFactory(self::getSchemaFactory()));
+    }
+
+    public static function getStaticLiteralTypeMap(): LiteralTypeMap
+    {
+        static $literalTypeMap;
+
+        return $literalTypeMap ??
+            ($literalTypeMap = new LiteralTypeMap(self::getSchemaFactory()));
     }
 
     protected $dataElement_;       ///< DataElementInterface
@@ -50,7 +65,8 @@ abstract class AbstractSerializer implements SerializerInterface
         ?DataElementInterface $dataElement = null,
         ?NonNegativeRange $lengthRange = null,
         ?int $flags = null,
-        ?LiteralFactory $literalFactory = null
+        ?LiteralFactory $literalFactory = null,
+        ?LiteralTypeMap $literalTypeMap = null
     ) {
         if (!isset($dataElement)) {
             $this->dataElement_ = new DataElement(
@@ -107,10 +123,10 @@ abstract class AbstractSerializer implements SerializerInterface
 
         $this->lengthRange_ = $lengthRange;
         $this->flags_ = (int)$flags;
-        $this->literalFactory_ = $literalFactory ?? new LiteralFactory();
-        $this->literalTypeMap_ = new LiteralTypeMap(
-            $this->literalFactory_->getSchemaFactory()
-        );
+        $this->literalFactory_ =
+            $literalFactory ?? static::getStaticLiteralFactory();
+        $this->literalTypeMap_ =
+            $literalTypeMap ?? static::getStaticLiteralTypeMap();
     }
 
     public function getDataElement(): DataElementInterface
