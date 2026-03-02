@@ -76,14 +76,16 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
         $posixFormat = null,
         ?int $flags = null,
         ?string $encoding = null,
-        ?LiteralFactory $literalFactory = null
+        ?LiteralFactory $literalFactory = null,
+        ?LiteralTypeMap $literalTypeMap = null
     ) {
         parent::__construct(
             $dataElement,
             null,
             $flags,
             $encoding,
-            $literalFactory
+            $literalFactory,
+            $literalTypeMap
         );
 
         if (isset($posixFormat)) {

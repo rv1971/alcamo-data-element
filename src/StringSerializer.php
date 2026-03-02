@@ -42,20 +42,22 @@ class StringSerializer extends AbstractSerializer
      * @parm $encoding Defaults to DEFAULT_ENCODING
      *
      * Unlike AbstractSerializerWithEncoding, in this class it is not checked
-     * inf $encoding is supported.
+     * if $encoding is supported.
      */
     public function __construct(
         ?DataElementInterface $dataElement = null,
         ?NonNegativeRange $lengthRange = null,
         ?int $flags = null,
         ?string $encoding = null,
-        ?LiteralFactory $literalFactory = null
+        ?LiteralFactory $literalFactory = null,
+        ?LiteralTypeMap $literalTypeMap = null
     ) {
         parent::__construct(
             $dataElement,
             $lengthRange,
             $flags,
-            $literalFactory
+            $literalFactory,
+            $literalTypeMap
         );
 
         $this->encoding_ = $encoding ?? static::DEFAULT_ENCODING;

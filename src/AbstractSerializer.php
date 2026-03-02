@@ -60,6 +60,11 @@ abstract class AbstractSerializer implements SerializerInterface
      * encoding-dependent units (bytes or nibbles).
      *
      * @param $flags Bitwise-OR-combination of the above constants
+     *
+     * @param $literalFactory Literal factory to use in deserialize().
+     *
+     * @param $literalTypeMap Literal type map to use in
+     * validateLiteralClass().
      */
     public function __construct(
         ?DataElementInterface $dataElement = null,
