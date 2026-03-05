@@ -2,7 +2,7 @@
 
 namespace alcamo\data_element;
 
-use alcamo\exception\{InvalidEnumerator, LengthOutOfRange};
+use alcamo\exception\InvalidEnumerator;
 use alcamo\range\NonNegativeRange;
 
 /**
@@ -16,36 +16,37 @@ abstract class AbstractSerializerWithEncoding extends AbstractSerializer
     public const ENCODINGS_TO_BITS = [];
 
     /// Default encoding
-    public const DEFAULT_ENCODING = '';
+    public const DEFAULT_ENCODING = 'ASCII';
 
     protected $encoding_; ///< string
 
     /**
-     * @param $dataElement Defaults to a data element of type
-     * DEFAULT_DATATYPE_URI
+     * @param $datatypeXName Datatype for deserialized literals [default first
+     * item in SUPPORTED_DATATYPE_XNAMES)
      *
      * @param $lengthRange Allowed length of serialized data, in
      * encoding-dependent units (bytes or nibbles).
      *
      * @param $flags Bitwise-OR-combination of the
-     * alcamo::data_element::AbstractSerializer constants
+     * alcamo::data_element::AbstractSerializer constants.
      *
-     * @parm $encoding Defaults to DEFAULT_ENCODING
+     * @parm $encoding [default DEFAULT_ENCODING]
+     *
+     * @param $factoryGroup Factory group used in deserialize() and in
+     * validateLiteralClass(). [default FactoryGroup::getInstance()]
      */
     public function __construct(
-        ?DataElementInterface $dataElement = null,
+        ?string $datatypeXName = null,
         ?NonNegativeRange $lengthRange = null,
         ?int $flags = null,
         ?string $encoding = null,
-        ?LiteralFactory $literalFactory = null,
-        ?LiteralTypeMap $literalTypeMap = null
+        ?FactoryGroup $factoryGroup = null
     ) {
         parent::__construct(
-            $dataElement,
+            $datatypeXName,
             $lengthRange,
             $flags,
-            $literalFactory,
-            $literalTypeMap
+            $factoryGroup
         );
 
         if (isset($encoding)) {
@@ -62,12 +63,17 @@ abstract class AbstractSerializerWithEncoding extends AbstractSerializer
 
             $this->encoding_ = $encoding;
         } else {
-            $this->encoding_ =  static::DEFAULT_ENCODING;
+            $this->encoding_ = static::DEFAULT_ENCODING;
         }
     }
 
     public function getEncoding(): string
     {
         return $this->encoding_;
+    }
+
+    public function getBitsPerCharacter(): int
+    {
+        return static::ENCODINGS_TO_BITS[$this->encoding_];
     }
 }

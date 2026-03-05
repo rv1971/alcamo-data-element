@@ -22,15 +22,16 @@ class StringSerializerTest extends TestCase
         $literal,
         $expectedOutput
     ): void {
-        $datatype = AbstractSerializer::getSchemaFactory()
-            ->getMainSchema()->getGlobalType($datatypeXName);
-
         $serializer = new StringSerializer(
-            new DataElement($datatype),
+            $datatypeXName,
             new NonNegativeRange($minLength, $maxLength),
             SerializerInterface::TRUNCATE_SILENTLY,
             $encoding
         );
+
+        $datatype = $serializer->getDatatype();
+
+        $this->assertSame($datatypeXName, (string)$datatype->getXName());
 
         $output = $serializer->serialize($literal);
 
@@ -84,16 +85,11 @@ class StringSerializerTest extends TestCase
         $this->expectException(InvalidType::class);
 
         $this->expectExceptionMessage(
-            'Invalid type <alcamo\xml\XName>"http://www.w3.org/2001/XMLSchema '
-                . 'dura...", expected one of [["http://www.w3.org/2001/XMLSchema", ...]'
+            'Invalid type "http://www.w3.org/2001/XMLSchema dura...", '
+                . 'expected one of ["http://www.w3.org/2001/XMLSchema str...]'
         );
 
-        new StringSerializer(
-            new DataElement(
-                AbstractSerializer::getSchemaFactory()
-                    ->getMainSchema()->getGlobalType(self::XSD_NS . ' duration')
-            )
-        );
+        new StringSerializer(self::XSD_NS . ' duration');
     }
 
     public function testInvalidLiteralClassException(): void
@@ -101,8 +97,8 @@ class StringSerializerTest extends TestCase
         $this->expectException(InvalidType::class);
 
         $this->expectExceptionMessage(
-            'Invalid type "alcamo\rdfa\QNameLiteral"; '
-                . 'incompatible with data element datatype '
+            'Invalid type <alcamo\xml\XName>"http://www.w3.org/2001/XMLSchema '
+                . 'QName";  incompatible with serializer datatype '
                 . 'http://www.w3.org/2001/XMLSchema string'
         );
 

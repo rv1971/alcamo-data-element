@@ -22,15 +22,14 @@ class FourBitStringSerializerTest extends TestCase
         $expectedOutput,
         $expectedDeserialization
     ): void {
-        $datatype = AbstractSerializer::getSchemaFactory()
-            ->createTypeFromUri(FourBitStringLiteral::DATATYPE_URI);
-
         $serializer = new FourBitStringSerializer(
-            new DataElement($datatype),
+            null,
             new NonNegativeRange($minLength, $maxLength),
             SerializerInterface::TRUNCATE_SILENTLY,
             $encoding
         );
+
+        $datatype = $serializer->getDatatype();
 
         $output = $serializer->serialize($literal);
 

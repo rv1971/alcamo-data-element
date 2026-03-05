@@ -4,17 +4,7 @@ namespace alcamo\data_element;
 
 use alcamo\exception\OutOfRange;
 use alcamo\range\NonNegativeRange;
-use alcamo\rdfa\{
-    DateLiteral,
-    DateTimeLiteral,
-    GDayLiteral,
-    GMonthLiteral,
-    GMonthDayLiteral,
-    GYearMonthLiteral,
-    LiteralInterface,
-    PositiveGYearLiteral,
-    TimeLiteral
-};
+use alcamo\rdfa\{LiteralInterface, PositiveGYearLiteral};
 use alcamo\time\PosixFormat;
 
 /**
@@ -25,22 +15,18 @@ use alcamo\time\PosixFormat;
 class DateTimeSerializer extends AbstractSerializerWithEncoding
 {
     public const SUPPORTED_DATATYPE_XNAMES = [
-        [ self::XSD_NS, 'date' ],
-        [ self::XSD_NS, 'dateTime' ],
-        [ self::XSD_NS, 'gDay' ],
-        [ self::XSD_NS, 'gMonth' ],
-        [ self::XSD_NS, 'gMonthDay' ],
-        [ self::XSD_NS, 'gYear' ],
-        [ self::XSD_NS, 'gYearMonth' ],
-        [ self::XSD_NS, 'time' ]
+        self::XSD_NS . ' dateTime',
+        self::XSD_NS . ' date',
+        self::XSD_NS . ' gDay',
+        self::XSD_NS . ' gMonth',
+        self::XSD_NS . ' gMonthDay',
+        self::XSD_NS . ' gYear',
+        self::XSD_NS . ' gYearMonth',
+        self::XSD_NS . ' time'
     ];
-
-    public const DEFAULT_DATATYPE_URI = DateTimeLiteral::DATATYPE_URI;
 
     public const ENCODINGS_TO_BITS =
         [ 'ASCII' => 8, 'BCD' => 4, 'EBCDIC' => 8 ];
-
-    public const DEFAULT_ENCODING = 'ASCII';
 
     public const DEFAULT_POSIX_FORMATS = [
         self::XSD_NS . ' date'  => [
@@ -51,8 +37,12 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
             'BCD' => '%Y%m%d%H%M%S',
             '*'   => '%Y-%m-%dT%H-%M-%S'
         ],
-        self::XSD_NS . ' gDay'   => [ '*' => '%d' ],
-        self::XSD_NS . ' gMonth' => [ '*' => '%m' ],
+        self::XSD_NS . ' gDay' => [
+            '*' => '%d'
+        ],
+        self::XSD_NS . ' gMonth' => [
+            '*' => '%m'
+        ],
         self::XSD_NS . ' gMonthDay'  => [
             'BCD' => '%m%d',
             '*'   => '%m-%d'
@@ -61,8 +51,9 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
             'BCD' => '%Y%m',
             '*'   => '%Y-%m'
         ],
-        PositiveGYearLiteral::DATATYPE_XNAME[0] . ' '
-            . PositiveGYearLiteral::DATATYPE_XNAME[1] => [ '*' => '%Y' ],
+        PositiveGYearLiteral::DATATYPE_XNAME => [
+            '*' => '%Y'
+        ],
         self::XSD_NS . ' time'  => [
             'BCD' => '%H%M%S',
             '*'   => '%H-%M-%S'
@@ -71,21 +62,34 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
 
     private $posixFormat_; ///< PosixFormat
 
+    /**
+     * @param $datatypeXName Datatype for deserialized literals [default first
+     * item in SUPPORTED_DATATYPE_XNAMES)
+     *
+     * @param $posixFormat POSIX format for input/output. Length is fixed and
+     * computed from $posixFormat. [default taken from DEFAULT_POSIX_FORMATS]
+     *
+     * @param $flags Bitwise-OR-combination of the
+     * alcamo::data_element::AbstractSerializer constants
+     *
+     * @parm $encoding [default DEFAULT_ENCODING]
+     *
+     * @param $factoryGroup Factory group used in deserialize() and in
+     * validateLiteralClass(). [default FactoryGroup::getInstance()]
+     */
     public function __construct(
-        ?DataElementInterface $dataElement = null,
+        ?string $datatypeXName = null,
         $posixFormat = null,
         ?int $flags = null,
         ?string $encoding = null,
-        ?LiteralFactory $literalFactory = null,
-        ?LiteralTypeMap $literalTypeMap = null
+        ?FactoryGroup $factoryGroup = null
     ) {
         parent::__construct(
-            $dataElement,
+            $datatypeXName,
             null,
             $flags,
             $encoding,
-            $literalFactory,
-            $literalTypeMap
+            $factoryGroup
         );
 
         if (isset($posixFormat)) {
@@ -165,8 +169,8 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
                 break;
         }
 
-        return $this->literalFactory_->createLiteralForDataElement(
-            $this->dataElement_,
+        return $this->factoryGroup_->getLiteralFactory()->create(
+            $this->datatype_,
             \DateTime::createFromFormat(
                 $this->posixFormat_->getPhpFormat(),
                 $value

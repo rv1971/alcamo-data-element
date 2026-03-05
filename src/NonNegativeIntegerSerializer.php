@@ -3,16 +3,7 @@
 namespace alcamo\data_element;
 
 use alcamo\binary_data\{Bcd, BinaryString};
-use alcamo\dom\schema\component\AbstractSimpleType;
-use alcamo\range\NonNegativeRange;
-use alcamo\rdfa\{
-    BooleanLiteral,
-    GDayLiteral,
-    GMonthLiteral,
-    LiteralInterface,
-    NonNegativeIntegerLiteral,
-    PositiveGYearLiteral
-};
+use alcamo\rdfa\{LiteralInterface, PositiveGYearLiteral};
 
 /**
  * @brief (De)Serializer for nonnegative integers
@@ -22,19 +13,15 @@ use alcamo\rdfa\{
 class NonNegativeIntegerSerializer extends AbstractSerializerWithEncoding
 {
     public const SUPPORTED_DATATYPE_XNAMES = [
-        [ self::XSD_NS, 'boolean' ],
-        [ self::XSD_NS, 'gDay' ],
-        [ self::XSD_NS, 'gMonth' ],
-        PositiveGYearLiteral::DATATYPE_XNAME,
-        [ self::XSD_NS, 'nonNegativeInteger' ]
+        self::XSD_NS . ' nonNegativeInteger',
+        self::XSD_NS . ' boolean',
+        self::XSD_NS . ' gDay',
+        self::XSD_NS . ' gMonth',
+        PositiveGYearLiteral::DATATYPE_XNAME
     ];
-
-    public const DEFAULT_DATATYPE_URI = NonNegativeIntegerLiteral::DATATYPE_URI;
 
     public const ENCODINGS_TO_BITS =
         [ 'ASCII' => 8, 'BCD' => 4, 'BIG-ENDIAN' => 8, 'EBCDIC' => 8 ];
-
-    public const DEFAULT_ENCODING = 'ASCII';
 
     public function serialize(LiteralInterface $literal): string
     {
@@ -42,14 +29,15 @@ class NonNegativeIntegerSerializer extends AbstractSerializerWithEncoding
 
         $value = $literal->toInt();
 
-        $minLength =
-            isset($this->lengthRange_) ? $this->lengthRange_->getMin() : null;
-
         switch ($this->encoding_) {
             case 'ASCII':
                 return $this->adjustOutputLength($value, '0', STR_PAD_LEFT);
 
             case 'BCD':
+                $minLength = isset($this->lengthRange_)
+                    ? $this->lengthRange_->getMin()
+                    : null;
+
                 /* adjustOutputLength() only checks the maximum length since
                  * the minimum length is already guaranteed. */
                 $output = $this->adjustOutputLength(
@@ -65,6 +53,10 @@ class NonNegativeIntegerSerializer extends AbstractSerializerWithEncoding
                 return hex2bin($output);
 
             case 'BIG-ENDIAN':
+                $minLength = isset($this->lengthRange_)
+                    ? $this->lengthRange_->getMin()
+                    : null;
+
                 /* adjustOutputLength() only checks the maximum length since
                  * the minimum length is already guaranteed. */
                 return $this->adjustOutputLength(
@@ -113,7 +105,7 @@ class NonNegativeIntegerSerializer extends AbstractSerializerWithEncoding
                 break;
         }
 
-        return $this->literalFactory_
-            ->createLiteralForDataElement($this->dataElement_, $value);
+        return $this->factoryGroup_->getLiteralFactory()
+            ->create($this->datatype_, $value);
     }
 }

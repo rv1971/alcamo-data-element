@@ -21,14 +21,15 @@ class BinarySerializerTest extends TestCase
         $literal,
         $expectedOutput
     ): void {
-        $datatype = AbstractSerializer::getSchemaFactory()
-            ->getMainSchema()->getGlobalType($datatypeXName);
-
         $serializer = new BinarySerializer(
-            new DataElement($datatype),
+            $datatypeXName,
             new NonNegativeRange($minLength, $maxLength),
             SerializerInterface::TRUNCATE_SILENTLY
         );
+
+        $datatype = $serializer->getDatatype();
+
+        $this->assertSame($datatypeXName, (string)$datatype->getXName());
 
         $output = $serializer->serialize($literal);
 
@@ -37,7 +38,8 @@ class BinarySerializerTest extends TestCase
         $literal2 = $serializer->deserialize($output);
 
         $this->assertInstanceOf(
-            $datatype->getXName()->getLocalName() == 'base64Binary'
+            $serializer->getDatatype()->getXName()->getLocalName()
+                == 'base64Binary'
             ? Base64BinaryLiteral::class
             : HexBinaryLiteral::class,
             $literal2

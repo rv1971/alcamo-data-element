@@ -3,7 +3,7 @@
 namespace alcamo\data_element;
 
 use alcamo\collection\ReadonlyCollectionTrait;
-use alcamo\exception\{DataValidationFailed, Eof, InvalidType};
+use alcamo\exception\{DataValidationFailed, Eof, InvalidType, SyntaxError};
 use alcamo\range\NonNegativeRange;
 use alcamo\rdfa\{HexBinaryLiteral, LiteralInterface};
 
@@ -20,12 +20,10 @@ class ConstructedSerializer extends AbstractSerializer implements
     use ReadonlyCollectionTrait;
 
     public const SUPPORTED_DATATYPE_XNAMES = [
-        [ self::XSD_NS, 'base64Binary' ],
-        [ self::XSD_NS, 'hexBinary' ],
-        [ self::XSD_NS, 'string' ]
+        self::XSD_NS . ' hexBinary',
+        self::XSD_NS . ' base64Binary',
+        self::XSD_NS . ' string'
     ];
-
-    public const DEFAULT_DATATYPE_URI = HexBinaryLiteral::DATATYPE_URI;
 
     private $separator_; ///< ?string
 
@@ -34,37 +32,22 @@ class ConstructedSerializer extends AbstractSerializer implements
      *
      * @parm $separator String to separate items in (de)serialization.
      *
-     * @param $dataElement Defaults to a data element of type
-     * DEFAULT_DATATYPE_URI
+     * @param $datatypeXName Datatype for deserialized literals [default first
+     * item in SUPPORTED_DATATYPE_XNAMES)
      *
      * @param $lengthRange Allowed length of serialized data, in
      * encoding-dependent units (bytes or nibbles).
      *
      * @param $flags Bitwise-OR-combination of the
      * alcamo::data_element::AbstractSerializer constants
-     *
-     * @param $literalFactory Literal factory to use in deserialize().
-     *
-     * @param $literalTypeMap Literal type map to use in
-     * validateLiteralClass().
      */
     public function __construct(
         iterable $serializers,
         ?string $separator = null,
-        ?DataElementInterface $dataElement = null,
+        ?string $datatypeXName = null,
         ?NonNegativeRange $lengthRange = null,
-        ?int $flags = null,
-        ?LiteralFactory $literalFactory = null,
-        ?LiteralTypeMap $literalTypeMap = null
+        ?int $flags = null
     ) {
-        parent::__construct(
-            $dataElement,
-            $lengthRange,
-            $flags,
-            $literalFactory,
-            $literalTypeMap
-        );
-
         foreach ($serializers as $key => $serializer) {
             if (!($serializer instanceof SerializerInterface)) {
                 /** @throw alcamo::exception::InvalidType if an item in
@@ -79,6 +62,13 @@ class ConstructedSerializer extends AbstractSerializer implements
 
             $this->data_[$key] = $serializer;
         }
+
+        parent::__construct(
+            $datatypeXName,
+            $lengthRange,
+            $flags,
+            $this->first()->getFactoryGroup()
+        );
 
         $this->separator_ = $separator;
     }
@@ -130,7 +120,7 @@ class ConstructedSerializer extends AbstractSerializer implements
 
         return $this->adjustOutputLength(
             $result,
-            $this->dataElement_->getDatatype()->isPrintable() ? ' ' : "\x00"
+            $this->datatype_->isPrintable() ? ' ' : "\x00"
         );
     }
 
@@ -211,6 +201,23 @@ class ConstructedSerializer extends AbstractSerializer implements
 
                 $pos += $length;
             }
+        }
+
+        if (
+            $pos < strlen($input) && !($this->flags_ & self::TRUNCATE_SILENTLY)
+        ) {
+            /**
+             * @throw alcamo::exception::SyntaxError if there is input left
+             * after all deserializers have been applied and $flags do not
+             * contain TRUNCATE_SILENTLY.
+             */
+            throw (new SyntaxError())->setMessageContext(
+                [
+                    'inData' => $input,
+                    'atOffset' => $pos,
+                    'extraMessage' => 'spurious trailing data'
+                ]
+            );
         }
 
         return new Constructedliteral($result);

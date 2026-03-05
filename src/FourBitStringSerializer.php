@@ -14,11 +14,7 @@ class FourBitStringSerializer extends AbstractSerializerWithEncoding
     public const SUPPORTED_DATATYPE_XNAMES =
         [ FourBitStringLiteral::DATATYPE_XNAME ];
 
-    public const DEFAULT_DATATYPE_URI = FourBitStringLiteral::DATATYPE_URI;
-
     public const ENCODINGS_TO_BITS = [ 'ASCII' => 8, 'FOUR-BIT' => 4 ];
-
-    public const DEFAULT_ENCODING = 'ASCII';
 
     public function serialize(LiteralInterface $literal): string
     {
@@ -47,8 +43,8 @@ class FourBitStringSerializer extends AbstractSerializerWithEncoding
 
         $this->validateInputLength($input);
 
-        return $this->literalFactory_->createLiteralForDataElement(
-            $this->dataElement_,
+        return $this->factoryGroup_->getLiteralFactory()->create(
+            $this->datatype_,
             $this->encoding_ == 'FOUR-BIT'
                 ? strtr($input, 'ABCDEFabcdef', ':;<=>?:;<=>?')
                 : rtrim($input)

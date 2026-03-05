@@ -29,20 +29,18 @@ class NonNegativeIntegerSerializerTest extends TestCase
         $expectedOutput,
         $expectedDeserialization
     ): void {
-        AbstractSerializer::getSchemaFactory()
-            ->createTypeFromUri(PositiveGYearLiteral::DATATYPE_URI);
-
-        $dataElement = isset($datatypeXName)
-            ? new DataElement(AbstractSerializer::getSchemaFactory()
-                              ->getMainSchema()->getGlobalType($datatypeXName))
-            : null;
-
         $serializer = new NonNegativeIntegerSerializer(
-            $dataElement,
+            $datatypeXName,
             new NonNegativeRange($minLength, $maxLength),
             SerializerInterface::TRUNCATE_SILENTLY,
             $encoding
         );
+
+        $datatype = $serializer->getDatatype();
+
+        if (isset($datatypeXName)) {
+            $this->assertSame($datatypeXName, (string)$datatype->getXName());
+        }
 
         $output = $serializer->serialize($literal);
 
@@ -65,10 +63,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
             );
         }
 
-        $this->assertEquals(
-            $serializer->getDataElement()->getDatatype()->getUri(),
-            $literal2->getDatatypeUri()
-        );
+        $this->assertEquals($datatype->getUri(), $literal2->getDatatypeUri());
     }
 
     public function serializeProvider(): array
@@ -111,8 +106,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 (new GMonthLiteral(12))->getValue()
                 ],
             [
-                PositiveGYearLiteral::DATATYPE_XNAME[0] . ' '
-                . PositiveGYearLiteral::DATATYPE_XNAME[1],
+                PositiveGYearLiteral::DATATYPE_XNAME,
                 8,
                 null,
                 null,

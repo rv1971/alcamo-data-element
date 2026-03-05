@@ -2,7 +2,6 @@
 
 namespace alcamo\data_element;
 
-use alcamo\range\NonNegativeRange;
 use alcamo\rdfa\{DigitsStringLiteral, LiteralInterface};
 
 /**
@@ -15,13 +14,7 @@ class DigitsStringSerializer extends AbstractSerializerWithEncoding
     public const SUPPORTED_DATATYPE_XNAMES =
         [ DigitsStringLiteral::DATATYPE_XNAME ];
 
-    public const DEFAULT_DATATYPE_URI = DigitsStringLiteral::DATATYPE_URI;
-
-    public const SUPPORTED_LITERAL_CLASSES = [ DigitsStringLiteral::class ];
-
     public const ENCODINGS_TO_BITS = [ 'ASCII' => 8, 'COMPRESSED-BCD' => 4 ];
-
-    public const DEFAULT_ENCODING = 'ASCII';
 
     public function serialize(LiteralInterface $literal): string
     {
@@ -50,8 +43,8 @@ class DigitsStringSerializer extends AbstractSerializerWithEncoding
 
         $this->validateInputLength($input);
 
-        return $this->literalFactory_->createLiteralForDataElement(
-            $this->dataElement_,
+        return $this->factoryGroup_->getLiteralFactory()->create(
+            $this->datatype_,
             rtrim($input, ' f')
         );
     }

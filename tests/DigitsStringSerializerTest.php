@@ -5,7 +5,6 @@ namespace alcamo\data_element;
 use alcamo\exception\{InvalidEnumerator, LengthOutOfRange};
 use alcamo\range\NonNegativeRange;
 use alcamo\rdfa\DigitsStringLiteral;
-use alcamo\uri\Uri;
 use PHPUnit\Framework\TestCase;
 
 class DigitsStringSerializerTest extends TestCase
@@ -23,15 +22,14 @@ class DigitsStringSerializerTest extends TestCase
         $expectedOutput,
         $expectedDeserialization
     ): void {
-        $datatype = AbstractSerializer::getSchemaFactory()
-            ->createTypeFromUri(DigitsStringLiteral::DATATYPE_URI);
-
         $serializer = new DigitsStringSerializer(
-            new DataElement($datatype),
+            null,
             new NonNegativeRange($minLength, $maxLength),
             SerializerInterface::TRUNCATE_SILENTLY,
             $encoding
         );
+
+        $datatype = $serializer->getDatatype();
 
         $output = $serializer->serialize($literal);
 

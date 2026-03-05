@@ -2,12 +2,13 @@
 
 namespace alcamo\data_element;
 
+use alcamo\dom\schema\component\SimpleTypeInterface;
 use alcamo\range\NonNegativeRange;
 use alcamo\rdfa\LiteralInterface;
 use alcamo\xml\NamespaceConstantsInterface;
 
 /**
- * @brief (De)Serializer based on data element information
+ * @brief (De)Serializer for literal objects
  *
  * @date Last reviewed 2026-02-24
  */
@@ -19,7 +20,7 @@ interface SerializerInterface extends NamespaceConstantsInterface
     /// Do not check length upon deserialization
     public const SKIP_LENGTH_CHECK = 2;
 
-    public function getDataElement(): DataElementInterface;
+    public function getDatatype(): SimpleTypeInterface;
 
     public function getLengthRange(): ?NonNegativeRange;
 

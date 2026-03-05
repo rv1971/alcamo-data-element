@@ -2,141 +2,101 @@
 
 namespace alcamo\data_element;
 
-use alcamo\dom\schema\SchemaFactory;
-use alcamo\dom\schema\component\AbstractSimpleType;
+use alcamo\dom\schema\component\{AbstractSimpleType, SimpleTypeInterface};
 use alcamo\exception\{InvalidType, LengthOutOfRange};
 use alcamo\range\NonNegativeRange;
 use alcamo\rdfa\LiteralInterface;
 
 /**
- * @brief (De)Serializer based on data element information
+ * @brief (De)Serializer for literal objects
  *
  * @date Last reviewed 2026-02-24
  */
 abstract class AbstractSerializer implements SerializerInterface
 {
-    /// Extended names of supported data eleemnt datatypes
+    /**
+     * @brief Extended name strings of supported data element datatypes
+     *
+     * The first item it taken as the default datatype.
+     */
     public const SUPPORTED_DATATYPE_XNAMES = [];
 
-    /// URI of default datatype
-    public const DEFAULT_DATATYPE_URI = '';
-
-    /// Schema factory used to create default data elements
-    public static function getSchemaFactory(): SchemaFactory
-    {
-        static $schemaFactory;
-
-        return $schemaFactory ?? ($schemaFactory = new SchemaFactory());
-    }
-
-    public static function getStaticLiteralFactory(): LiteralFactory
-    {
-        static $literalFactory;
-
-        return $literalFactory ??
-            ($literalFactory = new LiteralFactory(self::getSchemaFactory()));
-    }
-
-    public static function getStaticLiteralTypeMap(): LiteralTypeMap
-    {
-        static $literalTypeMap;
-
-        return $literalTypeMap ??
-            ($literalTypeMap = new LiteralTypeMap(self::getSchemaFactory()));
-    }
-
-    protected $dataElement_;       ///< DataElementInterface
-    protected $supportedDatatype_; ///< SimpleTypeInterface
-    protected $lengthRange_;       ///< ?NonNegativeRange
-    protected $flags_;             ///< int
-    protected $literalFactory_;    ///< LiteralFactory
-    protected $literalTypeMap_;    ///< LiteralTypeMap
+    protected $datatype_;     ///< SimpleTypeInterface
 
     /**
-     * @param $dataElement Defaults to a data element f type
-     * DEFAULT_DATATYPE_URI
+     * @brief SimpleTypeInterface
+     *
+     * That datatype listed in SUPPORTED_DATATYPE_XNAMES from which $datytpe_
+     * is derived.
+     */
+    protected $supportedDatatype_;
+
+    protected $lengthRange_;  ///< ?NonNegativeRange
+    protected $flags_;        ///< int
+    protected $factoryGroup_; ///< FactoryGroup
+
+    /**
+     * @param $datatypeXName Datatype for deserialized literals [default first
+     * item in SUPPORTED_DATATYPE_XNAMES)
      *
      * @param $lengthRange Allowed length of serialized data, in
      * encoding-dependent units (bytes or nibbles).
      *
-     * @param $flags Bitwise-OR-combination of the above constants
+     * @param $flags Bitwise-OR-combination of the above constants.
      *
-     * @param $literalFactory Literal factory to use in deserialize().
-     *
-     * @param $literalTypeMap Literal type map to use in
-     * validateLiteralClass().
+     * @param $factoryGroup Factory group used in deserialize() and in
+     * validateLiteralClass(). [default FactoryGroup::getInstance()]
      */
     public function __construct(
-        ?DataElementInterface $dataElement = null,
+        ?string $datatypeXName = null,
         ?NonNegativeRange $lengthRange = null,
         ?int $flags = null,
-        ?LiteralFactory $literalFactory = null,
-        ?LiteralTypeMap $literalTypeMap = null
+        ?FactoryGroup $factoryGroup = null
     ) {
-        if (!isset($dataElement)) {
-            $this->dataElement_ = new DataElement(
-                static::getSchemaFactory()
-                    ->createTypeFromUri(static::DEFAULT_DATATYPE_URI)
-            );
+        $this->factoryGroup_ = $factoryGroup ?? FactoryGroup::getMainInstance();
 
-            $this->supportedDatatype_ = $this->dataElement_->getDatatype();
+        $this->datatype_ = $this->factoryGroup_->getSchema()->getGlobalType(
+            $datatypeXName ?? static::SUPPORTED_DATATYPE_XNAMES[0]
+        );
+
+        if (!isset($datatypeXName)) {
+            $this->supportedDatatype_ = $this->datatype_;
         } else {
-            $this->dataElement_ = $dataElement;
-
-            /* First check primitive types since in most cases
-             * SUPPORTED_DATATYPE_XNAMES contains primitive types. */
-            $this->supportedDatatype_ =
-                $dataElement->getDatatype()->getPrimitiveType();
-
-            if (
-                !in_array(
-                    $this->supportedDatatype_->getXName()->getPair(),
-                    static::SUPPORTED_DATATYPE_XNAMES
-                )
+            for (
+                $type = $this->datatype_;
+                $type instanceof AbstractSimpleType;
+                $type = $type->getBaseType()
             ) {
-                $this->supportedDatatype_ = null;
-
-                for (
-                    $type = $dataElement->getDatatype();
-                    $type instanceof AbstractSimpleType;
-                    $type = $type->getBaseType()
+                if (
+                    in_array(
+                        (string)$type->getXName(),
+                        static::SUPPORTED_DATATYPE_XNAMES
+                    )
                 ) {
-                    if (
-                        in_array(
-                            $type->getXName()->getPair(),
-                            static::SUPPORTED_DATATYPE_XNAMES
-                        )
-                    ) {
-                        $this->supportedDatatype_ = $type;
-                        break;
-                    }
+                    $this->supportedDatatype_ = $type;
+                    break;
                 }
+            }
 
-                if (!isset($this->supportedDatatype_)) {
-                    /** @throw alcamo::exception::InvalidType if $dataElement
-                     *  does not have a type supported by this
-                     *  serializer class. */
-                    throw (new InvalidType())->setMessageContext(
-                        [
-                            'type' => $dataElement->getDatatype()->getXName(),
-                            'expectedOneOf' => static::SUPPORTED_DATATYPE_XNAMES
-                        ]
-                    );
-                }
+            if (!isset($this->supportedDatatype_)) {
+                /** @throw alcamo::exception::InvalidType if $datatype is
+                 *  not supported by this serializer class. */
+                throw (new InvalidType())->setMessageContext(
+                    [
+                        'type' => $datatypeXName,
+                        'expectedOneOf' => static::SUPPORTED_DATATYPE_XNAMES
+                    ]
+                );
             }
         }
 
         $this->lengthRange_ = $lengthRange;
         $this->flags_ = (int)$flags;
-        $this->literalFactory_ =
-            $literalFactory ?? static::getStaticLiteralFactory();
-        $this->literalTypeMap_ =
-            $literalTypeMap ?? static::getStaticLiteralTypeMap();
     }
 
-    public function getDataElement(): DataElementInterface
+    public function getDatatype(): SimpleTypeInterface
     {
-        return $this->dataElement_;
+        return $this->datatype_;
     }
 
     public function getLengthRange(): ?NonNegativeRange
@@ -149,36 +109,38 @@ abstract class AbstractSerializer implements SerializerInterface
         return $this->flags_;
     }
 
-    public function getLiteralFactory(): LiteralFactory
+    public function getFactoryGroup(): FactoryGroup
     {
-        return $this->literalFactory_;
+        return $this->factoryGroup_;
+    }
+
+    public function getBitsPerCharacter(): int
+    {
+        return 8;
     }
 
     abstract public function serialize(LiteralInterface $literal): string;
 
-    /**
-     * Create a literal object with a value obtained from $input and the
-     * datatype URI of $this->dataElement_.
-     */
     abstract public function deserialize(string $input): LiteralInterface;
 
     /// Check whether $literal is supported for this serializer class
     protected function validateLiteralClass(LiteralInterface $literal): void
     {
-        $literalDatatype = $this->literalTypeMap_->validateLiteral($literal);
+        $literalDatatype = $this->factoryGroup_->getLiteralTypeMap()
+            ->validateLiteral($literal);
 
         if (
             !$literalDatatype->isEqualToOrDerivedFrom(
-                $this->dataElement_->getDatatype()->getXName()
+                $this->datatype_->getXName()
             )
         ) {
-            /** @throw alcamo::exception::InvalidType if $literal primitive
-             *  type does not match data element type. */
+            /** @throw alcamo::exception::InvalidType if $literal type is not
+             *  supported. */
             throw (new InvalidType())->setMessageContext(
                 [
-                    'type' => get_class($literal),
-                    'extraMessage' => 'incompatible with data element datatype '
-                        . $this->dataElement_->getDatatype()->getXName()
+                    'type' => $literalDatatype->getXName(),
+                    'extraMessage' => ' incompatible with serializer datatype '
+                        . $this->datatype_->getXName()
                 ]
             );
         }
@@ -189,10 +151,10 @@ abstract class AbstractSerializer implements SerializerInterface
      *
      * @param $value Data possibly subject to length constraints
      *
-     * @param $padString Padding string, default space, as in str_pad.
+     * @param $padString Padding string. [default space, as in str_pad()]
      *
-     * @param $padType STR_PAD_RIGHT or STR_PAD_LEFT, default STR_PAD_RIGHT,
-     * as in str_pad.
+     * @param $padType STR_PAD_RIGHT or STR_PAD_LEFT. Truncation takes place
+     * on the same side as padding. [default STR_PAD_RIGHT, as in str_pad()]
      */
     protected function adjustOutputLength(
         string $value,
@@ -215,8 +177,8 @@ abstract class AbstractSerializer implements SerializerInterface
                         ? substr($value, 0, $maxLength)
                         : substr($value, -$maxLength);
                 } else {
-                    /** @throw If $value is too long and TRUNCATE_SILENTLY is
-                     *  not set, throw alcamo::exception::LengthOutOfRange. */
+                    /** @throw alcamo::exception::LengthOutOfRange if $value
+                     *  is too long and TRUNCATE_SILENTLY is not set. */
                     throw (new LengthOutOfRange())->setMessageContext(
                         [
                             'value' => $value,
@@ -243,11 +205,9 @@ abstract class AbstractSerializer implements SerializerInterface
         ) {
             [ $minLength, $maxLength ] = $this->lengthRange_->getMinMax();
 
-            if (
-                $this instanceof AbstractSerializerWithEncoding
-                    && $maxLength & 1
-                    && static::ENCODINGS_TO_BITS[$this->encoding_] == 4
-            ) {
+            /** Add a padding nibble to maxLength if length is measured in
+             *  nibbles and maximum length is odd. */
+            if ($maxLength & 1 && $this->getBitsPerCharacter() == 4) {
                 $maxLength++;
             }
 

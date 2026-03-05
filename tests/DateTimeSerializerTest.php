@@ -32,20 +32,18 @@ class DateTimeSerializerTest extends TestCase
         $expectedOutput,
         $expectedDeserialization
     ): void {
-        AbstractSerializer::getSchemaFactory()
-            ->createTypeFromUri(PositiveGYearLiteral::DATATYPE_URI);
-
-        $dataElement = isset($datatypeXName)
-            ? new DataElement(AbstractSerializer::getSchemaFactory()
-                              ->getMainSchema()->getGlobalType($datatypeXName))
-            : null;
-
         $serializer = new DateTimeSerializer(
-            $dataElement,
+            $datatypeXName,
             $format,
             null,
             $encoding
         );
+
+        $datatype = $serializer->getDatatype();
+
+        if (isset($datatypeXName)) {
+            $this->assertSame($datatypeXName, (string)$datatype->getXName());
+        }
 
         $output = $serializer->serialize($literal);
 
@@ -57,10 +55,7 @@ class DateTimeSerializerTest extends TestCase
 
         $this->assertTrue($expectedDeserialization->equals($literal2));
 
-        $this->assertEquals(
-            $serializer->getDataElement()->getDatatype()->getUri(),
-            $literal2->getDatatypeUri()
-        );
+        $this->assertEquals($datatype->getUri(), $literal2->getDatatypeUri());
     }
 
     public function serializeProvider(): array
@@ -115,7 +110,7 @@ class DateTimeSerializerTest extends TestCase
                 new GYearMonthLiteral('2006-08')
                 ],
             [
-                new XName(...PositiveGYearLiteral::DATATYPE_XNAME),
+                PositiveGYearLiteral::DATATYPE_XNAME,
                 '%y',
                 'BCD',
                 new PositiveGYearLiteral('2008'),
@@ -148,19 +143,15 @@ class DateTimeSerializerTest extends TestCase
 
     public function testDatatypeMismatch(): void
     {
-        $dataElement = new DataElement(
-            AbstractSerializer::getSchemaFactory()->getMainSchema()
-                ->getGlobalType(self::XSD_NS . ' date')
-        );
-
         $this->expectException(InvalidType::class);
 
         $this->expectExceptionMessage(
-            'Invalid type "alcamo\rdfa\DateTimeLiteral"; incompatible with '
-                . 'data element datatype http://www.w3.org/2001/XMLSchema date'
+            'Invalid type <alcamo\xml\XName>"http://www.w3.org/2001/XMLSchema '
+                . 'date...";  incompatible with serializer datatype '
+                . 'http://www.w3.org/2001/XMLSchema date'
         );
 
-        (new DateTimeSerializer($dataElement))
+        (new DateTimeSerializer(self::XSD_NS . ' date'))
             ->serialize(new DateTimeLiteral());
     }
 }

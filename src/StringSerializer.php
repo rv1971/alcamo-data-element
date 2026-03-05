@@ -3,7 +3,7 @@
 namespace alcamo\data_element;
 
 use alcamo\range\NonNegativeRange;
-use alcamo\rdfa\{LangStringLiteral, LiteralInterface, StringLiteral};
+use alcamo\rdfa\LiteralInterface;
 
 /**
  * @brief (De)Serializer for string data
@@ -13,13 +13,11 @@ use alcamo\rdfa\{LangStringLiteral, LiteralInterface, StringLiteral};
 class StringSerializer extends AbstractSerializer
 {
     public const SUPPORTED_DATATYPE_XNAMES = [
-        [ self::XSD_NS, 'anyURI' ],
-        [ self::XSD_NS, 'NOTATION' ],
-        [ self::XSD_NS, 'QName' ],
-        [ self::XSD_NS, 'string' ]
+        self::XSD_NS . ' string',
+        self::XSD_NS . ' anyURI',
+        self::XSD_NS . ' NOTATION',
+        self::XSD_NS . ' QName'
     ];
-
-    public const DEFAULT_DATATYPE_URI = StringLiteral::DATATYPE_URI;
 
     /// String encoding used internally
     public const INTERNAL_ENCODING = 'UTF-8';
@@ -30,8 +28,8 @@ class StringSerializer extends AbstractSerializer
     protected $encoding_; ///< string
 
     /**
-     * @param $dataElement Defaults to a data element of type
-     * DEFAULT_DATATYPE_URI
+     * @param $datatypeXName Datatype for deserialized literals [default first
+     * item in SUPPORTED_DATATYPE_XNAMES)
      *
      * @param $lengthRange Allowed length of serialized data, in
      * encoding-dependent units (bytes or nibbles).
@@ -39,25 +37,26 @@ class StringSerializer extends AbstractSerializer
      * @param $flags Bitwise-OR-combination of the
      * alcamo::data_element::AbstractSerializer constants
      *
-     * @parm $encoding Defaults to DEFAULT_ENCODING
+     * @parm $encoding [default DEFAULT_ENCODING]
+     *
+     * @param $factoryGroup Factory group used in deserialize() and in
+     * validateLiteralClass(). [default FactoryGroup::getInstance()]
      *
      * Unlike AbstractSerializerWithEncoding, in this class it is not checked
      * if $encoding is supported.
      */
     public function __construct(
-        ?DataElementInterface $dataElement = null,
+        ?string $datatypeXName = null,
         ?NonNegativeRange $lengthRange = null,
         ?int $flags = null,
         ?string $encoding = null,
-        ?LiteralFactory $literalFactory = null,
-        ?LiteralTypeMap $literalTypeMap = null
+        ?FactoryGroup $factoryGroup = null
     ) {
         parent::__construct(
-            $dataElement,
+            $datatypeXName,
             $lengthRange,
             $flags,
-            $literalFactory,
-            $literalTypeMap
+            $factoryGroup
         );
 
         $this->encoding_ = $encoding ?? static::DEFAULT_ENCODING;
@@ -88,8 +87,8 @@ class StringSerializer extends AbstractSerializer
         $this->validateInputLength($input);
 
         /** Remove trailing spaces from input. */
-        return $this->literalFactory_->createLiteralForDataElement(
-            $this->dataElement_,
+        return $this->factoryGroup_->getLiteralFactory()->create(
+            $this->datatype_,
             rtrim(
                 static::INTERNAL_ENCODING == $this->encoding_
                     ? $input

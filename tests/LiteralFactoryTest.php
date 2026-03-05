@@ -71,13 +71,12 @@ class LiteralFactoryTest extends TestCase
 
         $datatype = $schema->getGlobalType($datatypeXName);
 
-        $literal = self::$literalFactory_
-            ->createLiteralForDataElement(new DataElement($datatype), $value);
+        $literal = self::$literalFactory_->create($datatype, $value);
 
         /* The literal objects as a whole are often not the same because their
          * datatype URIs differ: for instance, one refers to
          * http://www.w3.org/2001/XMLSchema while the other one refers to a
-         * lcoal copy. */
+         * local copy. */
 
         $this->assertSame(get_class($expectedLiteral), get_class($literal));
 

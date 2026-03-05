@@ -2,7 +2,7 @@
 
 namespace alcamo\data_element;
 
-use alcamo\exception\{DataValidationFailed, Eof, InvalidType};
+use alcamo\exception\{DataValidationFailed, Eof, InvalidType, SyntaxError};
 use alcamo\range\NonNegativeRange;
 use alcamo\rdfa\{
     HexBinaryLiteral,
@@ -21,7 +21,7 @@ class ConstructedSerializerTest extends TestCase
     public function testSerialize(
         $serializers,
         $separator,
-        $dataElement,
+        $datatypeXName,
         $lengthRange,
         $literalData,
         $expectedOutput,
@@ -30,7 +30,7 @@ class ConstructedSerializerTest extends TestCase
         $serializer = new ConstructedSerializer(
             $serializers,
             $separator,
-            $dataElement,
+            $datatypeXName,
             $lengthRange,
             ConstructedSerializer::TRUNCATE_SILENTLY
         );
@@ -93,11 +93,7 @@ class ConstructedSerializerTest extends TestCase
             [
                 [ $stringS4, $stringS4 ],
                 null,
-                new DataElement(
-                    AbstractSerializer::getSchemaFactory()
-                        ->getMainSchema()
-                        ->getGlobalType(self::XSD_NS . ' string')
-                ),
+                self::XSD_NS . ' string',
                 new NonNegativeRange(10),
                 [
                     new StringLiteral('bar'),
@@ -144,7 +140,8 @@ class ConstructedSerializerTest extends TestCase
                 . 'alcamo\data_element\ConstructedSerializer'
         );
 
-        (new ConstructedSerializer([]))->serialize(new StringLiteral());
+        (new ConstructedSerializer([ new StringSerializer() ]))
+            ->serialize(new StringLiteral());
     }
 
     public function testLiteralCountWrongException(): void
@@ -195,5 +192,17 @@ class ConstructedSerializerTest extends TestCase
             ],
             null
         ))->deserialize('abc');
+    }
+
+    public function testDeserializeException3(): void
+    {
+        $this->expectException(SyntaxError::class);
+        $this->expectExceptionMessage(
+            'Syntax error in "foo|bar" at offset 4 ("bar"); '
+                . 'spurious trailing data'
+        );
+
+        (new ConstructedSerializer([ new StringSerializer() ], '|'))
+            ->deserialize('foo|bar');
     }
 }
