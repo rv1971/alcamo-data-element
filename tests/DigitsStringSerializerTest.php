@@ -94,6 +94,14 @@ class DigitsStringSerializerTest extends TestCase
                 new DigitsStringLiteral('1234'),
                 "\x12\x3F",
                 '123'
+            ],
+            [
+                3,
+                3,
+                'EBCDIC',
+                new DigitsStringLiteral('17'),
+                "\xF1\xF7\x40",
+                '17'
             ]
         ];
     }
@@ -103,7 +111,8 @@ class DigitsStringSerializerTest extends TestCase
         $this->expectException(InvalidEnumerator::class);
 
         $this->expectExceptionMessage(
-            'Invalid value "BCD", expected one of ["ASCII", "COMPRESSED-BCD"]'
+            'Invalid value "BCD", expected one of '
+                . '["ASCII", "COMPRESSED-BCD", "EBCDIC"]'
         );
 
         new DigitsStringSerializer(null, null, null, 'BCD');

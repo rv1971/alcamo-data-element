@@ -14,7 +14,8 @@ class DigitsStringSerializer extends AbstractSerializerWithEncoding
     public const SUPPORTED_DATATYPE_XNAMES =
         [ DigitsStringLiteral::DATATYPE_XNAME ];
 
-    public const ENCODINGS_TO_BITS = [ 'ASCII' => 8, 'COMPRESSED-BCD' => 4 ];
+    public const ENCODINGS_TO_BITS =
+        [ 'ASCII' => 8, 'COMPRESSED-BCD' => 4, 'EBCDIC' => 8 ];
 
     public function serialize(LiteralInterface $literal): string
     {
@@ -32,6 +33,16 @@ class DigitsStringSerializer extends AbstractSerializerWithEncoding
                 }
 
                 return hex2bin($output);
+
+            case 'EBCDIC':
+                return $this->adjustOutputLength(
+                    strtr(
+                        $literal,
+                        '0123456789',
+                        "\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9"
+                    ),
+                    "\x40"
+                );
         }
     }
 
@@ -43,9 +54,22 @@ class DigitsStringSerializer extends AbstractSerializerWithEncoding
 
         $this->validateInputLength($input);
 
+        switch ($this->encoding_) {
+            case 'EBCDIC':
+                $value = (int)strtr(
+                    $input,
+                    "\x40\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9",
+                    ' 0123456789'
+                );
+                break;
+
+            default:
+                $value = $input;
+        }
+
         return $this->factoryGroup_->getLiteralFactory()->create(
             $this->datatype_,
-            rtrim($input, ' f')
+            rtrim($value, ' f')
         );
     }
 }
