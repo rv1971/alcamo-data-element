@@ -10,7 +10,7 @@ use alcamo\rdfa\{LiteralInterface, PositiveGYearLiteral};
  *
  * @date Last reviewed 2026-02-24
  */
-class NonNegativeIntegerSerializer extends AbstractSerializerWithEncoding
+class NonNegativeIntegerSerializer extends IntegerSerializer
 {
     public const SUPPORTED_DATATYPE_XNAMES = [
         self::XSD_NS . ' nonNegativeInteger',
@@ -25,87 +25,44 @@ class NonNegativeIntegerSerializer extends AbstractSerializerWithEncoding
 
     public function serialize(LiteralInterface $literal): string
     {
-        $this->validateLiteralClass($literal);
+        if ($this->encoding_ == 'BCD') {
+            $this->validateLiteralClass($literal);
 
-        $value = $literal->toInt();
+            $value = $literal->toInt();
 
-        switch ($this->encoding_) {
-            case 'ASCII':
-                return $this->adjustOutputLength($value, '0', STR_PAD_LEFT);
+            $minLength = isset($this->lengthRange_)
+                ? $this->lengthRange_->getMin()
+                : null;
 
-            case 'BCD':
-                $minLength = isset($this->lengthRange_)
-                    ? $this->lengthRange_->getMin()
-                    : null;
+            /* adjustOutputLength() only checks the maximum length since
+             * the minimum length is already guaranteed. */
+            $output = $this->adjustOutputLength(
+                Bcd::newFromInt($value, $minLength),
+                '0',
+                STR_PAD_LEFT
+            );
 
-                /* adjustOutputLength() only checks the maximum length since
-                 * the minimum length is already guaranteed. */
-                $output = $this->adjustOutputLength(
-                    Bcd::newFromInt($value, $minLength),
-                    '0',
-                    STR_PAD_LEFT
-                );
+            if (strlen($output) & 1) {
+                $output = "0$output";
+            }
 
-                if (strlen($output) & 1) {
-                    $output = "0$output";
-                }
-
-                return hex2bin($output);
-
-            case 'BIG-ENDIAN':
-                $minLength = isset($this->lengthRange_)
-                    ? $this->lengthRange_->getMin()
-                    : null;
-
-                /* adjustOutputLength() only checks the maximum length since
-                 * the minimum length is already guaranteed. */
-                return $this->adjustOutputLength(
-                    BinaryString::newFromInt($value, $minLength)->getData(),
-                    "\x00",
-                    STR_PAD_LEFT
-                );
-
-            case 'EBCDIC':
-                return $this->adjustOutputLength(
-                    strtr(
-                        $value,
-                        '0123456789',
-                        "\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9"
-                    ),
-                    "\xF0",
-                    STR_PAD_LEFT
-                );
+            return hex2bin($output);
         }
+
+        return parent::serialize($literal);
     }
 
     public function deserialize(string $input): LiteralInterface
     {
-        if (static::ENCODINGS_TO_BITS[$this->encoding_] == 4) {
+        if ($this->encoding_ == 'BCD') {
             $input = bin2hex($input);
+
+            $this->validateInputLength($input);
+
+            return $this->factoryGroup_->getLiteralFactory()
+                ->create($this->datatype_, (int)$input);
         }
 
-        $this->validateInputLength($input);
-
-        switch ($this->encoding_) {
-            case 'ASCII':
-            case 'BCD':
-                $value = (int)$input;
-                break;
-
-            case 'BIG-ENDIAN':
-                $value = (new BinaryString($input))->toInt();
-                break;
-
-            case 'EBCDIC':
-                $value = (int)strtr(
-                    $input,
-                    "\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9",
-                    '0123456789'
-                );
-                break;
-        }
-
-        return $this->factoryGroup_->getLiteralFactory()
-            ->create($this->datatype_, $value);
+        return parent::deserialize($input);
     }
 }
