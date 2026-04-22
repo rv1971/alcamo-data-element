@@ -9,15 +9,14 @@
 namespace alcamo\data_element;
 
 use alcamo\dom\schema\component\SimpleTypeInterface;
-use alcamo\rdfa\{HavingRdfaDataInterface, LiteralInterface};
+use alcamo\rdfa\HavingRdfaDataInterface;
 
 /**
  * @brief Data element with XSD type and metadata
  *
- * @date Last reviewed 2026-02-24
+ * @date Last reviewed 2026-04-21
  */
 interface DataElementInterface extends HavingRdfaDataInterface
 {
-    /// XSD data type
     public function getDatatype(): SimpleTypeInterface;
 }

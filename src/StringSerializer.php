@@ -3,12 +3,12 @@
 namespace alcamo\data_element;
 
 use alcamo\range\NonNegativeRange;
-use alcamo\rdfa\LiteralInterface;
+use alcamo\rdf_literal\LiteralInterface;
 
 /**
  * @brief (De)Serializer for string data
  *
- * @date Last reviewed 2026-02-24
+ * @date Last reviewed 2026-04-21
  */
 class StringSerializer extends AbstractSerializer
 {
@@ -27,6 +27,17 @@ class StringSerializer extends AbstractSerializer
 
     protected $encoding_; ///< string
 
+    public static function newFromProps(object $props): SerializerInterface
+    {
+        return new static(
+            $props->datatypeXName ?? null,
+            $props->lengthRange ?? null,
+            $props->flags ?? null,
+            $props->encoding ?? null,
+            $props->literalWorkbench ?? null
+        );
+    }
+
     /**
      * @param $datatypeXName Datatype for deserialized literals [default first
      * item in SUPPORTED_DATATYPE_XNAMES)
@@ -34,29 +45,33 @@ class StringSerializer extends AbstractSerializer
      * @param $lengthRange Allowed length of serialized data, in
      * encoding-dependent units (bytes or nibbles).
      *
-     * @param $flags Bitwise-OR-combination of the
-     * alcamo::data_element::AbstractSerializer constants
+     * @param $flags Bitwise-OR-combination of the constants in
+     * alcamo::data_element::SerializerInterface.
      *
-     * @parm $encoding [default DEFAULT_ENCODING]
+     * @parm $encoding [default
+     * alcamo::data_element::StringSerializer::DEFAULT_ENCODING]
      *
-     * @param $factoryGroup Factory group used in deserialize() and in
-     * validateLiteralClass(). [default FactoryGroup::getInstance()]
+     * @param $literalWorkbench Workbench used in deserialize() and in
+     * validateLiteralClass(). [default
+     * alcamo::data_element::LiteralWorkbench::getMainInstance()]
      *
-     * Unlike AbstractSerializerWithEncoding, in this class it is not checked
-     * if $encoding is supported.
+     * Unlike alcamo::data_element::AbstractSerializerWithEncoding, in
+     * this class it is not checked if $encoding is supported.
      */
     public function __construct(
         ?string $datatypeXName = null,
         ?NonNegativeRange $lengthRange = null,
         ?int $flags = null,
         ?string $encoding = null,
-        ?FactoryGroup $factoryGroup = null
+        ?FactoryGroup $literalWorkbench = null
     ) {
         parent::__construct(
             $datatypeXName,
             $lengthRange,
+            ' ',
+            STR_PAD_RIGHT,
             $flags,
-            $factoryGroup
+            $literalWorkbench
         );
 
         $this->encoding_ = $encoding ?? static::DEFAULT_ENCODING;
@@ -71,14 +86,26 @@ class StringSerializer extends AbstractSerializer
     {
         $this->validateLiteralClass($literal);
 
+        if (static::INTERNAL_ENCODING == $this->encoding_) {
+            return $this->adjustOutputLength($literal->getValue());
+        }
+
+        $value = $literal->getValue();
+
+        /* Pad to minimum length in internal encoding before character set
+         * conversion takes place, because output encoding might have a
+         * different representation of the padding character. */
+        if (isset($this->lengthRange_)) {
+            $value = str_pad(
+                $value,
+                $this->lengthRange_->getMin(),
+                $this->padString_,
+                $this->padType_
+            );
+        }
+
         return $this->adjustOutputLength(
-            static::INTERNAL_ENCODING == $this->encoding_
-                ? $literal->getValue()
-                : iconv(
-                    static::INTERNAL_ENCODING,
-                    $this->encoding_,
-                    $literal->getValue()
-                )
+            iconv(static::INTERNAL_ENCODING, $this->encoding_, $value)
         );
     }
 
@@ -87,17 +114,13 @@ class StringSerializer extends AbstractSerializer
         $this->validateInputLength($input);
 
         /** Remove trailing spaces from input. */
-        return $this->factoryGroup_->getLiteralFactory()->create(
-            $this->datatype_,
+        return $this->literalWorkbench_->createLiteral(
             rtrim(
                 static::INTERNAL_ENCODING == $this->encoding_
                     ? $input
-                    : iconv(
-                        $this->encoding_,
-                        static::INTERNAL_ENCODING,
-                        $input
-                    )
+                    : iconv($this->encoding_, static::INTERNAL_ENCODING, $input)
             ),
+            $this->datatype_
         );
     }
 }

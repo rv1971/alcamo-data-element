@@ -4,7 +4,7 @@ namespace alcamo\data_element;
 
 use alcamo\exception\{InvalidType, OutOfRange};
 use alcamo\range\NonNegativeRange;
-use alcamo\rdfa\{
+use alcamo\rdf_literal\{
     DateLiteral,
     DateTimeLiteral,
     GDayLiteral,
@@ -32,11 +32,12 @@ class DateTimeSerializerTest extends TestCase
         $expectedOutput,
         $expectedDeserialization
     ): void {
-        $serializer = new DateTimeSerializer(
-            $datatypeXName,
-            $format,
-            null,
-            $encoding
+        $serializer = DateTimeSerializer::newFromProps(
+            (object)[
+                'datatypeXName' => $datatypeXName,
+                'posixFormat' => $format,
+                'encoding' => $encoding
+            ]
         );
 
         $datatype = $serializer->getDatatype();
@@ -110,7 +111,7 @@ class DateTimeSerializerTest extends TestCase
                 new GYearMonthLiteral('2006-08')
                 ],
             [
-                PositiveGYearLiteral::DATATYPE_XNAME,
+                PositiveGYearLiteral::DEFAULT_DATATYPE_XNAME,
                 '%y',
                 'BCD',
                 new PositiveGYearLiteral('2008'),

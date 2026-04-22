@@ -4,7 +4,7 @@ namespace alcamo\data_element;
 
 use alcamo\exception\{InvalidEnumerator, LengthOutOfRange};
 use alcamo\range\NonNegativeRange;
-use alcamo\rdfa\DigitsStringLiteral;
+use alcamo\rdf_literal\DigitsStringLiteral;
 use PHPUnit\Framework\TestCase;
 
 class DigitsStringSerializerTest extends TestCase
@@ -22,11 +22,12 @@ class DigitsStringSerializerTest extends TestCase
         $expectedOutput,
         $expectedDeserialization
     ): void {
-        $serializer = new DigitsStringSerializer(
-            null,
-            new NonNegativeRange($minLength, $maxLength),
-            SerializerInterface::TRUNCATE_SILENTLY,
-            $encoding
+        $serializer = DigitsStringSerializer::newFromProps(
+            (object)[
+                'lengthRange' => new NonNegativeRange($minLength, $maxLength),
+                'flags' => SerializerInterface::TRUNCATE_SILENTLY,
+                'encoding' => $encoding
+            ]
         );
 
         $datatype = $serializer->getDatatype();

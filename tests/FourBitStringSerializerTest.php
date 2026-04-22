@@ -3,7 +3,7 @@
 namespace alcamo\data_element;
 
 use alcamo\range\NonNegativeRange;
-use alcamo\rdfa\FourBitStringLiteral;
+use alcamo\rdf_literal\FourBitStringLiteral;
 use alcamo\uri\Uri;
 use PHPUnit\Framework\TestCase;
 
@@ -22,11 +22,12 @@ class FourBitStringSerializerTest extends TestCase
         $expectedOutput,
         $expectedDeserialization
     ): void {
-        $serializer = new FourBitStringSerializer(
-            null,
-            new NonNegativeRange($minLength, $maxLength),
-            SerializerInterface::TRUNCATE_SILENTLY,
-            $encoding
+        $serializer = FourBitStringSerializer::newFromProps(
+            (object)[
+                'lengthRange' => new NonNegativeRange($minLength, $maxLength),
+                'flags' => SerializerInterface::TRUNCATE_SILENTLY,
+                'encoding' => $encoding
+            ]
         );
 
         $datatype = $serializer->getDatatype();
@@ -87,6 +88,8 @@ class FourBitStringSerializerTest extends TestCase
                 "\x7D\xD2\xFF",
                 '7==2??'
             ],
+            /* The following changes the last character to a filler because
+             * first is truncates to 3 digits and then add a filler nibble. */
             [
                 2,
                 3,

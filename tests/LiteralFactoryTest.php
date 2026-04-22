@@ -3,11 +3,11 @@
 namespace alcamo\data_element;
 
 use alcamo\dom\schema\SchemaFactory;
-use alcamo\rdfa\{
+use alcamo\rdf_literal\{
     Base64BinaryLiteral,
     BooleanLiteral,
     HexBinaryLiteral,
-    LiteralFactory as RdfaLiteralFactory,
+    LiteralFactory as RdfLiteralFactory,
     NonNegativeIntegerLiteral,
     StringLiteral
 };
@@ -38,8 +38,8 @@ class LiteralFactoryTest extends TestCase
     public function testBasics(): void
     {
         $this->assertInstanceOf(
-            RdfaLiteralFactory::class,
-            self::$literalFactory_->getRdfaLiteralFactory()
+            RdfLiteralFactory::class,
+            self::$literalFactory_->getRdfLiteralFactory()
         );
 
         $schema = self::$literalFactory_->getSchemaFactory()->getMainSchema();
@@ -71,7 +71,7 @@ class LiteralFactoryTest extends TestCase
 
         $datatype = $schema->getGlobalType($datatypeXName);
 
-        $literal = self::$literalFactory_->create($datatype, $value);
+        $literal = self::$literalFactory_->create($value, $datatype);
 
         /* The literal objects as a whole are often not the same because their
          * datatype URIs differ: for instance, one refers to

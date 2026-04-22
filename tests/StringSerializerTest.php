@@ -4,7 +4,7 @@ namespace alcamo\data_element;
 
 use alcamo\exception\{InvalidType, LengthOutOfRange};
 use alcamo\range\NonNegativeRange;
-use alcamo\rdfa\{QNameLiteral, StringLiteral};
+use alcamo\rdf_literal\{QNameLiteral, StringLiteral};
 use PHPUnit\Framework\TestCase;
 
 class StringSerializerTest extends TestCase
@@ -22,11 +22,13 @@ class StringSerializerTest extends TestCase
         $literal,
         $expectedOutput
     ): void {
-        $serializer = new StringSerializer(
-            $datatypeXName,
-            new NonNegativeRange($minLength, $maxLength),
-            SerializerInterface::TRUNCATE_SILENTLY,
-            $encoding
+        $serializer = StringSerializer::newFromProps(
+            (object)[
+                'datatypeXName' => $datatypeXName,
+                'lengthRange' => new NonNegativeRange($minLength, $maxLength),
+                'flags' => SerializerInterface::TRUNCATE_SILENTLY,
+                'encoding' => $encoding
+            ]
         );
 
         $datatype = $serializer->getDatatype();

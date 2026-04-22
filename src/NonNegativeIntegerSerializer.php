@@ -3,12 +3,12 @@
 namespace alcamo\data_element;
 
 use alcamo\binary_data\{Bcd, BinaryString};
-use alcamo\rdfa\{LiteralInterface, PositiveGYearLiteral};
+use alcamo\rdf_literal\{LiteralInterface, PositiveGYearLiteral};
 
 /**
  * @brief (De)Serializer for nonnegative integers
  *
- * @date Last reviewed 2026-02-24
+ * @date Last reviewed 2026-04-21
  */
 class NonNegativeIntegerSerializer extends IntegerSerializer
 {
@@ -17,11 +17,22 @@ class NonNegativeIntegerSerializer extends IntegerSerializer
         self::XSD_NS . ' boolean',
         self::XSD_NS . ' gDay',
         self::XSD_NS . ' gMonth',
-        PositiveGYearLiteral::DATATYPE_XNAME
+        PositiveGYearLiteral::DEFAULT_DATATYPE_XNAME
     ];
 
-    public const ENCODINGS_TO_BITS =
-        [ 'ASCII' => 8, 'BCD' => 4, 'BIG-ENDIAN' => 8, 'EBCDIC' => 8 ];
+    public const ENCODING_TO_BITS = [
+        'ASCII'      => 8,
+        'BCD'        => 4,
+        'BIG-ENDIAN' => 8,
+        'EBCDIC'     => 8
+    ];
+
+    public const ENCODING_TO_PAD_STRING = [
+        'ASCII'      => '0',
+        'BCD'        => '0',
+        'BIG-ENDIAN' => "\x00",
+        'EBCDIC'     => "\x40"
+    ];
 
     public function serialize(LiteralInterface $literal): string
     {
@@ -34,19 +45,9 @@ class NonNegativeIntegerSerializer extends IntegerSerializer
                 ? $this->lengthRange_->getMin()
                 : null;
 
-            /* adjustOutputLength() only checks the maximum length since
-             * the minimum length is already guaranteed. */
-            $output = $this->adjustOutputLength(
-                Bcd::newFromInt($value, $minLength),
-                '0',
-                STR_PAD_LEFT
+            return hex2bin(
+                $this->adjustOutputLength(Bcd::newFromInt($value, $minLength))
             );
-
-            if (strlen($output) & 1) {
-                $output = "0$output";
-            }
-
-            return hex2bin($output);
         }
 
         return parent::serialize($literal);
@@ -54,13 +55,13 @@ class NonNegativeIntegerSerializer extends IntegerSerializer
 
     public function deserialize(string $input): LiteralInterface
     {
-        if ($this->encoding_ == 'BCD') {
+        if (static::ENCODING_TO_BITS[$this->encoding_] == 4) {
             $input = bin2hex($input);
 
             $this->validateInputLength($input);
 
-            return $this->factoryGroup_->getLiteralFactory()
-                ->create($this->datatype_, (int)$input);
+            return $this->literalWorkbench_
+                ->createLiteral((int)$input, $this->datatype_);
         }
 
         return parent::deserialize($input);

@@ -6,11 +6,11 @@ use alcamo\dom\schema\SchemaFactory;
 use alcamo\exception\DataValidationFailed;
 use PHPUnit\Framework\TestCase;
 
-class FactoryGroupTest extends TestCase
+class LiteralWorkbenchTest extends TestCase
 {
     public function testCreation(): void
     {
-        $factoryGroup = FactoryGroup::getMainInstance();
+        $factoryGroup = LiteralWorkbench::getMainInstance();
 
         $this->assertInstanceOf(
             SchemaFactory::class,
@@ -37,7 +37,7 @@ class FactoryGroupTest extends TestCase
             $factoryGroup->getLiteralTypeMap()->getSchemaFactory()
         );
 
-        $factoryGroup2 = FactoryGroup::newFromFactories(
+        $factoryGroup2 = LiteralWorkbench::newFromFactories(
             $factoryGroup->getLiteralFactory(),
             $factoryGroup->getLiteralTypeMap()
         );
@@ -62,7 +62,7 @@ class FactoryGroupTest extends TestCase
                 . 'different schema factories'
         );
 
-        FactoryGroup::newFromFactories(
+        LiteralWorkbench::newFromFactories(
             new LiteralFactory(new SchemaFactory()),
             new LiteralTypeMap(new SchemaFactory()),
         );

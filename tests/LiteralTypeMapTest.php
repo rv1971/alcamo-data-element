@@ -4,7 +4,7 @@ namespace alcamo\data_element;
 
 use alcamo\dom\schema\SchemaFactory;
 use alcamo\dom\schema\component\SimpleTypeInterface;
-use alcamo\rdfa\{
+use alcamo\rdf_literal\{
     AnyUriLiteral,
     Base64BinaryLiteral,
     BooleanLiteral,
@@ -50,24 +50,16 @@ class LiteralTypeMapTest extends TestCase
     /**
      * @dataProvider arrayAccessProvider
      */
-    public function testArrayAccess($literalClass, $expectedLocalName): void
-    {
+    public function testGetDefaultDatatype(
+        $literalClass,
+        $expectedLocalName
+    ): void {
         $this->assertSame(
             $expectedLocalName,
-            self::$literalTypeMap_[$literalClass]->getXName()
-                ->getLocalName()
-        );
-
-        $this->assertTrue(
             self::$literalTypeMap_
-                ->createTypeFromUri($literalClass::DATATYPE_URI)
-                ->isEqualToOrDerivedFrom(
-                    self::$literalTypeMap_[$literalClass]->getXName()
-                )
-        );
-
-        $this->assertTrue(
-            isset(self::$literalTypeMap_[$literalClass])
+                ->getDefaultDatatype($literalClass)
+                ->getXName()
+                ->getLocalName()
         );
     }
 
@@ -118,17 +110,22 @@ class LiteralTypeMapTest extends TestCase
         return [
             [ new BooleanLiteral() ],
             [ new IntegerLiteral(42, self::XSD_NS . '#byte') ],
-            [ new GYearLiteral(2027, PositiveGYearLiteral::DATATYPE_URI) ]
+            [
+                new GYearLiteral(
+                    2027,
+                    PositiveGYearLiteral::DEFAULT_DATATYPE_URI
+                )
+            ]
         ];
     }
 
-    public function testOffsetGetException(): void
+    public function testGetDefaultDatatypeException(): void
     {
         $this->expectException(\Error::class);
 
         $this->expectExceptionMessage("Class 'foo' not found");
 
-        isset(self::$literalTypeMap_['foo']);
+        self::$literalTypeMap_->getDefaultDatatype('foo');
     }
 
     public function testValidateLiteralException(): void
@@ -138,11 +135,15 @@ class LiteralTypeMapTest extends TestCase
         $this->expectExceptionMessage(
             'Validation failed; literal datatype '
                 . 'http://www.w3.org/2001/XMLSchema integer not derived from '
-                . 'type http://www.w3.org/2001/XMLSchema nonNegativeInteger'
+                . 'default datatype '
+                . 'http://www.w3.org/2001/XMLSchema nonNegativeInteger'
         );
 
         self::$literalTypeMap_->validateLiteral(
-            new NonNegativeIntegerLiteral(42, IntegerLiteral::DATATYPE_URI)
+            new NonNegativeIntegerLiteral(
+                42,
+                IntegerLiteral::DEFAULT_DATATYPE_URI
+            )
         );
     }
 }

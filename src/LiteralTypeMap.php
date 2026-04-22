@@ -6,16 +6,17 @@ use alcamo\collection\ReadonlyCollection;
 use alcamo\dom\schema\component\SimpleTypeInterface;
 use alcamo\dom\schema\SchemaFactory;
 use alcamo\exception\DataValidationFailed;
-use alcamo\rdfa\{LangStringLiteral, LiteralInterface, StringLiteral};
+use alcamo\rdf_literal\{LangStringLiteral, LiteralInterface, StringLiteral};
 
 /**
  * @brief Map of literal classes to their datatypes
  *
- * @date Last reviewed 2026-02-27
+ * @date Last reviewed 2026-04-20
  */
-class LiteralTypeMap extends ReadonlyCollection
+class LiteralTypeMap
 {
     private $schemaFactory_; ///< SchemaFactory
+    private $map_ = [];      ///< map of string to SimpleTypeInterface
 
     public function __construct(
         ?SchemaFactory $schemaFactory = null
@@ -28,34 +29,20 @@ class LiteralTypeMap extends ReadonlyCollection
         return $this->schemaFactory_;
     }
 
-    /// Either returns true or throws an exception
-    public function offsetExists($literalClass): bool
+    public function getDefaultDatatype($literalClass): SimpleTypeInterface
     {
-        return (bool)$this->offsetGet($literalClass);
-    }
-
-    public function offsetGet($literalClass): SimpleTypeInterface
-    {
-        if (!isset($this->data_[$literalClass])) {
-            $this->data_[$literalClass] =
-                $this->createTypeFromUri($literalClass::DATATYPE_URI);
+        if (!isset($this->map_[$literalClass])) {
+            $this->map_[$literalClass] = $this->createTypeFromUri(
+                $literalClass::getClassDefaultDatatypeUri()
+            );
         }
 
-        return $this->data_[$literalClass];
-    }
-
-    public function createTypeFromUri($datatypeUri): SimpleTypeInterface
-    {
-        return $this->schemaFactory_->createTypeFromUri(
-            $datatypeUri == LangStringLiteral::DATATYPE_URI
-                ? StringLiteral::DATATYPE_URI
-                : $datatypeUri
-        );
+        return $this->map_[$literalClass];
     }
 
     /**
-     * @brief Check whether the literal's datatype is derived from the correct
-     * type
+     * @brief Check whether the literal's datatype is derived from the
+     * literal's default datatype.
      *
      * @return The literal's datatype.
      */
@@ -64,21 +51,28 @@ class LiteralTypeMap extends ReadonlyCollection
     ): SimpleTypeInterface {
         $datatype = $this->createTypeFromUri($literal->getDatatypeUri());
 
-        if (
-            !$datatype->isEqualToOrDerivedFrom(
-                $this[get_class($literal)]->getXName()
-            )
-        ) {
+        $defaultDatatypeXName =
+            $this->getDefaultDatatype(get_class($literal))->getXName();
+
+        if (!$datatype->isEqualToOrDerivedFrom($defaultDatatypeXName)) {
             throw (new DataValidationFailed())->setMessageContext(
                 [
-                    'extraMessage' => 'literal datatype '
-                        . $datatype->getXName()
-                        . ' not derived from type '
-                        . $this[get_class($literal)]->getXName()
+                    'extraMessage' => "literal datatype {$datatype->getXName()}"
+                        . " not derived from default datatype "
+                        . $defaultDatatypeXName
                 ]
             );
         }
 
         return $datatype;
+    }
+
+    protected function createTypeFromUri($datatypeUri): SimpleTypeInterface
+    {
+        return $this->schemaFactory_->createTypeFromUri(
+            $datatypeUri == LangStringLiteral::getClassDefaultDatatypeUri()
+                ? StringLiteral::getClassDefaultDatatypeUri()
+                : $datatypeUri
+        );
     }
 }

@@ -5,7 +5,7 @@ namespace alcamo\data_element;
 use alcamo\dom\schema\component\{AbstractSimpleType, SimpleTypeInterface};
 use alcamo\exception\{InvalidType, LengthOutOfRange};
 use alcamo\range\NonNegativeRange;
-use alcamo\rdfa\LiteralInterface;
+use alcamo\rdf_literal\LiteralInterface;
 
 /**
  * @brief (De)Serializer for literal objects
@@ -21,7 +21,7 @@ abstract class AbstractSerializer implements SerializerInterface
      */
     public const SUPPORTED_DATATYPE_XNAMES = [];
 
-    protected $datatype_;     ///< SimpleTypeInterface
+    protected $datatype_; ///< SimpleTypeInterface
 
     /**
      * @brief SimpleTypeInterface
@@ -31,41 +31,53 @@ abstract class AbstractSerializer implements SerializerInterface
      */
     protected $supportedDatatype_;
 
-    protected $lengthRange_;  ///< ?NonNegativeRange
-    protected $flags_;        ///< int
-    protected $factoryGroup_; ///< FactoryGroup
+    protected $lengthRange_;      ///< ?NonNegativeRange
+    protected $padString_;        ///< string
+    protected $padType_;          ///< one of STR_PAD_RIGHT or STR_PAD_LEFT
+    protected $flags_;            ///< int
+    protected $literalWorkbench_; ///< LiteralWorkbench
 
     /**
-     * @param $datatypeXName Datatype for deserialized literals [default first
-     * item in SUPPORTED_DATATYPE_XNAMES)
+     * @param $datatypeXName Datatype to use for deserialized literals
+     * [default first item in SUPPORTED_DATATYPE_XNAMES]
      *
      * @param $lengthRange Allowed length of serialized data, in
      * encoding-dependent units (bytes or nibbles).
      *
-     * @param $flags Bitwise-OR-combination of the above constants.
+     * @param $padString Padding string. [default space, as in str_pad()]
      *
-     * @param $factoryGroup Factory group used in deserialize() and in
-     * validateLiteralClass(). [default FactoryGroup::getInstance()]
+     * @param $padType STR_PAD_RIGHT or STR_PAD_LEFT. Truncation, if
+     * necessary, takes place on the same side as padding. [default
+     * STR_PAD_RIGHT, as in str_pad()]
+     *
+     * @param $flags Bitwise-OR-combination of the constants in
+     * alcamo::data_element::SerializerInterface.
+     *
+     * @param $literalWorkbench Workbench used in deserialize() and in
+     * validateLiteralClass(). [default
+     * alcamo::data_element::LiteralWorkbench::getMainInstance()]
      */
     public function __construct(
         ?string $datatypeXName = null,
         ?NonNegativeRange $lengthRange = null,
+        ?string $padString = null,
+        ?int $padType = null,
         ?int $flags = null,
-        ?FactoryGroup $factoryGroup = null
+        ?LiteralWorkbench $literalWorkbench = null
     ) {
-        $this->factoryGroup_ = $factoryGroup ?? FactoryGroup::getMainInstance();
+        $this->literalWorkbench_ =
+            $literalWorkbench ?? LiteralWorkbench::getMainInstance();
 
-        $this->datatype_ = $this->factoryGroup_->getSchema()->getGlobalType(
+        $this->datatype_ = $this->literalWorkbench_->getSchema()->getGlobalType(
             $datatypeXName ?? static::SUPPORTED_DATATYPE_XNAMES[0]
         );
 
         if (!isset($datatypeXName)) {
             $this->supportedDatatype_ = $this->datatype_;
         } else {
-            for (
-                $type = $this->datatype_;
-                $type instanceof AbstractSimpleType;
-                $type = $type->getBaseType()
+            foreach (
+                $this->datatype_
+                    ->getSelfAndBaseTypes(AbstractSimpleType::class) as $type
             ) {
                 if (
                     in_array(
@@ -91,6 +103,8 @@ abstract class AbstractSerializer implements SerializerInterface
         }
 
         $this->lengthRange_ = $lengthRange;
+        $this->padString_ = $padString ?? ' ';
+        $this->padType_ = $padType ?? STR_PAD_RIGHT;
         $this->flags_ = (int)$flags;
     }
 
@@ -104,14 +118,24 @@ abstract class AbstractSerializer implements SerializerInterface
         return $this->lengthRange_;
     }
 
+    public function getPadString(): string
+    {
+        return $this->padString_;
+    }
+
+    public function getPadType(): int
+    {
+        return $this->padType_;
+    }
+
     public function getFlags(): int
     {
         return $this->flags_;
     }
 
-    public function getFactoryGroup(): FactoryGroup
+    public function getLiteralWorkbench(): LiteralWorkbench
     {
-        return $this->factoryGroup_;
+        return $this->literalWorkbench_;
     }
 
     public function getBitsPerCharacter(): int
@@ -126,16 +150,14 @@ abstract class AbstractSerializer implements SerializerInterface
     /// Check whether $literal is supported for this serializer class
     protected function validateLiteralClass(LiteralInterface $literal): void
     {
-        $literalDatatype = $this->factoryGroup_->getLiteralTypeMap()
-            ->validateLiteral($literal);
+        $literalDatatype = $this->literalWorkbench_->validateLiteral($literal);
 
         if (
-            !$literalDatatype->isEqualToOrDerivedFrom(
-                $this->datatype_->getXName()
-            )
+            !$literalDatatype
+                ->isEqualToOrDerivedFrom($this->datatype_->getXName())
         ) {
             /** @throw alcamo::exception::InvalidType if $literal type is not
-             *  supported. */
+             *  derived from the serializer datatype. */
             throw (new InvalidType())->setMessageContext(
                 [
                     'type' => $literalDatatype->getXName(),
@@ -150,30 +172,18 @@ abstract class AbstractSerializer implements SerializerInterface
      * @brief Pad/truncate/throw if necessary
      *
      * @param $value Data possibly subject to length constraints
-     *
-     * @param $padString Padding string. [default space, as in str_pad()]
-     *
-     * @param $padType STR_PAD_RIGHT or STR_PAD_LEFT. Truncation takes place
-     * on the same side as padding. [default STR_PAD_RIGHT, as in str_pad()]
      */
-    protected function adjustOutputLength(
-        string $value,
-        ?string $padString = null,
-        ?int $padType = null
-    ): string {
+    protected function adjustOutputLength(string $value): string
+    {
         if (isset($this->lengthRange_)) {
-            if (!isset($padType)) {
-                $padType = STR_PAD_RIGHT;
-            }
-
             [ $minLength, $maxLength ] = $this->lengthRange_->getMinMax();
 
             if (isset($maxLength) && strlen($value) > $maxLength) {
                 if ($this->flags_ & self::TRUNCATE_SILENTLY) {
                     /** If $value is too long and TRUNCATE_SILENTLY is set in
                      * the flags, truncate to the left or to the right,
-                     * depending on $padType. */
-                    $value = $padType == STR_PAD_RIGHT
+                     * depending on $this->padType_. */
+                    $value = $this->padType_ == STR_PAD_RIGHT
                         ? substr($value, 0, $maxLength)
                         : substr($value, -$maxLength);
                 } else {
@@ -189,8 +199,22 @@ abstract class AbstractSerializer implements SerializerInterface
                 }
             } elseif (isset($minLength)) {
                 /** Pad to the minimum length if necessary. */
-                return str_pad($value, $minLength, $padString ?? ' ', $padType);
+                $value = str_pad(
+                    $value,
+                    $minLength,
+                    $this->padString_,
+                    $this->padType_
+                );
             }
+        }
+
+        if (strlen($value) & 1 && $this->getBitsPerCharacter() == 4) {
+            $value = str_pad(
+                $value,
+                strlen($value) + 1,
+                $this->padString_,
+                $this->padType_
+            );
         }
 
         return $value;

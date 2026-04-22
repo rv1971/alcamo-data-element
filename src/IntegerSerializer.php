@@ -3,12 +3,14 @@
 namespace alcamo\data_element;
 
 use alcamo\binary_data\BinaryString;
-use alcamo\rdfa\LiteralInterface;
+use alcamo\range\NonNegativeRange;
+use alcamo\rdf_literal\LiteralInterface;
+use alcamo\exception\InvalidEnumerator;
 
 /**
  * @brief (De)Serializer for integers
  *
- * @date Last reviewed 2026-02-24
+ * @date Last reviewed 2026-04-21
  */
 class IntegerSerializer extends AbstractSerializerWithEncoding
 {
@@ -20,8 +22,77 @@ class IntegerSerializer extends AbstractSerializerWithEncoding
         self::XSD_NS . ' gYear'
     ];
 
-    public const ENCODINGS_TO_BITS =
-        [ 'ASCII' => 8, 'BIG-ENDIAN' => 8, 'EBCDIC' => 8 ];
+    public const ENCODING_TO_BITS = [
+        'ASCII'      => 8,
+        'BIG-ENDIAN' => 8,
+        'EBCDIC'     => 8
+    ];
+
+    public const ENCODING_TO_PAD_STRING = [
+        'ASCII'      => '0',
+        'BIG-ENDIAN' => "\x00",
+        'EBCDIC'     => "\x40"
+    ];
+
+    public static function newFromProps(object $props): SerializerInterface
+    {
+        return new static(
+            $props->datatypeXName ?? null,
+            $props->lengthRange ?? null,
+            $props->flags ?? null,
+            $props->encoding ?? null,
+            $props->literalWorkbench ?? null
+        );
+    }
+
+    /**
+     * @param $datatypeXName Datatype for deserialized literals [default first
+     * item in SUPPORTED_DATATYPE_XNAMES)
+     *
+     * @param $lengthRange Allowed length of serialized data, in
+     * encoding-dependent units (bytes or nibbles).
+     *
+     * @param $flags Bitwise-OR-combination of the constants in
+     * alcamo::data_element::SerializerInterface.
+     *
+     * @parm $encoding [default
+     * alcamo::data_element::AbstractSerializerWithEncoding::DEFAULT_ENCODING]
+     *
+     * @param $literalWorkbench Workbench used in deserialize() and in
+     * validateLiteralClass(). [default
+     * alcamo::data_element::LiteralWorkbench::getMainInstance()]
+     */
+    public function __construct(
+        ?string $datatypeXName = null,
+        ?NonNegativeRange $lengthRange = null,
+        ?int $flags = null,
+        ?string $encoding = null,
+        ?FactoryGroup $literalWorkbench = null
+    ) {
+        $padString = static::ENCODING_TO_PAD_STRING[
+            $encoding ?? static::DEFAULT_ENCODING
+        ] ?? null;
+
+        if (!isset($padString)) {
+            throw (new InvalidEnumerator())->setMessageContext(
+                [
+                    'value' => $encoding ?? static::DEFAULT_ENCODING,
+                    'expectedOneOf' =>
+                        array_keys(static::ENCODING_TO_PAD_STRING)
+                ]
+            );
+        }
+
+        parent::__construct(
+            $datatypeXName,
+            $lengthRange,
+            $padString,
+            STR_PAD_LEFT,
+            $flags,
+            $encoding,
+            $literalWorkbench
+        );
+    }
 
     public function serialize(LiteralInterface $literal): string
     {
@@ -33,21 +104,18 @@ class IntegerSerializer extends AbstractSerializerWithEncoding
             ? $this->lengthRange_->getMin()
             : 0;
 
-        /* adjustOutputLength() only checks the maximum length since
-         * the minimum length is already guaranteed. */
+        /* sprintf() is needed to put the padding 0s after a sign, if the
+         * value is negative. adjustOutputLength() then only checks the
+         * maximum length since the minimum length is already guaranteed. */
         switch ($this->encoding_) {
             case 'ASCII':
                 return $this->adjustOutputLength(
-                    sprintf("%0{$minLength}d", $value),
-                    ' ',
-                    STR_PAD_LEFT
+                    sprintf("%0{$minLength}d", $value)
                 );
 
             case 'BIG-ENDIAN':
                 return $this->adjustOutputLength(
-                    BinaryString::newFromInt($value, $minLength)->getData(),
-                    "\x00",
-                    STR_PAD_LEFT
+                    BinaryString::newFromInt($value, $minLength)->getData()
                 );
 
             case 'EBCDIC':
@@ -56,9 +124,7 @@ class IntegerSerializer extends AbstractSerializerWithEncoding
                         sprintf("%0{$minLength}d", $value),
                         '-0123456789',
                         "\x60\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9"
-                    ),
-                    "\x40",
-                    STR_PAD_LEFT
+                    )
                 );
         }
     }
@@ -86,7 +152,7 @@ class IntegerSerializer extends AbstractSerializerWithEncoding
                 break;
         }
 
-        return $this->factoryGroup_->getLiteralFactory()
-            ->create($this->datatype_, $value);
+        return
+            $this->literalWorkbench_->createLiteral($value, $this->datatype_);
     }
 }

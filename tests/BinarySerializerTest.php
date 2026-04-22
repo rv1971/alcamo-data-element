@@ -4,7 +4,7 @@ namespace alcamo\data_element;
 
 use alcamo\binary_data\BinaryString;
 use alcamo\range\NonNegativeRange;
-use alcamo\rdfa\{Base64BinaryLiteral, HexBinaryLiteral};
+use alcamo\rdf_literal\{Base64BinaryLiteral, HexBinaryLiteral};
 use PHPUnit\Framework\TestCase;
 
 class BinarySerializerTest extends TestCase
@@ -21,10 +21,12 @@ class BinarySerializerTest extends TestCase
         $literal,
         $expectedOutput
     ): void {
-        $serializer = new BinarySerializer(
-            $datatypeXName,
-            new NonNegativeRange($minLength, $maxLength),
-            SerializerInterface::TRUNCATE_SILENTLY
+        $serializer = BinarySerializer::newFromProps(
+            (object)[
+                'datatypeXName' => $datatypeXName,
+                'lengthRange' => new NonNegativeRange($minLength, $maxLength),
+                'flags' => SerializerInterface::TRUNCATE_SILENTLY
+            ]
         );
 
         $datatype = $serializer->getDatatype();

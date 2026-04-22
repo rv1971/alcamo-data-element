@@ -8,7 +8,7 @@ use alcamo\rdfa\RdfaData;
 /**
  * @brief Data element with XSD type and metadata
  *
- * @date Last reviewed 2026-02-24
+ * @date Last reviewed 2026-04-21
  */
 class DataElement implements DataElementInterface
 {

@@ -4,32 +4,46 @@ namespace alcamo\data_element;
 
 use alcamo\dom\schema\{SchemaFactory, TypeMap};
 use alcamo\dom\schema\component\SimpleTypeInterface;
-use alcamo\rdfa\{LiteralFactory as RdfaLiteralFactory, LiteralInterface};
+use alcamo\rdf_literal\{LiteralFactory as RdfLiteralFactory, LiteralInterface};
 
 /**
- * @brief Factory creating literals from data types and values
+ * @brief Factory creating RDF literals from data types and values
  *
- * @date Last reviewed 2026-03-05
+ * While alcamo::rdf_literal::LiteralFactory creates literals from a value, a
+ * language and a datatype URI, this class creates them from a value and a
+ * SimpleTypeInterface object.
+ *
+ * Unlike alcamo::rdf_literal::LiteralFactory, this class is aware of type
+ * hierarchies. For instance, when given a value and a type derived from
+ * xsd:integer, it is able to conclude that the needed literal class is that
+ * for xsd:integer.
+ *
+ * Since there is no XML Schema dataytpe
+ * corresponding to LangStringLiteral, this class does not support creaeting
+ * LangStringLiteral objects, and therefore the create() method does not have
+ * a language parameter.
+ *
+ * @date Last reviewed 2026-04-20
  */
 class LiteralFactory
 {
     private $schemaFactory_;      ///< SchemaFactory
-    private $rdfaLiteralFactory_; ///< RdfaLiteralFactory
+    private $rdfLiteralFactory_;  ///< RdfLiteralFactory
     private $typeToLiteralClass_; ///< TypeMap
 
     public function __construct(
         ?SchemaFactory $schemaFactory = null,
-        ?RdfaLiteralFactory $rdfaLiteralFactory = null
+        ?RdfLiteralFactory $rdfLiteralFactory = null
     ) {
         $this->schemaFactory_ = $schemaFactory ?? new SchemaFactory();
 
-        $this->rdfaLiteralFactory_ =
-            $rdfaLiteralFactory ?? new RdfaLiteralFactory();
+        $this->rdfLiteralFactory_ =
+            $rdfLiteralFactory ?? new RdfLiteralFactory();
 
         $map = [];
 
         foreach (
-            $this->rdfaLiteralFactory_::DATATYPE_URI_TO_CLASS as $uri => $class
+            $this->rdfLiteralFactory_::getDatatypeUriToClass() as $uri => $class
         ) {
             $map[
                 (string)$this->schemaFactory_->createTypeFromUri($uri)
@@ -45,9 +59,9 @@ class LiteralFactory
         return $this->schemaFactory_;
     }
 
-    public function getRdfaLiteralFactory(): RdfaLiteralFactory
+    public function getRdfLiteralFactory(): RdfLiteralFactory
     {
-        return $this->rdfaLiteralFactory_;
+        return $this->rdfLiteralFactory_;
     }
 
     public function getTypeToLiteralClass(): TypeMap
@@ -55,9 +69,16 @@ class LiteralFactory
         return $this->typeToLiteralClass_;
     }
 
+    /**
+     * @brief Create a literal
+     *
+     * @return RDF Literal object of the literal type of the closest ancestor
+     * of $datatype for which a literal type is known, containing the URI of
+     * $datatype itself.
+     */
     public function create(
-        SimpleTypeInterface $datatype,
-        $value = null
+        $value,
+        SimpleTypeInterface $datatype
     ): LiteralInterface {
         $class = $this->typeToLiteralClass_->lookup($datatype);
 

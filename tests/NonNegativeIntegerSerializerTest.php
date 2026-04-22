@@ -3,7 +3,7 @@
 namespace alcamo\data_element;
 
 use alcamo\range\NonNegativeRange;
-use alcamo\rdfa\{
+use alcamo\rdf_literal\{
     BooleanLiteral,
     GDayLiteral,
     GMonthLiteral,
@@ -29,11 +29,13 @@ class NonNegativeIntegerSerializerTest extends TestCase
         $expectedOutput,
         $expectedDeserialization
     ): void {
-        $serializer = new NonNegativeIntegerSerializer(
-            $datatypeXName,
-            new NonNegativeRange($minLength, $maxLength),
-            SerializerInterface::TRUNCATE_SILENTLY,
-            $encoding
+        $serializer = NonNegativeIntegerSerializer::newFromProps(
+            (object)[
+                'datatypeXName' => $datatypeXName,
+                'lengthRange' => new NonNegativeRange($minLength, $maxLength),
+                'flags' => SerializerInterface::TRUNCATE_SILENTLY,
+                'encoding' => $encoding
+            ]
         );
 
         $datatype = $serializer->getDatatype();
@@ -106,7 +108,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 (new GMonthLiteral(12))->getValue()
                 ],
             [
-                PositiveGYearLiteral::DATATYPE_XNAME,
+                PositiveGYearLiteral::DEFAULT_DATATYPE_XNAME,
                 8,
                 null,
                 null,

@@ -4,13 +4,13 @@ namespace alcamo\data_element;
 
 use alcamo\exception\OutOfRange;
 use alcamo\range\NonNegativeRange;
-use alcamo\rdfa\{LiteralInterface, PositiveGYearLiteral};
+use alcamo\rdf_literal\{LiteralInterface, PositiveGYearLiteral};
 use alcamo\time\PosixFormat;
 
 /**
  * @brief (De)Serializer for date/time data
  *
- * @date Last reviewed 2026-02-24
+ * @date Last reviewed 2026-04-21
  */
 class DateTimeSerializer extends AbstractSerializerWithEncoding
 {
@@ -22,18 +22,21 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
         self::XSD_NS . ' gMonthDay',
         self::XSD_NS . ' gYear',
         self::XSD_NS . ' gYearMonth',
-        self::XSD_NS . ' time'
+        self::XSD_NS . ' time',
     ];
 
-    public const ENCODINGS_TO_BITS =
-        [ 'ASCII' => 8, 'BCD' => 4, 'EBCDIC' => 8 ];
+    public const ENCODING_TO_BITS = [
+        'ASCII'  => 8,
+        'BCD'    => 4,
+        'EBCDIC' => 8
+    ];
 
     public const DEFAULT_POSIX_FORMATS = [
-        self::XSD_NS . ' date'  => [
+        self::XSD_NS . ' date' => [
             'BCD' => '%Y%m%d',
             '*'   => '%Y-%m-%d'
         ],
-        self::XSD_NS . ' dateTime'  => [
+        self::XSD_NS . ' dateTime' => [
             'BCD' => '%Y%m%d%H%M%S',
             '*'   => '%Y-%m-%dT%H-%M-%S'
         ],
@@ -43,24 +46,35 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
         self::XSD_NS . ' gMonth' => [
             '*' => '%m'
         ],
-        self::XSD_NS . ' gMonthDay'  => [
+        self::XSD_NS . ' gMonthDay' => [
             'BCD' => '%m%d',
             '*'   => '%m-%d'
         ],
-        self::XSD_NS . ' gYearMonth'  => [
+        self::XSD_NS . ' gYearMonth' => [
             'BCD' => '%Y%m',
             '*'   => '%Y-%m'
         ],
-        PositiveGYearLiteral::DATATYPE_XNAME => [
+        self::XSD_NS . ' gYear' => [
             '*' => '%Y'
         ],
-        self::XSD_NS . ' time'  => [
+        self::XSD_NS . ' time' => [
             'BCD' => '%H%M%S',
             '*'   => '%H-%M-%S'
-        ],
+        ]
     ];
 
     private $posixFormat_; ///< PosixFormat
+
+    public static function newFromProps(object $props): SerializerInterface
+    {
+        return new static(
+            $props->datatypeXName ?? null,
+            $props->posixFormat ?? null,
+            $props->flags ?? null,
+            $props->encoding ?? null,
+            $props->literalWorkbench ?? null
+        );
+    }
 
     /**
      * @param $datatypeXName Datatype for deserialized literals [default first
@@ -69,27 +83,34 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
      * @param $posixFormat POSIX format for input/output. Length is fixed and
      * computed from $posixFormat. [default taken from DEFAULT_POSIX_FORMATS]
      *
-     * @param $flags Bitwise-OR-combination of the
-     * alcamo::data_element::AbstractSerializer constants
+     * @param $flags Bitwise-OR-combination of the constants in
+     * alcamo::data_element::SerializerInterface.
      *
-     * @parm $encoding [default DEFAULT_ENCODING]
+     * @parm $encoding [default
+     * alcamo::data_element::AbstractSerializerWithEncoding::DEFAULT_ENCODING]
      *
-     * @param $factoryGroup Factory group used in deserialize() and in
-     * validateLiteralClass(). [default FactoryGroup::getInstance()]
+     * @param $literalWorkbench Workbench used in deserialize() and in
+     * validateLiteralClass(). [default
+     * alcamo::data_element::LiteralWorkbench::getMainInstance()]
      */
     public function __construct(
         ?string $datatypeXName = null,
         $posixFormat = null,
         ?int $flags = null,
         ?string $encoding = null,
-        ?FactoryGroup $factoryGroup = null
+        ?LiteralWorkbench $literalWorkbench = null
     ) {
+        /* No padding will take place since the output strings are created at
+         * the exact length of the chosen format (which may contain padding
+         * characters if needed. */
         parent::__construct(
             $datatypeXName,
             null,
+            null,
+            null,
             $flags,
             $encoding,
-            $factoryGroup
+            $literalWorkbench
         );
 
         if (isset($posixFormat)) {
@@ -107,6 +128,9 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
                 ?? static::DEFAULT_POSIX_FORMATS[$supportedDatatypeXName]['*']
             );
         }
+
+        /* The length of input is validated if the chosen format has a fixed
+         * length. */
 
         $length = $this->posixFormat_->getLength();
 
@@ -148,7 +172,7 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
 
     public function deserialize(string $input): LiteralInterface
     {
-        if (static::ENCODINGS_TO_BITS[$this->encoding_] == 4) {
+        if (static::ENCODING_TO_BITS[$this->encoding_] == 4) {
             $input = bin2hex($input);
         }
 
@@ -169,12 +193,12 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
                 break;
         }
 
-        return $this->factoryGroup_->getLiteralFactory()->create(
-            $this->datatype_,
+        return $this->literalWorkbench_->createLiteral(
             \DateTime::createFromFormat(
                 $this->posixFormat_->getPhpFormat(),
                 $value
-            )
+            ),
+            $this->datatype_
         );
     }
 }

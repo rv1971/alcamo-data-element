@@ -3,16 +3,31 @@
 namespace alcamo\data_element;
 
 use alcamo\dom\schema\{Schema, SchemaFactory};
+use alcamo\dom\schema\component\SimpleTypeInterface;
 use alcamo\exception\DataValidationFailed;
+use alcamo\rdf_literal\LiteralInterface;
+use alcamo\uri\FileUriFactory;
 
 /**
- * @brief Group of related factories that are typically needed together
+ * @brief Facade for literal factory and literal type map
  *
- * @date Last reviewed 2026-03-05
+ * @date Last reviewed 2026-04-21
  */
-class FactoryGroup
+class LiteralWorkbench
 {
-    private static $mainInstance_;  ///< self
+    /// Absolute path to the vendor directory, including trailing separator
+    public const VENDOR_PATH = __DIR__ . DIRECTORY_SEPARATOR
+        . '..' . DIRECTORY_SEPARATOR
+        . 'vendor' . DIRECTORY_SEPARATOR;
+
+    /// Absolute paths to additional XSDs to load
+    public const ADDTIONAL_XSD_PATHS = [
+        self::VENDOR_PATH . 'alcamo' . DIRECTORY_SEPARATOR
+            . 'rdf-literal' . DIRECTORY_SEPARATOR
+            . 'xsd' . DIRECTORY_SEPARATOR . 'alcamo.rdf.xsd'
+    ];
+
+    private static $mainInstance_; ///< self
 
     public static function newFromFactories(
         LiteralFactory $literalFactory,
@@ -23,7 +38,7 @@ class FactoryGroup
                 !== $literalTypeMap->getSchemaFactory()
         ) {
             /** @throw alcamo::exception::DataValidationFailed on attempt to
-             *  create a factory group from objects based on different schema
+             *  create a workbench from objects based on different schema
              *  factories.
              */
             throw (new DataValidationFailed())->setMessageContext(
@@ -67,6 +82,16 @@ class FactoryGroup
         $this->schema_ = $this->schemaFactory_->getMainSchema();
         $this->literalFactory_ = $literalFactory;
         $this->literalTypeMap_ = $literalTypeMap;
+
+        $fileUriFactory = new FileUriFactory();
+
+        $xsdUris = [];
+
+        foreach (static::ADDTIONAL_XSD_PATHS as $xsdPath) {
+            $xsdUris[] = $fileUriFactory->create($xsdPath);
+        }
+
+        $this->schema_->addUris($xsdUris);
     }
 
     public function getSchemaFactory(): SchemaFactory
@@ -87,5 +112,18 @@ class FactoryGroup
     public function getLiteralTypeMap(): LiteralTypeMap
     {
         return $this->literalTypeMap_;
+    }
+
+    public function createLiteral(
+        $value,
+        SimpleTypeInterface $datatype
+    ): LiteralInterface {
+        return $this->literalFactory_->create($value, $datatype);
+    }
+
+    public function validateLiteral(
+        LiteralInterface $literal
+    ): SimpleTypeInterface {
+        return $this->literalTypeMap_->validateLiteral($literal);
     }
 }

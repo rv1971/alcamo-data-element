@@ -5,7 +5,7 @@ namespace alcamo\data_element;
 use alcamo\collection\ReadonlyCollectionTrait;
 use alcamo\exception\{DataValidationFailed, Eof, InvalidType, SyntaxError};
 use alcamo\range\NonNegativeRange;
-use alcamo\rdfa\{HexBinaryLiteral, LiteralInterface};
+use alcamo\rdf_literal\{HexBinaryLiteral, LiteralInterface};
 
 /**
  * @brief (De)Serializer for constructed data
@@ -19,32 +19,36 @@ class ConstructedSerializer extends AbstractSerializer implements
 {
     use ReadonlyCollectionTrait;
 
-    public const SUPPORTED_DATATYPE_XNAMES = [
-        self::XSD_NS . ' hexBinary',
-        self::XSD_NS . ' base64Binary',
-        self::XSD_NS . ' string'
-    ];
+    public const SUPPORTED_DATATYPE_XNAMES = [ self::XSD_NS . ' string' ];
 
     private $separator_; ///< ?string
+
+    public static function newFromProps(object $props): SerializerInterface
+    {
+        return new static(
+            $props->serializers ?? null,
+            $props->separator ?? null,
+            $props->lengthRange ?? null,
+            $props->flags ?? null
+        );
+    }
 
     /**
      * @parm $serializers Iterable of SerializerInterface objects
      *
      * @parm $separator String to separate items in (de)serialization.
      *
-     * @param $datatypeXName Datatype for deserialized literals [default first
-     * item in SUPPORTED_DATATYPE_XNAMES)
-     *
      * @param $lengthRange Allowed length of serialized data, in
-     * encoding-dependent units (bytes or nibbles).
+     * encoding-dependent bytes.
      *
-     * @param $flags Bitwise-OR-combination of the
-     * alcamo::data_element::AbstractSerializer constants
+     * @param $flags Bitwise-OR-combination of the constants in
+     * alcamo::data_element::SerializerInterface.
+     *
+     * Padding string and padding type are taken from the last serializer.
      */
     public function __construct(
         iterable $serializers,
         ?string $separator = null,
-        ?string $datatypeXName = null,
         ?NonNegativeRange $lengthRange = null,
         ?int $flags = null
     ) {
@@ -64,10 +68,12 @@ class ConstructedSerializer extends AbstractSerializer implements
         }
 
         parent::__construct(
-            $datatypeXName,
+            self::XSD_NS . ' string',
             $lengthRange,
+            $serializer->padString_,
+            $serializer->padType_,
             $flags,
-            $this->first()->getFactoryGroup()
+            $serializer->literalWorkbench_
         );
 
         $this->separator_ = $separator;
@@ -89,7 +95,8 @@ class ConstructedSerializer extends AbstractSerializer implements
         if (!($this->flags_ & self::TRUNCATE_SILENTLY)) {
             if (count($literal) != count($this)) {
                 /** @todo throw alcamo::exception::DataValidationFailed if
-                 *  literal count does not match serializer count. */
+                 *  literal count does not match serializer count and the
+                 *  TRUNCATE_SILENTLY flag is not set. */
                 throw (new DataValidationFailed())->setMessageContext(
                     [
                         'extraMessage' => 'literal count ' . count($literal)
@@ -118,10 +125,7 @@ class ConstructedSerializer extends AbstractSerializer implements
             }
         }
 
-        return $this->adjustOutputLength(
-            $result,
-            $this->datatype_->isPrintable() ? ' ' : "\x00"
-        );
+        return $this->adjustOutputLength($result);
     }
 
     public function deserialize(string $input): LiteralInterface
@@ -132,9 +136,8 @@ class ConstructedSerializer extends AbstractSerializer implements
         $pos = 0;
 
         /**
-         * If the input ends exactly after application of a deserializer which
-         * is not the last one and $flags contain TRUNCATE_SILENTLY, accept
-         * this gracefully.
+         * If the input ends exactly after application of a deserializer and
+         * $flags contain TRUNCATE_SILENTLY, accept this gracefully.
          *
          * @throw alcamo::exception::Eof if input ends before all
          * deserializers have been applied and either $flags do not contain
@@ -187,7 +190,6 @@ class ConstructedSerializer extends AbstractSerializer implements
                 if (strlen($input) < $pos + $length) {
                     throw (new Eof())->setMessageContext(
                         [
-                            'objectType' => 'input data',
                             'object' => $input,
                             'requestedUnits' => $length,
                             'atOffset' => $pos,

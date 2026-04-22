@@ -3,7 +3,7 @@
 namespace alcamo\data_element;
 
 use alcamo\exception\InvalidType;
-use alcamo\rdfa\{IntegerLiteral, LangStringLiteral};
+use alcamo\rdf_literal\{IntegerLiteral, LangStringLiteral};
 use PHPUnit\Framework\TestCase;
 
 class ConstructedLiteralTest extends TestCase
@@ -43,7 +43,7 @@ class ConstructedLiteralTest extends TestCase
         $this->expectException(InvalidType::class);
         $this->expectExceptionMessage(
             'Invalid type "string", expected one of '
-                . '"alcamo\rdfa\LiteralInterface"'
+                . '"alcamo\rdf_literal\LiteralInterface"'
         );
 
         new ConstructedLiteral([ new IntegerLiteral(0), 'foo' ]);

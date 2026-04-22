@@ -2,20 +2,30 @@
 
 namespace alcamo\data_element;
 
-use alcamo\rdfa\{DigitsStringLiteral, LiteralInterface};
+use alcamo\range\NonNegativeRange;
+use alcamo\rdf_literal\{DigitsStringLiteral, LiteralInterface};
 
 /**
  * @brief (De)Serializer for digits string data
  *
- * @date Last reviewed 2026-02-24
+ * @date Last reviewed 2026-04-21
  */
-class DigitsStringSerializer extends AbstractSerializerWithEncoding
+class DigitsStringSerializer extends FourBitStringSerializer
 {
     public const SUPPORTED_DATATYPE_XNAMES =
-        [ DigitsStringLiteral::DATATYPE_XNAME ];
+        [ DigitsStringLiteral::DEFAULT_DATATYPE_XNAME ];
 
-    public const ENCODINGS_TO_BITS =
-        [ 'ASCII' => 8, 'COMPRESSED-BCD' => 4, 'EBCDIC' => 8 ];
+    public const ENCODING_TO_BITS = [
+            'ASCII' => 8,
+            'COMPRESSED-BCD' => 4,
+            'EBCDIC' => 8
+    ];
+
+    public const ENCODING_TO_PAD_STRING = [
+        'ASCII'          => ' ',
+        'COMPRESSED-BCD' => 'F',
+        'EBCDIC'         => "\x40"
+    ];
 
     public function serialize(LiteralInterface $literal): string
     {
@@ -26,13 +36,7 @@ class DigitsStringSerializer extends AbstractSerializerWithEncoding
                 return $this->adjustOutputLength($literal);
 
             case 'COMPRESSED-BCD':
-                $output = $this->adjustOutputLength($literal, 'F');
-
-                if (strlen($output) & 1) {
-                    $output .= 'F';
-                }
-
-                return hex2bin($output);
+                return hex2bin($this->adjustOutputLength($literal));
 
             case 'EBCDIC':
                 return $this->adjustOutputLength(
@@ -40,36 +44,42 @@ class DigitsStringSerializer extends AbstractSerializerWithEncoding
                         $literal,
                         '0123456789',
                         "\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9"
-                    ),
-                    "\x40"
+                    )
                 );
         }
     }
 
     public function deserialize(string $input): LiteralInterface
     {
-        if (static::ENCODINGS_TO_BITS[$this->encoding_] == 4) {
-            $input = bin2hex($input);
-        }
-
-        $this->validateInputLength($input);
+        /** Remove trailing padding characters from input. */
 
         switch ($this->encoding_) {
-            case 'EBCDIC':
-                $value = (int)strtr(
-                    $input,
-                    "\x40\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9",
-                    ' 0123456789'
-                );
+            case 'ASCII':
+                $this->validateInputLength($input);
+
+                $value = rtrim($input);
                 break;
 
-            default:
-                $value = $input;
+            case 'COMPRESSED-BCD':
+                $input = bin2hex($input);
+
+                $this->validateInputLength($input);
+
+                $value = rtrim($input, 'f');
+                break;
+
+            case 'EBCDIC':
+                $value = rtrim(
+                    strtr(
+                        $input,
+                        "\x40\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9",
+                        ' 0123456789'
+                    )
+                );
+                break;
         }
 
-        return $this->factoryGroup_->getLiteralFactory()->create(
-            $this->datatype_,
-            rtrim($value, ' f')
-        );
+        return $this->literalWorkbench_
+            ->createLiteral($value, $this->datatype_);
     }
 }

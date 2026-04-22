@@ -4,7 +4,7 @@ namespace alcamo\data_element;
 
 use alcamo\exception\{DataValidationFailed, Eof, InvalidType, SyntaxError};
 use alcamo\range\NonNegativeRange;
-use alcamo\rdfa\{
+use alcamo\rdf_literal\{
     HexBinaryLiteral,
     NonNegativeIntegerLiteral,
     StringLiteral
@@ -21,18 +21,18 @@ class ConstructedSerializerTest extends TestCase
     public function testSerialize(
         $serializers,
         $separator,
-        $datatypeXName,
         $lengthRange,
         $literalData,
         $expectedOutput,
         $expectedDeserializionDigest
     ): void {
-        $serializer = new ConstructedSerializer(
-            $serializers,
-            $separator,
-            $datatypeXName,
-            $lengthRange,
-            ConstructedSerializer::TRUNCATE_SILENTLY
+        $serializer = ConstructedSerializer::newFromProps(
+            (object)[
+                'serializers' => $serializers,
+                'separator' => $separator,
+                'lengthRange' => $lengthRange,
+                'flags' => ConstructedSerializer::TRUNCATE_SILENTLY
+            ]
         );
 
         $literal = new ConstructedLiteral($literalData);
@@ -48,7 +48,7 @@ class ConstructedSerializerTest extends TestCase
         $this->assertSame($expectedDeserializionDigest, $literal2->getDigest());
 
         $this->assertEquals(
-            ConstructedLiteral::DATATYPE_URI,
+            ConstructedLiteral::DEFAULT_DATATYPE_URI,
             $literal2->getDatatypeUri()
         );
     }
@@ -66,7 +66,6 @@ class ConstructedSerializerTest extends TestCase
                 [ $intS, $stringS4, $intS, $intS ],
                 ',',
                 null,
-                null,
                 [
                     new NonNegativeIntegerLiteral(7),
                     new StringLiteral('foo'),
@@ -80,7 +79,6 @@ class ConstructedSerializerTest extends TestCase
                 [ $stringS, $stringS, $intS, $stringS4, $intS ],
                 '/',
                 null,
-                null,
                 [
                     null,
                     new StringLiteral('bar'),
@@ -93,7 +91,6 @@ class ConstructedSerializerTest extends TestCase
             [
                 [ $stringS4, $stringS4 ],
                 null,
-                self::XSD_NS . ' string',
                 new NonNegativeRange(10),
                 [
                     new StringLiteral('bar'),
@@ -107,7 +104,6 @@ class ConstructedSerializerTest extends TestCase
             [
                 [ $bcdS, $binS, $binS ],
                 "\xFF",
-                null,
                 new NonNegativeRange(5),
                 [
                     new NonNegativeIntegerLiteral(3),
@@ -115,7 +111,7 @@ class ConstructedSerializerTest extends TestCase
                 ],
                 "\x03\xFF\xAB\xCD\x00",
                 '3|ABCD00'
-            ],
+            ]
         ];
     }
 
@@ -136,7 +132,8 @@ class ConstructedSerializerTest extends TestCase
     {
         $this->expectException(InvalidType::class);
         $this->expectExceptionMessage(
-            'Invalid type "alcamo\rdfa\StringLiteral"; incompatible with '
+            'Invalid type "alcamo\rdf_literal\StringLiteral"; '
+                . 'incompatible with '
                 . 'alcamo\data_element\ConstructedSerializer'
         );
 
@@ -180,7 +177,7 @@ class ConstructedSerializerTest extends TestCase
     {
         $this->expectException(Eof::class);
         $this->expectExceptionMessage(
-            'Failed to read 3 unit(s) from input data "abc" at offset 3 '
+            'Failed to read 3 unit(s) from object "abc" at offset 3 '
                 . 'for key 2'
         );
 

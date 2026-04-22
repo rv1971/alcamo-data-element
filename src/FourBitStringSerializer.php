@@ -2,19 +2,89 @@
 
 namespace alcamo\data_element;
 
-use alcamo\rdfa\{FourBitStringLiteral, LiteralInterface};
+use alcamo\range\NonNegativeRange;
+use alcamo\rdf_literal\{FourBitStringLiteral, LiteralInterface};
+use alcamo\exception\InvalidEnumerator;
 
 /**
  * @brief (De)Serializer for four-bit string data
  *
- * @date Last reviewed 2026-02-24
+ * @date Last reviewed 2026-04-21
  */
 class FourBitStringSerializer extends AbstractSerializerWithEncoding
 {
     public const SUPPORTED_DATATYPE_XNAMES =
-        [ FourBitStringLiteral::DATATYPE_XNAME ];
+        [ FourBitStringLiteral::DEFAULT_DATATYPE_XNAME ];
 
-    public const ENCODINGS_TO_BITS = [ 'ASCII' => 8, 'FOUR-BIT' => 4 ];
+    public const ENCODING_TO_BITS = [
+        'ASCII'    => 8,
+        'FOUR-BIT' => 4
+    ];
+
+    public const ENCODING_TO_PAD_STRING = [
+        'ASCII'    => ' ',
+        'FOUR-BIT' => 'F'
+    ];
+
+    public static function newFromProps(object $props): SerializerInterface
+    {
+        return new static(
+            $props->datatypeXName ?? null,
+            $props->lengthRange ?? null,
+            $props->flags ?? null,
+            $props->encoding ?? null,
+            $props->literalWorkbench ?? null
+        );
+    }
+
+    /**
+     * @param $datatypeXName Datatype for deserialized literals [default first
+     * item in SUPPORTED_DATATYPE_XNAMES)
+     *
+     * @param $lengthRange Allowed length of serialized data, in
+     * encoding-dependent units (bytes or nibbles).
+     *
+     * @param $flags Bitwise-OR-combination of the constants in
+     * alcamo::data_element::SerializerInterface.
+     *
+     * @parm $encoding [default
+     * alcamo::data_element::AbstractSerializerWithEncoding::DEFAULT_ENCODING]
+     *
+     * @param $literalWorkbench Workbench used in deserialize() and in
+     * validateLiteralClass(). [default
+     * alcamo::data_element::LiteralWorkbench::getMainInstance()]
+     */
+    public function __construct(
+        ?string $datatypeXName = null,
+        ?NonNegativeRange $lengthRange = null,
+        ?int $flags = null,
+        ?string $encoding = null,
+        ?FactoryGroup $literalWorkbench = null
+    ) {
+        $padString = static::ENCODING_TO_PAD_STRING[
+            $encoding ?? static::DEFAULT_ENCODING
+        ] ?? null;
+
+        if (!isset($padString)) {
+            throw (new InvalidEnumerator())->setMessageContext(
+                [
+                    'value' => $encoding ?? static::DEFAULT_ENCODING,
+                    'expectedOneOf' =>
+                        array_keys(static::ENCODING_TO_PAD_STRING)
+                ]
+            );
+        }
+
+        parent::__construct(
+            $datatypeXName,
+            $lengthRange,
+            $padString,
+            STR_PAD_RIGHT,
+            $flags,
+            $encoding,
+            $literalWorkbench
+        );
+    }
 
     public function serialize(LiteralInterface $literal): string
     {
@@ -25,29 +95,31 @@ class FourBitStringSerializer extends AbstractSerializerWithEncoding
                 return $this->adjustOutputLength($literal);
 
             case 'FOUR-BIT':
-                $output = $this->adjustOutputLength($literal->toHex(), 'F');
-
-                if (strlen($output) & 1) {
-                    $output .= 'F';
-                }
-
-                return hex2bin($output);
+                return hex2bin($this->adjustOutputLength($literal->toHex()));
         }
     }
 
     public function deserialize(string $input): LiteralInterface
     {
-        if (static::ENCODINGS_TO_BITS[$this->encoding_] == 4) {
-            $input = bin2hex($input);
+        switch ($this->encoding_) {
+            case 'FOUR-BIT':
+                $input = bin2hex($input);
+
+                $this->validateInputLength($input);
+
+                $class = $this->literalWorkbench_
+                    ->getLiteralFactory()
+                    ->getTypeToLiteralClass()
+                    ->lookup($this->datatype_);
+
+                return $class::newFromHex($input, $this->datatype_->getUri());
+
+            default:
+                $this->validateInputLength($input);
+
+                /** Remove trailing spaces from input. */
+                return $this->literalWorkbench_
+                    ->createLiteral(rtrim($input), $this->datatype_);
         }
-
-        $this->validateInputLength($input);
-
-        return $this->factoryGroup_->getLiteralFactory()->create(
-            $this->datatype_,
-            $this->encoding_ == 'FOUR-BIT'
-                ? strtr($input, 'ABCDEFabcdef', ':;<=>?:;<=>?')
-                : rtrim($input)
-        );
     }
 }
