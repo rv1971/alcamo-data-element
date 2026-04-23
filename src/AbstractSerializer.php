@@ -143,10 +143,6 @@ abstract class AbstractSerializer implements SerializerInterface
         return 8;
     }
 
-    abstract public function serialize(LiteralInterface $literal): string;
-
-    abstract public function deserialize(string $input): LiteralInterface;
-
     /// Check whether $literal is supported for this serializer class
     protected function validateLiteralClass(LiteralInterface $literal): void
     {
@@ -208,10 +204,18 @@ abstract class AbstractSerializer implements SerializerInterface
             }
         }
 
+        /** Add padding as needed to get complete bytes in hte output. */
         if (strlen($value) & 1 && $this->getBitsPerCharacter() == 4) {
             $value = str_pad(
                 $value,
                 strlen($value) + 1,
+                $this->padString_,
+                $this->padType_
+            );
+        } elseif (strlen($value) & 7 && $this->getBitsPerCharacter() == 1) {
+            $value = str_pad(
+                $value,
+                (strlen($value) + 7) >> 3 << 3,
                 $this->padString_,
                 $this->padType_
             );
@@ -229,10 +233,14 @@ abstract class AbstractSerializer implements SerializerInterface
         ) {
             [ $minLength, $maxLength ] = $this->lengthRange_->getMinMax();
 
-            /** Add a padding nibble to maxLength if length is measured in
-             *  nibbles and maximum length is odd. */
             if ($maxLength & 1 && $this->getBitsPerCharacter() == 4) {
+                /** Add a padding nibble to maxLength if length is measured in
+                 *  nibbles and maximum length is odd. */
                 $maxLength++;
+            } elseif ($maxLength & 7 && $this->getBitsPerCharacter() == 1) {
+                /** Add padding bits to maxLength if length is measured in
+                 *  bits and maximum length is not a multiple of 8. */
+                $maxLength = ($maxLength + 7) >> 3 << 3;
             }
 
             /** @throw alcamo::exception::LengthOutOfRange is

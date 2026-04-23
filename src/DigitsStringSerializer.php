@@ -2,6 +2,7 @@
 
 namespace alcamo\data_element;
 
+use alcamo\dom\schema\component\SimpleTypeInterface;
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\{DigitsStringLiteral, LiteralInterface};
 
@@ -49,8 +50,10 @@ class DigitsStringSerializer extends FourBitStringSerializer
         }
     }
 
-    public function deserialize(string $input): LiteralInterface
-    {
+    public function deserialize(
+        string $input,
+        ?SimpleTypeInterface $datatype = null
+    ): LiteralInterface {
         /** Remove trailing padding characters from input. */
 
         switch ($this->encoding_) {
@@ -80,6 +83,6 @@ class DigitsStringSerializer extends FourBitStringSerializer
         }
 
         return $this->literalWorkbench_
-            ->createLiteral($value, $this->datatype_);
+            ->createLiteral($value, $datatype ?? $this->datatype_);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace alcamo\data_element;
 
+use alcamo\dom\schema\component\SimpleTypeInterface;
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\LiteralInterface;
 
@@ -109,8 +110,10 @@ class StringSerializer extends AbstractSerializer
         );
     }
 
-    public function deserialize(string $input): LiteralInterface
-    {
+    public function deserialize(
+        string $input,
+        ?SimpleTypeInterface $datatype = null
+    ): LiteralInterface {
         $this->validateInputLength($input);
 
         /** Remove trailing spaces from input. */
@@ -120,7 +123,7 @@ class StringSerializer extends AbstractSerializer
                     ? $input
                     : iconv($this->encoding_, static::INTERNAL_ENCODING, $input)
             ),
-            $this->datatype_
+            $datatype ?? $this->datatype_
         );
     }
 }

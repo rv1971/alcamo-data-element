@@ -3,6 +3,7 @@
 namespace alcamo\data_element;
 
 use alcamo\collection\ReadonlyCollectionTrait;
+use alcamo\dom\schema\component\SimpleTypeInterface;
 use alcamo\exception\{DataValidationFailed, Eof, InvalidType, SyntaxError};
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\{HexBinaryLiteral, LiteralInterface};
@@ -128,8 +129,10 @@ class ConstructedSerializer extends AbstractSerializer implements
         return $this->adjustOutputLength($result);
     }
 
-    public function deserialize(string $input): LiteralInterface
-    {
+    public function deserialize(
+        string $input,
+        ?SimpleTypeInterface $datatype = null
+    ): LiteralInterface {
         $this->validateInputLength($input);
 
         $result = [];
@@ -222,6 +225,6 @@ class ConstructedSerializer extends AbstractSerializer implements
             );
         }
 
-        return new Constructedliteral($result);
+        return new Constructedliteral($result, $datatype);
     }
 }

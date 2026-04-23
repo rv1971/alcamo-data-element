@@ -3,6 +3,7 @@
 namespace alcamo\data_element;
 
 use alcamo\binary_data\BinaryString;
+use alcamo\dom\schema\component\SimpleTypeInterface;
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\LiteralInterface;
 use alcamo\exception\InvalidEnumerator;
@@ -129,8 +130,10 @@ class IntegerSerializer extends AbstractSerializerWithEncoding
         }
     }
 
-    public function deserialize(string $input): LiteralInterface
-    {
+    public function deserialize(
+        string $input,
+        ?SimpleTypeInterface $datatype = null
+    ): LiteralInterface {
         $this->validateInputLength($input);
 
         switch ($this->encoding_) {
@@ -152,7 +155,7 @@ class IntegerSerializer extends AbstractSerializerWithEncoding
                 break;
         }
 
-        return
-            $this->literalWorkbench_->createLiteral($value, $this->datatype_);
+        return $this->literalWorkbench_
+            ->createLiteral($value, $datatype ?? $this->datatype_);
     }
 }

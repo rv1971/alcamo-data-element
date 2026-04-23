@@ -3,6 +3,7 @@
 namespace alcamo\data_element;
 
 use alcamo\binary_data\{Bcd, BinaryString};
+use alcamo\dom\schema\component\SimpleTypeInterface;
 use alcamo\rdf_literal\{LiteralInterface, PositiveGYearLiteral};
 
 /**
@@ -53,17 +54,19 @@ class NonNegativeIntegerSerializer extends IntegerSerializer
         return parent::serialize($literal);
     }
 
-    public function deserialize(string $input): LiteralInterface
-    {
+    public function deserialize(
+        string $input,
+        ?SimpleTypeInterface $datatype = null
+    ): LiteralInterface {
         if (static::ENCODING_TO_BITS[$this->encoding_] == 4) {
             $input = bin2hex($input);
 
             $this->validateInputLength($input);
 
             return $this->literalWorkbench_
-                ->createLiteral((int)$input, $this->datatype_);
+                ->createLiteral((int)$input, $datatype ?? $this->datatype_);
         }
 
-        return parent::deserialize($input);
+        return parent::deserialize($input, $datatype);
     }
 }

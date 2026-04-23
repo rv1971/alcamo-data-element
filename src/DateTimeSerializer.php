@@ -2,6 +2,7 @@
 
 namespace alcamo\data_element;
 
+use alcamo\dom\schema\component\SimpleTypeInterface;
 use alcamo\exception\OutOfRange;
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\{LiteralInterface, PositiveGYearLiteral};
@@ -170,8 +171,10 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
         }
     }
 
-    public function deserialize(string $input): LiteralInterface
-    {
+    public function deserialize(
+        string $input,
+        ?SimpleTypeInterface $datatype = null
+    ): LiteralInterface {
         if (static::ENCODING_TO_BITS[$this->encoding_] == 4) {
             $input = bin2hex($input);
         }
@@ -198,7 +201,7 @@ class DateTimeSerializer extends AbstractSerializerWithEncoding
                 $this->posixFormat_->getPhpFormat(),
                 $value
             ),
-            $this->datatype_
+            $datatype ?? $this->datatype_
         );
     }
 }

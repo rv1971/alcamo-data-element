@@ -2,6 +2,8 @@
 
 namespace alcamo\data_element;
 
+use alcamo\binary_data\BinaryString;
+use alcamo\dom\schema\component\SimpleTypeInterface;
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\{FourBitStringLiteral, LiteralInterface};
 use alcamo\exception\InvalidEnumerator;
@@ -99,27 +101,29 @@ class FourBitStringSerializer extends AbstractSerializerWithEncoding
         }
     }
 
-    public function deserialize(string $input): LiteralInterface
-    {
+    public function deserialize(
+        string $input,
+        ?SimpleTypeInterface $datatype = null
+    ): LiteralInterface {
         switch ($this->encoding_) {
             case 'FOUR-BIT':
                 $input = bin2hex($input);
 
                 $this->validateInputLength($input);
 
-                $class = $this->literalWorkbench_
-                    ->getLiteralFactory()
-                    ->getTypeToLiteralClass()
-                    ->lookup($this->datatype_);
-
-                return $class::newFromHex($input, $this->datatype_->getUri());
+                return $this->literalWorkbench_->createLiteral(
+                    BinaryString::newFromHex($input)->toFourBitString(),
+                    $datatype ?? $this->datatype_
+                );
 
             default:
                 $this->validateInputLength($input);
 
                 /** Remove trailing spaces from input. */
-                return $this->literalWorkbench_
-                    ->createLiteral(rtrim($input), $this->datatype_);
+                return $this->literalWorkbench_->createLiteral(
+                    rtrim($input),
+                    $datatype ?? $this->datatype_
+                );
         }
     }
 }

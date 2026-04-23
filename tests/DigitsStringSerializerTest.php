@@ -9,8 +9,6 @@ use PHPUnit\Framework\TestCase;
 
 class DigitsStringSerializerTest extends TestCase
 {
-    public const XSD_NS = SerializerInterface::XSD_NS;
-
     /**
      * @dataProvider serializeProvider
      */
