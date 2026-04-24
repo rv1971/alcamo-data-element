@@ -3,11 +3,11 @@
 namespace alcamo\data_element;
 
 use alcamo\range\NonNegativeRange;
-use alcamo\rdf_literal\FourBitStringLiteral;
+use alcamo\rdf_literal\FourBitCharStringLiteral;
 use alcamo\uri\Uri;
 use PHPUnit\Framework\TestCase;
 
-class FourBitStringSerializerTest extends TestCase
+class FourBitCharStringSerializerTest extends TestCase
 {
     /**
      * @dataProvider serializeProvider
@@ -20,7 +20,7 @@ class FourBitStringSerializerTest extends TestCase
         $expectedOutput,
         $expectedDeserialization
     ): void {
-        $serializer = FourBitStringSerializer::newFromProps(
+        $serializer = FourBitCharStringSerializer::newFromProps(
             (object)[
                 'lengthRange' => new NonNegativeRange($minLength, $maxLength),
                 'flags' => SerializerInterface::TRUNCATE_SILENTLY,
@@ -36,7 +36,7 @@ class FourBitStringSerializerTest extends TestCase
 
         $literal2 = $serializer->deserialize($output);
 
-        $this->assertInstanceOf(FourBitStringLiteral::class, $literal2);
+        $this->assertInstanceOf(FourBitCharStringLiteral::class, $literal2);
 
         $this->assertEquals($expectedDeserialization, $literal2->getValue());
 
@@ -50,7 +50,7 @@ class FourBitStringSerializerTest extends TestCase
                 null,
                 null,
                 null,
-                new FourBitStringLiteral(';1234=456<7:8>9?'),
+                new FourBitCharStringLiteral(';1234=456<7:8>9?'),
                 ';1234=456<7:8>9?',
                 ';1234=456<7:8>9?'
             ],
@@ -58,7 +58,7 @@ class FourBitStringSerializerTest extends TestCase
                 5,
                 null,
                 'ASCII',
-                new FourBitStringLiteral('42<<'),
+                new FourBitCharStringLiteral('42<<'),
                 '42<< ',
                 '42<<'
             ],
@@ -66,7 +66,7 @@ class FourBitStringSerializerTest extends TestCase
                 null,
                 null,
                 'FOUR-BIT',
-                new FourBitStringLiteral('1=2'),
+                new FourBitCharStringLiteral('1=2'),
                 "\x1D\x2F",
                 '1=2?'
             ],
@@ -74,7 +74,7 @@ class FourBitStringSerializerTest extends TestCase
                 5,
                 null,
                 'FOUR-BIT',
-                new FourBitStringLiteral('7==2'),
+                new FourBitCharStringLiteral('7==2'),
                 "\x7D\xD2\xFF",
                 '7==2??'
             ],
@@ -82,7 +82,7 @@ class FourBitStringSerializerTest extends TestCase
                 6,
                 null,
                 'FOUR-BIT',
-                new FourBitStringLiteral('7==2'),
+                new FourBitCharStringLiteral('7==2'),
                 "\x7D\xD2\xFF",
                 '7==2??'
             ],
@@ -92,7 +92,7 @@ class FourBitStringSerializerTest extends TestCase
                 2,
                 3,
                 'FOUR-BIT',
-                new FourBitStringLiteral(':2<>'),
+                new FourBitCharStringLiteral(':2<>'),
                 "\xA2\xCF",
                 ':2<?'
             ]

@@ -4,10 +4,10 @@ namespace alcamo\data_element;
 
 use alcamo\exception\{InvalidEnumerator, LengthOutOfRange};
 use alcamo\range\NonNegativeRange;
-use alcamo\rdf_literal\DigitsStringLiteral;
+use alcamo\rdf_literal\DigitStringLiteral;
 use PHPUnit\Framework\TestCase;
 
-class DigitsStringSerializerTest extends TestCase
+class DigitStringSerializerTest extends TestCase
 {
     /**
      * @dataProvider serializeProvider
@@ -20,7 +20,7 @@ class DigitsStringSerializerTest extends TestCase
         $expectedOutput,
         $expectedDeserialization
     ): void {
-        $serializer = DigitsStringSerializer::newFromProps(
+        $serializer = DigitStringSerializer::newFromProps(
             (object)[
                 'lengthRange' => new NonNegativeRange($minLength, $maxLength),
                 'flags' => SerializerInterface::TRUNCATE_SILENTLY,
@@ -36,7 +36,7 @@ class DigitsStringSerializerTest extends TestCase
 
         $literal2 = $serializer->deserialize($output);
 
-        $this->assertInstanceOf(DigitsStringLiteral::class, $literal2);
+        $this->assertInstanceOf(DigitStringLiteral::class, $literal2);
 
         $this->assertEquals($expectedDeserialization, $literal2->getValue());
 
@@ -50,7 +50,7 @@ class DigitsStringSerializerTest extends TestCase
                 null,
                 null,
                 null,
-                new DigitsStringLiteral('000123456789'),
+                new DigitStringLiteral('000123456789'),
                 '000123456789',
                 '000123456789'
             ],
@@ -58,7 +58,7 @@ class DigitsStringSerializerTest extends TestCase
                 5,
                 null,
                 'ASCII',
-                new DigitsStringLiteral('42'),
+                new DigitStringLiteral('42'),
                 '42   ',
                 '42'
             ],
@@ -66,7 +66,7 @@ class DigitsStringSerializerTest extends TestCase
                 null,
                 null,
                 'COMPRESSED-BCD',
-                new DigitsStringLiteral('421'),
+                new DigitStringLiteral('421'),
                 "\x42\x1F",
                 '421'
             ],
@@ -74,7 +74,7 @@ class DigitsStringSerializerTest extends TestCase
                 7,
                 null,
                 'COMPRESSED-BCD',
-                new DigitsStringLiteral('002026'),
+                new DigitStringLiteral('002026'),
                 "\x00\x20\x26\xFF",
                 '002026'
             ],
@@ -82,7 +82,7 @@ class DigitsStringSerializerTest extends TestCase
                 8,
                 null,
                 'COMPRESSED-BCD',
-                new DigitsStringLiteral('002026'),
+                new DigitStringLiteral('002026'),
                 "\x00\x20\x26\xFF",
                 '002026'
             ],
@@ -90,7 +90,7 @@ class DigitsStringSerializerTest extends TestCase
                 2,
                 3,
                 'COMPRESSED-BCD',
-                new DigitsStringLiteral('1234'),
+                new DigitStringLiteral('1234'),
                 "\x12\x3F",
                 '123'
             ],
@@ -98,7 +98,7 @@ class DigitsStringSerializerTest extends TestCase
                 3,
                 3,
                 'EBCDIC',
-                new DigitsStringLiteral('17'),
+                new DigitStringLiteral('17'),
                 "\xF1\xF7\x40",
                 '17'
             ]
@@ -114,7 +114,7 @@ class DigitsStringSerializerTest extends TestCase
                 . '["ASCII", "COMPRESSED-BCD", "EBCDIC"]'
         );
 
-        new DigitsStringSerializer(null, null, null, 'BCD');
+        new DigitStringSerializer(null, null, null, 'BCD');
     }
 
     public function testInputLengthWrong(): void
@@ -125,7 +125,7 @@ class DigitsStringSerializerTest extends TestCase
             'Length 6 of "12345f" out of range [0, 4]'
         );
 
-        (new DigitsStringSerializer(
+        (new DigitStringSerializer(
             null,
             new NonNegativeRange(null, 4),
             0,

@@ -5,7 +5,7 @@ namespace alcamo\data_element;
 use alcamo\binary_data\BinaryString;
 use alcamo\dom\schema\component\SimpleTypeInterface;
 use alcamo\range\NonNegativeRange;
-use alcamo\rdf_literal\{FourBitStringLiteral, LiteralInterface};
+use alcamo\rdf_literal\{FourBitCharStringLiteral, LiteralInterface};
 use alcamo\exception\InvalidEnumerator;
 
 /**
@@ -13,10 +13,10 @@ use alcamo\exception\InvalidEnumerator;
  *
  * @date Last reviewed 2026-04-21
  */
-class FourBitStringSerializer extends AbstractSerializerWithEncoding
+class FourBitCharStringSerializer extends AbstractSerializerWithEncoding
 {
     public const SUPPORTED_DATATYPE_XNAMES =
-        [ FourBitStringLiteral::DEFAULT_DATATYPE_XNAME ];
+        [ FourBitCharStringLiteral::DEFAULT_DATATYPE_XNAME ];
 
     public const ENCODING_TO_BITS = [
         'ASCII'    => 8,
@@ -97,7 +97,11 @@ class FourBitStringSerializer extends AbstractSerializerWithEncoding
                 return $this->adjustOutputLength($literal);
 
             case 'FOUR-BIT':
-                return hex2bin($this->adjustOutputLength($literal->toHex()));
+                return hex2bin(
+                    $this->adjustOutputLength(
+                        strtr($literal, ':;<=>?', 'ABCDEF')
+                    )
+                );
         }
     }
 
@@ -112,7 +116,7 @@ class FourBitStringSerializer extends AbstractSerializerWithEncoding
                 $this->validateInputLength($input);
 
                 return $this->literalWorkbench_->createLiteral(
-                    BinaryString::newFromHex($input)->toFourBitString(),
+                    BinaryString::newFromHex($input)->toFourBitCharString(),
                     $datatype ?? $this->datatype_
                 );
 

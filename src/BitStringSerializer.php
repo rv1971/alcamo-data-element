@@ -5,17 +5,17 @@ namespace alcamo\data_element;
 use alcamo\binary_data\BinaryString;
 use alcamo\dom\schema\component\SimpleTypeInterface;
 use alcamo\range\NonNegativeRange;
-use alcamo\rdf_literal\{BitsStringLiteral, LiteralInterface};
+use alcamo\rdf_literal\{BitStringLiteral, LiteralInterface};
 
 /**
- * @brief (De)Serializer for bits string data
+ * @brief (De)Serializer for bit string data
  *
  * @date Last reviewed 2026-04-21
  */
-class BitsStringSerializer extends DigitsStringSerializer
+class BitStringSerializer extends DigitStringSerializer
 {
     public const SUPPORTED_DATATYPE_XNAMES =
-        [ BitsStringLiteral::DEFAULT_DATATYPE_XNAME ];
+        [ BitStringLiteral::DEFAULT_DATATYPE_XNAME ];
 
     public const ENCODING_TO_BITS = [
         'ASCII'  => 8,
@@ -37,7 +37,7 @@ class BitsStringSerializer extends DigitsStringSerializer
             case 'BINARY':
                 $this->validateLiteralClass($literal);
 
-                return BinaryString::newFromBitsString(
+                return BinaryString::newFromBitString(
                     $this->adjustOutputLength($literal)
                 )->getData();
 
@@ -47,7 +47,7 @@ class BitsStringSerializer extends DigitsStringSerializer
                 $unusedBits = (8 - strlen($literal) % 8) % 8;
 
                 return $this->adjustOutputLength(
-                    pack('C', $unusedBits) . BinaryString::newFromBitsString(
+                    pack('C', $unusedBits) . BinaryString::newFromBitString(
                         $literal . substr('0000000', 0, $unusedBits)
                     )->getData()
                 );
@@ -63,7 +63,7 @@ class BitsStringSerializer extends DigitsStringSerializer
     ): LiteralInterface {
         switch ($this->encoding_) {
             case 'BINARY':
-                $value = (new BinaryString($input))->toBitsString();
+                $value = (new BinaryString($input))->toBitString();
 
                 $this->validateInputLength($value);
 
@@ -75,7 +75,7 @@ class BitsStringSerializer extends DigitsStringSerializer
 
                 $unusedBits = unpack('C', $input[0])[1];
 
-                $value = (new BinaryString(substr($input, 1)))->toBitsString();
+                $value = (new BinaryString(substr($input, 1)))->toBitString();
 
                 if ($unusedBits) {
                     $value = substr($value, 0, -$unusedBits);

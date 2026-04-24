@@ -4,17 +4,17 @@ namespace alcamo\data_element;
 
 use alcamo\dom\schema\component\SimpleTypeInterface;
 use alcamo\range\NonNegativeRange;
-use alcamo\rdf_literal\{DigitsStringLiteral, LiteralInterface};
+use alcamo\rdf_literal\{DigitStringLiteral, LiteralInterface};
 
 /**
- * @brief (De)Serializer for digits string data
+ * @brief (De)Serializer for digit string data
  *
  * @date Last reviewed 2026-04-21
  */
-class DigitsStringSerializer extends FourBitStringSerializer
+class DigitStringSerializer extends FourBitCharStringSerializer
 {
     public const SUPPORTED_DATATYPE_XNAMES =
-        [ DigitsStringLiteral::DEFAULT_DATATYPE_XNAME ];
+        [ DigitStringLiteral::DEFAULT_DATATYPE_XNAME ];
 
     public const ENCODING_TO_BITS = [
         'ASCII' => 8,
