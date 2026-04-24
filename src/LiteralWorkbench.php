@@ -121,9 +121,31 @@ class LiteralWorkbench
         return $this->literalFactory_->create($value, $datatype);
     }
 
+    /** @copydoc alcamo::data_element::LiteralTypeMap::validateLiteral */
     public function validateLiteral(
         LiteralInterface $literal
     ): SimpleTypeInterface {
         return $this->literalTypeMap_->validateLiteral($literal);
+    }
+
+    public function validateDataElementInstance(
+        DataElementInstanceInterface $dataElementInstance
+    ): SimpleTypeInterface {
+        $datatype = $this->validateLiteral($dataElementInstance->getLiteral());
+
+        $dataElementDatatypeXName =
+            $dataElementInstance->getDataElement()->getDatatype()->getXName();
+
+        if (!$datatype->isEqualToOrDerivedFrom($dataElementDatatypeXName)) {
+            throw (new DataValidationFailed())->setMessageContext(
+                [
+                    'extraMessage' => "literal datatype {$datatype->getXName()}"
+                        . " not derived from data element datatype "
+                        . $dataElementDatatypeXName
+                ]
+            );
+        }
+
+        return $datatype;
     }
 }

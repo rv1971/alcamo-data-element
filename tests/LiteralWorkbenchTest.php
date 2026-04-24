@@ -4,52 +4,53 @@ namespace alcamo\data_element;
 
 use alcamo\dom\schema\SchemaFactory;
 use alcamo\exception\DataValidationFailed;
+use alcamo\rdf_literal\{IntegerLiteral, LanguageLiteral, StringLiteral};
 use PHPUnit\Framework\TestCase;
 
 class LiteralWorkbenchTest extends TestCase
 {
     public function testCreation(): void
     {
-        $factoryGroup = LiteralWorkbench::getMainInstance();
+        $literalWorkbench = LiteralWorkbench::getMainInstance();
 
         $this->assertInstanceOf(
             SchemaFactory::class,
-            $factoryGroup->getSchemaFactory()
+            $literalWorkbench->getSchemaFactory()
         );
 
         $this->assertInstanceOf(
             LiteralFactory::class,
-            $factoryGroup->getLiteralFactory()
+            $literalWorkbench->getLiteralFactory()
         );
 
         $this->assertInstanceOf(
             LiteralTypeMap::class,
-            $factoryGroup->getLiteralTypeMap()
+            $literalWorkbench->getLiteralTypeMap()
         );
 
         $this->assertSame(
-            $factoryGroup->getSchemaFactory(),
-            $factoryGroup->getLiteralFactory()->getSchemaFactory()
+            $literalWorkbench->getSchemaFactory(),
+            $literalWorkbench->getLiteralFactory()->getSchemaFactory()
         );
 
         $this->assertSame(
-            $factoryGroup->getSchemaFactory(),
-            $factoryGroup->getLiteralTypeMap()->getSchemaFactory()
+            $literalWorkbench->getSchemaFactory(),
+            $literalWorkbench->getLiteralTypeMap()->getSchemaFactory()
         );
 
-        $factoryGroup2 = LiteralWorkbench::newFromFactories(
-            $factoryGroup->getLiteralFactory(),
-            $factoryGroup->getLiteralTypeMap()
-        );
-
-        $this->assertSame(
-            $factoryGroup->getLiteralFactory(),
-            $factoryGroup2->getLiteralFactory()
+        $literalWorkbench2 = LiteralWorkbench::newFromFactories(
+            $literalWorkbench->getLiteralFactory(),
+            $literalWorkbench->getLiteralTypeMap()
         );
 
         $this->assertSame(
-            $factoryGroup->getLiteralTypeMap(),
-            $factoryGroup2->getLiteralTypeMap()
+            $literalWorkbench->getLiteralFactory(),
+            $literalWorkbench2->getLiteralFactory()
+        );
+
+        $this->assertSame(
+            $literalWorkbench->getLiteralTypeMap(),
+            $literalWorkbench2->getLiteralTypeMap()
         );
     }
 
@@ -65,6 +66,47 @@ class LiteralWorkbenchTest extends TestCase
         LiteralWorkbench::newFromFactories(
             new LiteralFactory(new SchemaFactory()),
             new LiteralTypeMap(new SchemaFactory()),
+        );
+    }
+
+    public function testValidateDataElementInstance(): void
+    {
+        $literalWorkbench = LiteralWorkbench::getMainInstance();
+
+        $dataElement = new DataElement(
+            $literalWorkbench->getSchemaFactory()->createTypeFromUri(
+                StringLiteral::getClassDefaultDatatypeUri()
+            )
+        );
+
+        $type = $literalWorkbench->validateDataElementInstance(
+            new DataElementInstance(
+                $dataElement,
+                new LanguageLiteral('cr')
+            )
+        );
+
+        $this->assertSame(
+            $literalWorkbench->getSchemaFactory()->createTypeFromUri(
+                LanguageLiteral::getClassDefaultDatatypeUri()
+            ),
+            $type
+        );
+
+        $this->expectException(DataValidationFailed::class);
+
+        $this->expectExceptionMessage(
+            'Validation failed; literal datatype '
+                . 'http://www.w3.org/2001/XMLSchema integer not derived '
+                . 'from data element datatype '
+                . 'http://www.w3.org/2001/XMLSchema string'
+        );
+
+        $literalWorkbench->validateDataElementInstance(
+            new DataElementInstance(
+                $dataElement,
+                new IntegerLiteral(42)
+            )
         );
     }
 }
