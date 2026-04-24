@@ -2,6 +2,7 @@
 
 namespace alcamo\data_element;
 
+use alcamo\exception\{LengthOutOfRange, Unsupported};
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\BitsStringLiteral;
 use PHPUnit\Framework\TestCase;
@@ -22,7 +23,9 @@ class BitsStringSerializerTest extends TestCase
         $serializer = BitsStringSerializer::newFromProps(
             (object)[
                 'lengthRange' => new NonNegativeRange($minLength, $maxLength),
-                'flags' => SerializerInterface::TRUNCATE_SILENTLY,
+                'flags' => $encoding == 'X.690'
+                    ? 0
+                    : SerializerInterface::TRUNCATE_SILENTLY,
                 'encoding' => $encoding
             ]
         );
@@ -76,7 +79,53 @@ class BitsStringSerializerTest extends TestCase
                 new BitsStringLiteral('11111111'),
                 "\xF8",
                 '11111000'
+            ],
+            [
+                null,
+                null,
+                'X.690',
+                new BitsStringLiteral('1'),
+                "\x07\x80",
+                '1'
+            ],
+            [
+                null,
+                null,
+                'X.690',
+                new BitsStringLiteral('00110011'),
+                "\x00\x33",
+                '00110011'
             ]
         ];
+    }
+
+    public function testConstructException(): void
+    {
+        $this->expectException(Unsupported::class);
+
+        $this->expectExceptionMessage('truncation of X.690');
+
+        BitsStringSerializer::newFromProps(
+            (object)[
+                'flags' => BitsStringSerializer::TRUNCATE_SILENTLY,
+                'encoding' => 'X.690'
+            ]
+        );
+    }
+
+    public function testAdjustOutputLengthException(): void
+    {
+        $this->expectException(LengthOutOfRange::class);
+
+        $this->expectExceptionMessage(
+            'Length 2 of "\000\210" out of range [3, 3]'
+        );
+
+        BitsStringSerializer::newFromProps(
+            (object)[
+                'lengthRange' => new NonNegativeRange(3, 3),
+                'encoding' => 'X.690'
+            ]
+        )->serialize(new BitsStringLiteral('10001000'));
     }
 }

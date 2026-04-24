@@ -17,9 +17,9 @@ class DigitsStringSerializer extends FourBitStringSerializer
         [ DigitsStringLiteral::DEFAULT_DATATYPE_XNAME ];
 
     public const ENCODING_TO_BITS = [
-            'ASCII' => 8,
-            'COMPRESSED-BCD' => 4,
-            'EBCDIC' => 8
+        'ASCII' => 8,
+        'COMPRESSED-BCD' => 4,
+        'EBCDIC' => 8
     ];
 
     public const ENCODING_TO_PAD_STRING = [

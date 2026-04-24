@@ -2,7 +2,7 @@
 
 namespace alcamo\data_element;
 
-use alcamo\exception\InvalidEnumerator;
+use alcamo\exception\{InvalidEnumerator, Unsupported};
 use alcamo\range\NonNegativeRange;
 
 /**
@@ -14,6 +14,15 @@ abstract class AbstractSerializerWithEncoding extends AbstractSerializer
 {
     /// Map of supported encodings to number of bits per encoded character
     public const ENCODING_TO_BITS = null;
+
+    /**
+     * @brief Map of supported encodings to pad string
+     *
+     * If an encoding has an empty pad string, this means that the length of
+     * of a serialization result MUST NOT be changed, neither padded nor
+     * truncated.
+     */
+    public const ENCODING_TO_PAD_STRING = null;
 
     /// Default encoding
     public const DEFAULT_ENCODING = 'ASCII';
@@ -59,15 +68,6 @@ abstract class AbstractSerializerWithEncoding extends AbstractSerializer
         ?string $encoding = null,
         ?LiteralWorkbench $literalWorkbench = null
     ) {
-        parent::__construct(
-            $datatypeXName,
-            $lengthRange,
-            $padString,
-            $padType,
-            $flags,
-            $literalWorkbench
-        );
-
         if (isset($encoding)) {
             if (!isset(static::ENCODING_TO_BITS[$encoding])) {
                 /** @throw alcamo::exception::InvalidEnumerator if $encoding
@@ -84,6 +84,26 @@ abstract class AbstractSerializerWithEncoding extends AbstractSerializer
         } else {
             $this->encoding_ = static::DEFAULT_ENCODING;
         }
+
+        if (
+            static::ENCODING_TO_PAD_STRING[$this->encoding_] == ''
+                && $flags & self::TRUNCATE_SILENTLY
+        ) {
+            /** @throw alcamo::exception::Unsupported if the output length
+             *  MUST NOT be changed but TRUNCATE_SILENTLY is activated. */
+            throw (new Unsupported())->setMessageContext(
+                [ 'feature' => "truncation of $encoding" ]
+            );
+        }
+
+        parent::__construct(
+            $datatypeXName,
+            $lengthRange,
+            $padString,
+            $padType,
+            $flags,
+            $literalWorkbench
+        );
     }
 
     public function getEncoding(): string

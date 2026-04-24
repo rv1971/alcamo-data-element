@@ -194,6 +194,19 @@ abstract class AbstractSerializer implements SerializerInterface
                     );
                 }
             } elseif (isset($minLength)) {
+                if ($this->padString_ == '' && strlen($value) < $minLength) {
+                    /** @throw alcamo::exception::LengthOutOfRange if $value
+                     *  is too short and no padding is possible. */
+                    throw (new LengthOutOfRange())->setMessageContext(
+                        [
+                            'value' => $value,
+                            'length' => strlen($value),
+                            'lowerBound' => $minLength,
+                            'upperBound' => $maxLength
+                        ]
+                    );
+                }
+
                 /** Pad to the minimum length if necessary. */
                 $value = str_pad(
                     $value,
