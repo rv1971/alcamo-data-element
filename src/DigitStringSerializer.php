@@ -3,7 +3,6 @@
 namespace alcamo\data_element;
 
 use alcamo\dom\schema\component\SimpleTypeInterface;
-use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\{DigitStringLiteral, LiteralInterface};
 
 /**

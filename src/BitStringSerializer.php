@@ -4,7 +4,6 @@ namespace alcamo\data_element;
 
 use alcamo\binary_data\BinaryString;
 use alcamo\dom\schema\component\SimpleTypeInterface;
-use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\{BitStringLiteral, LiteralInterface};
 
 /**

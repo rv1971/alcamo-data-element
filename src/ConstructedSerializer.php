@@ -45,7 +45,9 @@ class ConstructedSerializer extends AbstractSerializer implements
      *
      * @parm $separator String to separate items in (de)serialization.
      *
-     * @param $lengthRange Allowed length of serialized data, in bytes.
+     * @param $lengthRange NonNegativeRange|array Allowed length of serialized
+     * data, in bytes or nibbles. If given a an array, it must have 1 to 2
+     * items representing the minimum and optionlly the maximim length.
      *
      * @param $flags Bitwise-OR-combination of the constants in
      * alcamo::data_element::SerializerInterface.
@@ -55,7 +57,7 @@ class ConstructedSerializer extends AbstractSerializer implements
     public function __construct(
         iterable $serializers,
         ?string $separator = null,
-        ?NonNegativeRange $lengthRange = null,
+        $lengthRange = null,
         ?int $flags = null
     ) {
         foreach ($serializers as $key => $serializer) {

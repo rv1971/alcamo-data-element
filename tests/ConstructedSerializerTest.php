@@ -57,9 +57,7 @@ class ConstructedSerializerTest extends TestCase
     {
         $intS = new NonNegativeIntegerSerializer();
         $stringS = new StringSerializer();
-        $stringS4 = StringSerializer::newFromProps(
-            ['lengthRange' => new NonNegativeRange(4, null)]
-        );
+        $stringS4 = StringSerializer::newFromProps([ 'lengthRange' => [ 4 ] ]);
         $bcdS = NonNegativeIntegerSerializer::newFromProps(
             [ 'encoding' =>  'BCD']
         );
@@ -95,7 +93,7 @@ class ConstructedSerializerTest extends TestCase
             [
                 [ $stringS4, $stringS4 ],
                 null,
-                new NonNegativeRange(10),
+                [ 10 ],
                 [
                     new StringLiteral('bar'),
                     new StringLiteral('foo'),
@@ -108,7 +106,7 @@ class ConstructedSerializerTest extends TestCase
             [
                 [ $bcdS, $binS, $binS ],
                 "\xFF",
-                new NonNegativeRange(5),
+                [ 5 ],
                 [
                     new NonNegativeIntegerLiteral(3),
                     new HexBinaryLiteral('abcd'),
@@ -187,15 +185,9 @@ class ConstructedSerializerTest extends TestCase
 
         (new ConstructedSerializer(
             [
-                StringSerializer::newFromProps(
-                    [ 'lengthRange' => new NonNegativeRange(1, 1) ]
-                ),
-                StringSerializer::newFromProps(
-                    [ 'lengthRange' => new NonNegativeRange(2, 3) ]
-                ),
-                StringSerializer::newFromProps(
-                    [ 'lengthRange' => new NonNegativeRange(3, null) ]
-                )
+                StringSerializer::newFromProps([ 'lengthRange' => [ 1, 1 ] ]),
+                StringSerializer::newFromProps([ 'lengthRange' => [ 2, 3 ] ]),
+                StringSerializer::newFromProps([ 'lengthRange' => [ 3 ] ])
             ],
             null
         ))->deserialize('abc');

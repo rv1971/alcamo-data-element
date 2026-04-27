@@ -85,8 +85,10 @@ abstract class AbstractSerializer implements SerializerInterface
      * @parm $encoding [default
      * alcamo::data_element::AbstractSerializer::DEFAULT_ENCODING]
      *
-     * @param $lengthRange Allowed length of serialized data, in
-     * encoding-dependent units (bytes or nibbles).
+     * @param $lengthRange NonNegativeRange|array Allowed length of serialized
+     * data, in encoding-dependent units (bytes or nibbles). If given a an
+     * array, it must have 1 to 2 items representing the minimum and optionlly
+     * the maximim length.
      *
      * @param $flags Bitwise-OR-combination of the constants in
      * alcamo::data_element::SerializerInterface.
@@ -105,7 +107,7 @@ abstract class AbstractSerializer implements SerializerInterface
     public function __construct(
         ?string $datatypeXName = null,
         ?string $encoding = null,
-        ?NonNegativeRange $lengthRange = null,
+        $lengthRange = null,
         ?int $flags = null,
         ?string $padString = null,
         ?int $padType = null,
@@ -180,7 +182,12 @@ abstract class AbstractSerializer implements SerializerInterface
             );
         }
 
-        $this->lengthRange_ = $lengthRange;
+        if (isset($lengthRange)) {
+            $this->lengthRange_ = $lengthRange instanceof NonNegativeRange
+                ? $lengthRange
+                : new NonNegativeRange(...$lengthRange);
+        }
+
         $this->padType_ = $padType ?? static::PAD_TYPE;
         $this->flags_ = (int)$flags;
     }
