@@ -3,7 +3,6 @@
 namespace alcamo\data_element;
 
 use alcamo\dom\schema\component\SimpleTypeInterface;
-use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\LiteralInterface;
 
 /**
@@ -20,7 +19,7 @@ class StringSerializer extends AbstractSerializer
         self::XSD_NS . ' QName'
     ];
 
-    public const ENCODING_TO_PAD_STRING = [ '*' => ' ' ];
+    public const ENCODINGS = [ '*' => [ 8, ' ' ] ];
 
     /// String encoding used internally
     public const INTERNAL_ENCODING = 'UTF-8';

@@ -58,7 +58,9 @@ class ConstructedSerializerTest extends TestCase
         $intS = new NonNegativeIntegerSerializer();
         $stringS = new StringSerializer();
         $stringS4 = new StringSerializer(null, new NonNegativeRange(4, null));
-        $bcdS = new NonNegativeIntegerSerializer(null, null, null, 'BCD');
+        $bcdS = NonNegativeIntegerSerializer::newFromProps(
+            (object)[ 'encoding' =>  'BCD']
+        );
         $binS = new BinarySerializer();
 
         return [

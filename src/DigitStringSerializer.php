@@ -16,16 +16,10 @@ class DigitStringSerializer extends FourBitCharStringSerializer
     public const SUPPORTED_DATATYPE_XNAMES =
         [ DigitStringLiteral::DEFAULT_DATATYPE_XNAME ];
 
-    public const ENCODING_TO_BITS = [
-        'ASCII' => 8,
-        'COMPRESSED-BCD' => 4,
-        'EBCDIC' => 8
-    ];
-
-    public const ENCODING_TO_PAD_STRING = [
-        'ASCII'          => ' ',
-        'COMPRESSED-BCD' => 'F',
-        'EBCDIC'         => "\x40"
+    public const ENCODINGS = [
+        'ASCII'          => [ 8, ' ' ],
+        'COMPRESSED-BCD' => [ 4, 'F' ],
+        'EBCDIC'         => [ 8, "\x40" ]
     ];
 
     public function serialize(LiteralInterface $literal): string

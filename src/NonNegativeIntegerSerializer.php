@@ -21,18 +21,11 @@ class NonNegativeIntegerSerializer extends IntegerSerializer
         PositiveGYearLiteral::DEFAULT_DATATYPE_XNAME
     ];
 
-    public const ENCODING_TO_BITS = [
-        'ASCII'      => 8,
-        'BCD'        => 4,
-        'BIG-ENDIAN' => 8,
-        'EBCDIC'     => 8
-    ];
-
-    public const ENCODING_TO_PAD_STRING = [
-        'ASCII'      => '0',
-        'BCD'        => '0',
-        'BIG-ENDIAN' => "\x00",
-        'EBCDIC'     => "\x40"
+    public const ENCODINGS = [
+        'ASCII'      => [ 8, '0' ],
+        'BCD'        => [ 4, '0' ],
+        'BIG-ENDIAN' => [ 8, "\x00" ],
+        'EBCDIC'     => [ 8, "\x40" ]
     ];
 
     public function serialize(LiteralInterface $literal): string
@@ -58,7 +51,7 @@ class NonNegativeIntegerSerializer extends IntegerSerializer
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
-        if (static::ENCODING_TO_BITS[$this->encoding_] == 4) {
+        if (static::ENCODINGS[$this->encoding_][0] == 4) {
             $input = bin2hex($input);
 
             $this->validateInputLength($input);

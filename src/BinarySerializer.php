@@ -21,7 +21,7 @@ class BinarySerializer extends AbstractSerializer
 
     public const DEFAULT_ENCODING = 'BINARY';
 
-    public const ENCODING_TO_PAD_STRING = [ 'BINARY' => "\x00" ];
+    public const ENCODINGS = [ 'BINARY' => [ 8, "\x00" ] ];
 
     public function serialize(LiteralInterface $literal): string
     {

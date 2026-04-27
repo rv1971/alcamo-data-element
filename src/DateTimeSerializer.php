@@ -26,10 +26,10 @@ class DateTimeSerializer extends AbstractSerializer
         self::XSD_NS . ' time',
     ];
 
-    public const ENCODING_TO_BITS = [
-        'ASCII'  => 8,
-        'BCD'    => 4,
-        'EBCDIC' => 8
+    public const ENCODINGS = [
+        'ASCII'  => [ 8, ' ' ],
+        'BCD'    => [ 4, 'F' ],
+        'EBCDIC' => [ 8, "\x40" ]
     ];
 
     public const DEFAULT_POSIX_FORMATS = [
@@ -103,7 +103,7 @@ class DateTimeSerializer extends AbstractSerializer
     ) {
         /* No padding will take place since the output strings are created at
          * the exact length of the chosen format (which may contain padding
-         * characters if needed. */
+         * characters if needed). */
         parent::__construct(
             $datatypeXName,
             null,
@@ -175,7 +175,7 @@ class DateTimeSerializer extends AbstractSerializer
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
-        if (static::ENCODING_TO_BITS[$this->encoding_] == 4) {
+        if (static::ENCODINGS[$this->encoding_][0] == 4) {
             $input = bin2hex($input);
         }
 

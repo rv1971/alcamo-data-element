@@ -114,7 +114,9 @@ class DigitStringSerializerTest extends TestCase
                 . '["ASCII", "COMPRESSED-BCD", "EBCDIC"]'
         );
 
-        new DigitStringSerializer(null, null, null, 'BCD');
+        DigitStringSerializer::newFromProps(
+            (object)[ 'encoding' =>  'BCD']
+        );
     }
 
     public function testInputLengthWrong(): void
@@ -125,12 +127,12 @@ class DigitStringSerializerTest extends TestCase
             'Length 6 of "12345f" out of range [0, 4]'
         );
 
-        (new DigitStringSerializer(
-            null,
-            new NonNegativeRange(null, 4),
-            0,
-            'COMPRESSED-BCD'
-        ))
+        DigitStringSerializer::newFromProps(
+            (object)[
+                'lengthRange' => new NonNegativeRange(null, 4),
+                'encoding' =>  'COMPRESSED-BCD'
+            ]
+        )
             ->deserialize("\x12\x34\x5f");
     }
 }

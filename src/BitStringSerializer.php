@@ -17,18 +17,11 @@ class BitStringSerializer extends DigitStringSerializer
     public const SUPPORTED_DATATYPE_XNAMES =
         [ BitStringLiteral::DEFAULT_DATATYPE_XNAME ];
 
-    public const ENCODING_TO_BITS = [
-        'ASCII'  => 8,
-        'BINARY' => 1,
-        'EBCDIC' => 8,
-        'X.690'  => 8
-    ];
-
-    public const ENCODING_TO_PAD_STRING = [
-        'ASCII'  => ' ',
-        'BINARY' => '0',
-        'EBCDIC' => "\x40",
-        'X.690'  => ''
+    public const ENCODINGS = [
+        'ASCII'  => [ 8, ' ' ],
+        'BINARY' => [ 1, '0' ],
+        'EBCDIC' => [ 8, "\x40" ],
+        'X.690'  => [ 8, '' ]
     ];
 
     public function serialize(LiteralInterface $literal): string

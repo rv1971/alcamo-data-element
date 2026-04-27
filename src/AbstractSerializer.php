@@ -26,19 +26,25 @@ abstract class AbstractSerializer implements SerializerInterface
      */
     public const SUPPORTED_DATATYPE_XNAMES = [];
 
-    /// Map of supported encodings to number of bits per encoded character
-    public const ENCODING_TO_BITS = null;
-
     /**
-     * @brief Map of supported encodings to pad string
+     * @brief Supported encodings
      *
-     * If an encoding has an empty pad string, this means that the length of a
-     * serialization result MUST NOT be changed, neither padded nor truncated.
+     * Assigns to each supported encoding a pair, consisting of
+     * - the number of bits per encoded character
+     * - the padding string.
+     *
+     * The encoding `*` represents all encodings not explicitely listed.
+     *
+     * If an encoding has an empty padding string, this means that the length
+     * of a serialization result MUST NOT be changed, neither padded nor
+     * truncated.
      */
-    public const ENCODING_TO_PAD_STRING = null;
+    public const ENCODINGS = [ '*' => [ 8, ' ' ] ];
 
     /// Default encoding
     public const DEFAULT_ENCODING = 'ASCII';
+
+    public const PAD_TYPE = STR_PAD_RIGHT;
 
     public static function newFromProps(object $props): SerializerInterface
     {
@@ -81,7 +87,7 @@ abstract class AbstractSerializer implements SerializerInterface
      *
      * @param $padType STR_PAD_RIGHT or STR_PAD_LEFT. Truncation, if
      * necessary, takes place on the same side as padding. [default
-     * STR_PAD_RIGHT, as in str_pad()]
+     * static::PAD_TYPE, as in str_pad()]
      *
      * @param $flags Bitwise-OR-combination of the constants in
      * alcamo::data_element::SerializerInterface.
@@ -138,15 +144,15 @@ abstract class AbstractSerializer implements SerializerInterface
 
         if (isset($encoding)) {
             if (
-                static::ENCODING_TO_BITS
-                    && !isset(static::ENCODING_TO_BITS[$encoding])
+                !isset(static::ENCODINGS[$encoding])
+                    && !isset(static::ENCODINGS['*'])
             ) {
                 /** @throw alcamo::exception::InvalidEnumerator if $encoding
                  *  is not supported. */
                 throw (new InvalidEnumerator())->setMessageContext(
                     [
                         'value' => $encoding,
-                        'expectedOneOf' => array_keys(static::ENCODING_TO_BITS)
+                        'expectedOneOf' => array_keys(static::ENCODINGS)
                     ]
                 );
             }
@@ -156,24 +162,20 @@ abstract class AbstractSerializer implements SerializerInterface
             $this->encoding_ = static::DEFAULT_ENCODING;
         }
 
-        if (
-            static::ENCODING_TO_PAD_STRING
-                && (static::ENCODING_TO_PAD_STRING[$this->encoding_]
-                    ?? static::ENCODING_TO_PAD_STRING['*']) == ''
-                && $flags & self::TRUNCATE_SILENTLY
-        ) {
+        $this->padString_ = $padString
+            ?? (static::ENCODINGS[$this->encoding_]
+                ?? static::ENCODINGS['*'])[1];
+
+        if ($this->padString_ == '' && $flags & self::TRUNCATE_SILENTLY) {
             /** @throw alcamo::exception::Unsupported if the output length
              *  MUST NOT be changed but TRUNCATE_SILENTLY is activated. */
             throw (new Unsupported())->setMessageContext(
-                [ 'feature' => "truncation of $encoding" ]
+                [ 'feature' => "truncation of {$this->encoding_}" ]
             );
         }
 
         $this->lengthRange_ = $lengthRange;
-        $this->padString_ = $padString
-            ?? static::ENCODING_TO_PAD_STRING[$this->encoding_]
-            ?? static::ENCODING_TO_PAD_STRING['*'];
-        $this->padType_ = $padType ?? STR_PAD_RIGHT;
+        $this->padType_ = $padType ?? static::PAD_TYPE;
         $this->flags_ = (int)$flags;
     }
 
@@ -214,9 +216,8 @@ abstract class AbstractSerializer implements SerializerInterface
 
     public function getBitsPerCharacter(): int
     {
-        return static::ENCODING_TO_BITS
-            ? static::ENCODING_TO_BITS[$this->encoding_]
-            : 8;
+        return
+            (static::ENCODINGS[$this->encoding_] ?? static::ENCODINGS['*'])[0];
     }
 
     /// Check whether $literal is supported for this serializer class

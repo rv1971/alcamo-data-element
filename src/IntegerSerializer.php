@@ -4,9 +4,7 @@ namespace alcamo\data_element;
 
 use alcamo\binary_data\BinaryString;
 use alcamo\dom\schema\component\SimpleTypeInterface;
-use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\LiteralInterface;
-use alcamo\exception\InvalidEnumerator;
 
 /**
  * @brief (De)Serializer for integers
@@ -23,77 +21,13 @@ class IntegerSerializer extends AbstractSerializer
         self::XSD_NS . ' gYear'
     ];
 
-    public const ENCODING_TO_BITS = [
-        'ASCII'      => 8,
-        'BIG-ENDIAN' => 8,
-        'EBCDIC'     => 8
+    public const ENCODINGS = [
+        'ASCII'      => [ 8, ' ' ],
+        'BIG-ENDIAN' => [ 8, "\x00" ],
+        'EBCDIC'     => [ 8, "\x40" ]
     ];
 
-    public const ENCODING_TO_PAD_STRING = [
-        'ASCII'      => '0',
-        'BIG-ENDIAN' => "\x00",
-        'EBCDIC'     => "\x40"
-    ];
-
-    public static function newFromProps(object $props): SerializerInterface
-    {
-        return new static(
-            $props->datatypeXName ?? null,
-            $props->lengthRange ?? null,
-            $props->flags ?? null,
-            $props->encoding ?? null,
-            $props->literalWorkbench ?? null
-        );
-    }
-
-    /**
-     * @param $datatypeXName Datatype for deserialized literals [default first
-     * item in SUPPORTED_DATATYPE_XNAMES)
-     *
-     * @param $lengthRange Allowed length of serialized data, in
-     * encoding-dependent units (bytes or nibbles).
-     *
-     * @param $flags Bitwise-OR-combination of the constants in
-     * alcamo::data_element::SerializerInterface.
-     *
-     * @parm $encoding [default
-     * alcamo::data_element::AbstractSerializerWithEncoding::DEFAULT_ENCODING]
-     *
-     * @param $literalWorkbench Workbench used in deserialize() and in
-     * validateLiteralClass(). [default
-     * alcamo::data_element::LiteralWorkbench::getMainInstance()]
-     */
-    public function __construct(
-        ?string $datatypeXName = null,
-        ?NonNegativeRange $lengthRange = null,
-        ?int $flags = null,
-        ?string $encoding = null,
-        ?FactoryGroup $literalWorkbench = null
-    ) {
-        $padString = static::ENCODING_TO_PAD_STRING[
-            $encoding ?? static::DEFAULT_ENCODING
-        ] ?? null;
-
-        if (!isset($padString)) {
-            throw (new InvalidEnumerator())->setMessageContext(
-                [
-                    'value' => $encoding ?? static::DEFAULT_ENCODING,
-                    'expectedOneOf' =>
-                        array_keys(static::ENCODING_TO_PAD_STRING)
-                ]
-            );
-        }
-
-        parent::__construct(
-            $datatypeXName,
-            $lengthRange,
-            $padString,
-            STR_PAD_LEFT,
-            $flags,
-            $encoding,
-            $literalWorkbench
-        );
-    }
+    public const PAD_TYPE = STR_PAD_LEFT;
 
     public function serialize(LiteralInterface $literal): string
     {
