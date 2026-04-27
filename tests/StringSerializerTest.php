@@ -115,7 +115,7 @@ class StringSerializerTest extends TestCase
             'Length 5 of "elitr" out of range [0, 3]'
         );
 
-        (new StringSerializer(null, new NonNegativeRange(0, 3)))
+        (new StringSerializer(null, null, new NonNegativeRange(0, 3)))
             ->serialize(new StringLiteral('elitr'));
     }
 
@@ -127,7 +127,7 @@ class StringSerializerTest extends TestCase
             'Length 3 of "sed" out of range [5, "∞"]'
         );
 
-        (new StringSerializer(null, new NonNegativeRange(5, null)))
+        (new StringSerializer(null, null, new NonNegativeRange(5, null)))
             ->deserialize('sed');
     }
 }

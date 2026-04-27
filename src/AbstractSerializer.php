@@ -50,11 +50,11 @@ abstract class AbstractSerializer implements SerializerInterface
     {
         return new static(
             $props->datatypeXName ?? null,
+            $props->encoding ?? null,
             $props->lengthRange ?? null,
+            $props->flags ?? null,
             $props->padString ?? null,
             $props->padType ?? null,
-            $props->flags ?? null,
-            $props->encoding ?? null,
             $props->literalWorkbench ?? null
         );
     }
@@ -69,28 +69,32 @@ abstract class AbstractSerializer implements SerializerInterface
      */
     protected $supportedDatatype_;
 
+    protected $encoding_;         ///< string
     protected $lengthRange_;      ///< ?NonNegativeRange
+    protected $flags_;            ///< int
     protected $padString_;        ///< string
     protected $padType_;          ///< one of STR_PAD_RIGHT or STR_PAD_LEFT
-    protected $flags_;            ///< int
-    protected $encoding_;         ///< string
     protected $literalWorkbench_; ///< LiteralWorkbench
 
     /**
      * @param $datatypeXName Datatype to use for deserialized literals
      * [default first item in SUPPORTED_DATATYPE_XNAMES]
      *
+     * @parm $encoding [default
+     * alcamo::data_element::AbstractSerializer::DEFAULT_ENCODING]
+     *
      * @param $lengthRange Allowed length of serialized data, in
      * encoding-dependent units (bytes or nibbles).
      *
-     * @param $padString Padding string. [default space, as in str_pad()]
+     * @param $flags Bitwise-OR-combination of the constants in
+     * alcamo::data_element::SerializerInterface.
+     *
+     * @param $padString Padding string. [default taken from from
+     * alcamo::data_element::AbstractSerializer::ENCODINGS]
      *
      * @param $padType STR_PAD_RIGHT or STR_PAD_LEFT. Truncation, if
      * necessary, takes place on the same side as padding. [default
-     * static::PAD_TYPE, as in str_pad()]
-     *
-     * @param $flags Bitwise-OR-combination of the constants in
-     * alcamo::data_element::SerializerInterface.
+     * alcamo::data_element::AbstractSerializer::PAD_TYPE]
      *
      * @param $literalWorkbench Workbench used in deserialize() and in
      * validateLiteralClass(). [default
@@ -98,11 +102,11 @@ abstract class AbstractSerializer implements SerializerInterface
      */
     public function __construct(
         ?string $datatypeXName = null,
+        ?string $encoding = null,
         ?NonNegativeRange $lengthRange = null,
+        ?int $flags = null,
         ?string $padString = null,
         ?int $padType = null,
-        ?int $flags = null,
-        ?string $encoding = null,
         ?LiteralWorkbench $literalWorkbench = null
     ) {
         $this->literalWorkbench_ =
@@ -184,9 +188,19 @@ abstract class AbstractSerializer implements SerializerInterface
         return $this->datatype_;
     }
 
+    public function getEncoding(): string
+    {
+        return $this->encoding_;
+    }
+
     public function getLengthRange(): ?NonNegativeRange
     {
         return $this->lengthRange_;
+    }
+
+    public function getFlags(): int
+    {
+        return $this->flags_;
     }
 
     public function getPadString(): string
@@ -197,16 +211,6 @@ abstract class AbstractSerializer implements SerializerInterface
     public function getPadType(): int
     {
         return $this->padType_;
-    }
-
-    public function getFlags(): int
-    {
-        return $this->flags_;
-    }
-
-    public function getEncoding(): string
-    {
-        return $this->encoding_;
     }
 
     public function getLiteralWorkbench(): LiteralWorkbench

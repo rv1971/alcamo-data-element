@@ -22,6 +22,8 @@ class ConstructedSerializer extends AbstractSerializer implements
 
     public const SUPPORTED_DATATYPE_XNAMES = [ self::XSD_NS . ' string' ];
 
+    public const ENCODINGS = [ 'BINARY' => [ 8, "\x00" ] ];
+
     public const DEFAULT_ENCODING = 'BINARY';
 
     private $separator_; ///< ?string
@@ -71,11 +73,11 @@ class ConstructedSerializer extends AbstractSerializer implements
 
         parent::__construct(
             self::XSD_NS . ' string',
+            static::DEFAULT_ENCODING,
             $lengthRange,
+            $flags,
             $serializer->padString_,
             $serializer->padType_,
-            $flags,
-            static::DEFAULT_ENCODING,
             $serializer->literalWorkbench_
         );
 

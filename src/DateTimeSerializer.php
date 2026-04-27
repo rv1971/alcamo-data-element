@@ -70,9 +70,11 @@ class DateTimeSerializer extends AbstractSerializer
     {
         return new static(
             $props->datatypeXName ?? null,
+            $props->encoding ?? null,
             $props->posixFormat ?? null,
             $props->flags ?? null,
-            $props->encoding ?? null,
+            $props->padString ?? null,
+            $props->padType ?? null,
             $props->literalWorkbench ?? null
         );
     }
@@ -81,14 +83,21 @@ class DateTimeSerializer extends AbstractSerializer
      * @param $datatypeXName Datatype for deserialized literals [default first
      * item in SUPPORTED_DATATYPE_XNAMES)
      *
+     * @parm $encoding [default
+     * alcamo::data_element::AbstractSerializerWithEncoding::DEFAULT_ENCODING]
+     *
      * @param $posixFormat POSIX format for input/output. Length is fixed and
      * computed from $posixFormat. [default taken from DEFAULT_POSIX_FORMATS]
      *
      * @param $flags Bitwise-OR-combination of the constants in
      * alcamo::data_element::SerializerInterface.
      *
-     * @parm $encoding [default
-     * alcamo::data_element::AbstractSerializerWithEncoding::DEFAULT_ENCODING]
+     * @param $padString Padding string. [default taken from from
+     * alcamo::data_element::AbstractSerializer::ENCODINGS]
+     *
+     * @param $padType STR_PAD_RIGHT or STR_PAD_LEFT. Truncation, if
+     * necessary, takes place on the same side as padding. [default
+     * alcamo::data_element::AbstractSerializer::PAD_TYPE]
      *
      * @param $literalWorkbench Workbench used in deserialize() and in
      * validateLiteralClass(). [default
@@ -96,9 +105,11 @@ class DateTimeSerializer extends AbstractSerializer
      */
     public function __construct(
         ?string $datatypeXName = null,
+        ?string $encoding = null,
         $posixFormat = null,
         ?int $flags = null,
-        ?string $encoding = null,
+        ?string $padString = null,
+        ?int $padType = null,
         ?LiteralWorkbench $literalWorkbench = null
     ) {
         /* No padding will take place since the output strings are created at
@@ -106,11 +117,11 @@ class DateTimeSerializer extends AbstractSerializer
          * characters if needed). */
         parent::__construct(
             $datatypeXName,
-            null,
-            null,
+            $encoding,
             null,
             $flags,
-            $encoding,
+            $padString,
+            $padType,
             $literalWorkbench
         );
 

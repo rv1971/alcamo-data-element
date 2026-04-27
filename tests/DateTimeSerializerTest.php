@@ -137,9 +137,10 @@ class DateTimeSerializerTest extends TestCase
             'Value "-0007" out of range [0, "∞"]'
         );
 
-        (new DateTimeSerializer(null, null, null, 'BCD'))->serialize(
-            new DateTimeLiteral((new \DateTime())->setDate(-7, 1, 2))
-        );
+        DateTimeSerializer::newFromProps((object)[ 'encoding' => 'BCD' ])
+            ->serialize(
+                new DateTimeLiteral((new \DateTime())->setDate(-7, 1, 2))
+            );
     }
 
     public function testDatatypeMismatch(): void
