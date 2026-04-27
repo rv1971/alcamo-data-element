@@ -66,8 +66,10 @@ class DateTimeSerializer extends AbstractSerializer
 
     private $posixFormat_; ///< PosixFormat
 
-    public static function newFromProps(object $props): SerializerInterface
+    public static function newFromProps($props): SerializerInterface
     {
+        $props = (object)$props;
+
         return new static(
             $props->datatypeXName ?? null,
             $props->encoding ?? null,

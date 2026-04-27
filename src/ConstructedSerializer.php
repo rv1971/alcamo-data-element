@@ -28,8 +28,10 @@ class ConstructedSerializer extends AbstractSerializer implements
 
     private $separator_; ///< ?string
 
-    public static function newFromProps(object $props): SerializerInterface
+    public static function newFromProps($props): SerializerInterface
     {
+        $props = (object)$props;
+
         return new static(
             $props->serializers ?? null,
             $props->separator ?? null,

@@ -27,7 +27,7 @@ class ConstructedSerializerTest extends TestCase
         $expectedDeserializionDigest
     ): void {
         $serializer = ConstructedSerializer::newFromProps(
-            (object)[
+            [
                 'serializers' => $serializers,
                 'separator' => $separator,
                 'lengthRange' => $lengthRange,
@@ -58,10 +58,10 @@ class ConstructedSerializerTest extends TestCase
         $intS = new NonNegativeIntegerSerializer();
         $stringS = new StringSerializer();
         $stringS4 = StringSerializer::newFromProps(
-            (object)['lengthRange' => new NonNegativeRange(4, null)]
+            ['lengthRange' => new NonNegativeRange(4, null)]
         );
         $bcdS = NonNegativeIntegerSerializer::newFromProps(
-            (object)[ 'encoding' =>  'BCD']
+            [ 'encoding' =>  'BCD']
         );
         $binS = new BinarySerializer();
 
@@ -188,13 +188,13 @@ class ConstructedSerializerTest extends TestCase
         (new ConstructedSerializer(
             [
                 StringSerializer::newFromProps(
-                    (object)[ 'lengthRange' => new NonNegativeRange(1, 1) ]
+                    [ 'lengthRange' => new NonNegativeRange(1, 1) ]
                 ),
                 StringSerializer::newFromProps(
-                    (object)[ 'lengthRange' => new NonNegativeRange(2, 3) ]
+                    [ 'lengthRange' => new NonNegativeRange(2, 3) ]
                 ),
                 StringSerializer::newFromProps(
-                    (object)[ 'lengthRange' => new NonNegativeRange(3, null) ]
+                    [ 'lengthRange' => new NonNegativeRange(3, null) ]
                 )
             ],
             null

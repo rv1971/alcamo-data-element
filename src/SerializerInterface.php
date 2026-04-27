@@ -34,12 +34,14 @@ interface SerializerInterface extends NamespaceConstantsInterface
     public const SKIP_LENGTH_CHECK = 2;
 
     /**
-     * @brief Create from an object with named properties corresponding to the
-     * constructor parameters
+     * @brief Create from an object or array with named properties
+     * corresponding to the constructor parameters
      *
      * Useful to create instances of this class from configuration parameters.
+     *
+     * @param $props object or array
      */
-    public static function newFromProps(object $props): self;
+    public static function newFromProps($props): self;
 
     public function getDatatype(): SimpleTypeInterface;
 

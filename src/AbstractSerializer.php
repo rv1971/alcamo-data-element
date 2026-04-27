@@ -46,8 +46,10 @@ abstract class AbstractSerializer implements SerializerInterface
 
     public const PAD_TYPE = STR_PAD_RIGHT;
 
-    public static function newFromProps(object $props): SerializerInterface
+    public static function newFromProps($props): SerializerInterface
     {
+        $props = (object)$props;
+
         return new static(
             $props->datatypeXName ?? null,
             $props->encoding ?? null,
