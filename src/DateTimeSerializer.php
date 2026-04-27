@@ -64,8 +64,6 @@ class DateTimeSerializer extends AbstractSerializer
         ]
     ];
 
-    private $posixFormat_; ///< PosixFormat
-
     public static function newFromProps($props): SerializerInterface
     {
         $props = (object)$props;
@@ -81,12 +79,14 @@ class DateTimeSerializer extends AbstractSerializer
         );
     }
 
+    private $posixFormat_; ///< PosixFormat
+
     /**
      * @param $datatypeXName Datatype for deserialized literals [default first
      * item in SUPPORTED_DATATYPE_XNAMES)
      *
-     * @parm $encoding [default
-     * alcamo::data_element::AbstractSerializerWithEncoding::DEFAULT_ENCODING]
+     * @parm $encoding [default first key of
+     * alcamo::data_element::AbstractSerializer::ENCODINGS]
      *
      * @param $posixFormat POSIX format for input/output. Length is fixed and
      * computed from $posixFormat. [default taken from DEFAULT_POSIX_FORMATS]

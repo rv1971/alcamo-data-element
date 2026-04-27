@@ -19,13 +19,13 @@ class StringSerializer extends AbstractSerializer
         self::XSD_NS . ' QName'
     ];
 
-    public const ENCODINGS = [ '*' => [ 8, ' ' ] ];
+    public const ENCODINGS = [
+        'UTF-8' => [ 8, ' ' ], // default encoding
+        '*'     => [ 8, ' ' ]
+    ];
 
     /// String encoding used internally
     public const INTERNAL_ENCODING = 'UTF-8';
-
-    /// Default encoding in serialized data
-    public const DEFAULT_ENCODING = 'UTF-8';
 
     public function serialize(LiteralInterface $literal): string
     {

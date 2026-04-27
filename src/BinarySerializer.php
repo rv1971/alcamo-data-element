@@ -18,8 +18,6 @@ class BinarySerializer extends AbstractSerializer
         self::XSD_NS . ' base64Binary'
     ];
 
-    public const DEFAULT_ENCODING = 'BINARY';
-
     public const ENCODINGS = [ 'BINARY' => [ 8, "\x00" ] ];
 
     public function serialize(LiteralInterface $literal): string

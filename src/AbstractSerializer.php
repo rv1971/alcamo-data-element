@@ -39,10 +39,7 @@ abstract class AbstractSerializer implements SerializerInterface
      * of a serialization result MUST NOT be changed, neither padded nor
      * truncated.
      */
-    public const ENCODINGS = [ '*' => [ 8, ' ' ] ];
-
-    /// Default encoding
-    public const DEFAULT_ENCODING = 'ASCII';
+    public const ENCODINGS = [];
 
     public const PAD_TYPE = STR_PAD_RIGHT;
 
@@ -82,8 +79,8 @@ abstract class AbstractSerializer implements SerializerInterface
      * @param $datatypeXName Datatype to use for deserialized literals
      * [default first item in SUPPORTED_DATATYPE_XNAMES]
      *
-     * @parm $encoding [default
-     * alcamo::data_element::AbstractSerializer::DEFAULT_ENCODING]
+     * @parm $encoding [default first key of
+     * alcamo::data_element::AbstractSerializer::ENCODINGS]
      *
      * @param $lengthRange NonNegativeRange|array Allowed length of serialized
      * data, in encoding-dependent units (bytes or nibbles). If given a an
@@ -116,13 +113,10 @@ abstract class AbstractSerializer implements SerializerInterface
         $this->literalWorkbench_ =
             $literalWorkbench ?? LiteralWorkbench::getMainInstance();
 
-        $this->datatype_ = $this->literalWorkbench_->getSchema()->getGlobalType(
-            $datatypeXName ?? static::SUPPORTED_DATATYPE_XNAMES[0]
-        );
+        if (isset($datatypeXName)) {
+            $this->datatype_ = $this->literalWorkbench_->getSchema()
+                ->getGlobalType($datatypeXName);
 
-        if (!isset($datatypeXName)) {
-            $this->supportedDatatype_ = $this->datatype_;
-        } else {
             foreach (
                 $this->datatype_
                     ->getSelfAndBaseTypes(AbstractSimpleType::class) as $type
@@ -148,6 +142,11 @@ abstract class AbstractSerializer implements SerializerInterface
                     ]
                 );
             }
+        } else {
+            $this->datatype_ = $this->literalWorkbench_->getSchema()
+                ->getGlobalType(static::SUPPORTED_DATATYPE_XNAMES[0]);
+
+            $this->supportedDatatype_ = $this->datatype_;
         }
 
         if (isset($encoding)) {
@@ -167,8 +166,16 @@ abstract class AbstractSerializer implements SerializerInterface
 
             $this->encoding_ = $encoding;
         } else {
-            $this->encoding_ = static::DEFAULT_ENCODING;
+            $this->encoding_ = array_key_first(static::ENCODINGS);
         }
+
+        if (isset($lengthRange)) {
+            $this->lengthRange_ = $lengthRange instanceof NonNegativeRange
+                ? $lengthRange
+                : new NonNegativeRange(...$lengthRange);
+        }
+
+        $this->flags_ = (int)$flags;
 
         $this->padString_ = $padString
             ?? (static::ENCODINGS[$this->encoding_]
@@ -182,14 +189,7 @@ abstract class AbstractSerializer implements SerializerInterface
             );
         }
 
-        if (isset($lengthRange)) {
-            $this->lengthRange_ = $lengthRange instanceof NonNegativeRange
-                ? $lengthRange
-                : new NonNegativeRange(...$lengthRange);
-        }
-
         $this->padType_ = $padType ?? static::PAD_TYPE;
-        $this->flags_ = (int)$flags;
     }
 
     public function getDatatype(): SimpleTypeInterface

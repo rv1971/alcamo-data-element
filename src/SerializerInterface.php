@@ -45,13 +45,15 @@ interface SerializerInterface extends NamespaceConstantsInterface
 
     public function getDatatype(): SimpleTypeInterface;
 
+    public function getEncoding(): string;
+
     public function getLengthRange(): ?NonNegativeRange;
+
+    public function getFlags(): int;
 
     public function getPadString(): string;
 
     public function getPadType(): int;
-
-    public function getFlags(): int;
 
     public function serialize(LiteralInterface $literal): string;
 

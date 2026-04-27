@@ -24,10 +24,6 @@ class ConstructedSerializer extends AbstractSerializer implements
 
     public const ENCODINGS = [ 'BINARY' => [ 8, "\x00" ] ];
 
-    public const DEFAULT_ENCODING = 'BINARY';
-
-    private $separator_; ///< ?string
-
     public static function newFromProps($props): SerializerInterface
     {
         $props = (object)$props;
@@ -39,6 +35,8 @@ class ConstructedSerializer extends AbstractSerializer implements
             $props->flags ?? null
         );
     }
+
+    private $separator_; ///< ?string
 
     /**
      * @parm $serializers Iterable of SerializerInterface objects
@@ -77,7 +75,7 @@ class ConstructedSerializer extends AbstractSerializer implements
 
         parent::__construct(
             self::XSD_NS . ' string',
-            static::DEFAULT_ENCODING,
+            array_key_first(static::ENCODINGS),
             $lengthRange,
             $flags,
             $serializer->padString_,
