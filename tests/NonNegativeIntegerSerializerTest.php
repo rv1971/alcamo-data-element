@@ -33,7 +33,9 @@ class NonNegativeIntegerSerializerTest extends TestCase
             (object)[
                 'datatypeXName' => $datatypeXName,
                 'lengthRange' => new NonNegativeRange($minLength, $maxLength),
-                'flags' => SerializerInterface::TRUNCATE_SILENTLY,
+                'flags' => $encoding == 'DUMP'
+                    ? 0
+                    : SerializerInterface::TRUNCATE_SILENTLY,
                 'encoding' => $encoding
             ]
         );
@@ -199,6 +201,15 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 new NonNegativeIntegerLiteral(9876),
                 "\xF8\xF7\xF6",
                 876
+            ],
+            [
+                null,
+                null,
+                null,
+                'DUMP',
+                new NonNegativeIntegerLiteral(1226),
+                "1226",
+                1226
             ]
         ];
     }

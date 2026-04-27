@@ -23,7 +23,9 @@ class DigitStringSerializerTest extends TestCase
         $serializer = DigitStringSerializer::newFromProps(
             (object)[
                 'lengthRange' => new NonNegativeRange($minLength, $maxLength),
-                'flags' => SerializerInterface::TRUNCATE_SILENTLY,
+                'flags' => $encoding == 'DUMP'
+                    ? 0
+                    : SerializerInterface::TRUNCATE_SILENTLY,
                 'encoding' => $encoding
             ]
         );
@@ -101,6 +103,14 @@ class DigitStringSerializerTest extends TestCase
                 new DigitStringLiteral('17'),
                 "\xF1\xF7\x40",
                 '17'
+            ],
+            [
+                null,
+                null,
+                'DUMP',
+                new DigitStringLiteral('1848'),
+                '"1848"',
+                '1848'
             ]
         ];
     }
@@ -111,7 +121,7 @@ class DigitStringSerializerTest extends TestCase
 
         $this->expectExceptionMessage(
             'Invalid value "BCD", expected one of '
-                . '["ASCII", "COMPRESSED-BCD", "EBCDIC"]'
+                . '["ASCII", "COMPRESSED-BCD", "DUMP", "E...]'
         );
 
         DigitStringSerializer::newFromProps(

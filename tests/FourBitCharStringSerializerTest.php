@@ -23,7 +23,9 @@ class FourBitCharStringSerializerTest extends TestCase
         $serializer = FourBitCharStringSerializer::newFromProps(
             (object)[
                 'lengthRange' => new NonNegativeRange($minLength, $maxLength),
-                'flags' => SerializerInterface::TRUNCATE_SILENTLY,
+                'flags' => $encoding == 'DUMP'
+                    ? 0
+                    : SerializerInterface::TRUNCATE_SILENTLY,
                 'encoding' => $encoding
             ]
         );
@@ -95,6 +97,14 @@ class FourBitCharStringSerializerTest extends TestCase
                 new FourBitCharStringLiteral(':2<>'),
                 "\xA2\xCF",
                 ':2<?'
+            ],
+            [
+                null,
+                null,
+                'DUMP',
+                new FourBitCharStringLiteral('<45=6>'),
+                '"<45=6>"',
+                '<45=6>'
             ]
         ];
     }

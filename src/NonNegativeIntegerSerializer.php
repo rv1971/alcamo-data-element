@@ -25,11 +25,16 @@ class NonNegativeIntegerSerializer extends IntegerSerializer
         'ASCII'      => [ 8, '0' ],
         'BCD'        => [ 4, '0' ],
         'BIG-ENDIAN' => [ 8, "\x00" ],
+        'DUMP'       => [ 8, '' ],
         'EBCDIC'     => [ 8, "\x40" ]
     ];
 
     public function serialize(LiteralInterface $literal): string
     {
+        if ($this->encoding_ == 'DUMP') {
+            return parent::serialize($literal);
+        }
+
         if ($this->encoding_ == 'BCD') {
             $this->validateLiteralClass($literal);
 
@@ -51,6 +56,10 @@ class NonNegativeIntegerSerializer extends IntegerSerializer
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
+        if ($this->encoding_ == 'DUMP') {
+                return parent::deserialize($input, $datatype);
+        }
+
         if (static::ENCODINGS[$this->encoding_][0] == 4) {
             $input = bin2hex($input);
 

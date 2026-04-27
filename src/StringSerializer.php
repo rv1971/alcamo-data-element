@@ -3,6 +3,7 @@
 namespace alcamo\data_element;
 
 use alcamo\dom\schema\component\SimpleTypeInterface;
+use alcamo\exception\{SyntaxError, Unsupported};
 use alcamo\rdf_literal\LiteralInterface;
 
 /**
@@ -21,6 +22,7 @@ class StringSerializer extends AbstractSerializer
 
     public const ENCODINGS = [
         'UTF-8' => [ 8, ' ' ], // default encoding
+        'DUMP'  => [ 8, '' ],
         '*'     => [ 8, ' ' ]
     ];
 
@@ -30,6 +32,22 @@ class StringSerializer extends AbstractSerializer
     public function serialize(LiteralInterface $literal): string
     {
         $this->validateLiteralClass($literal);
+
+        if ($this->encoding_ == 'DUMP') {
+            if (strpos($literal, '"') !== false) {
+                /** @throw alcamo::exception::Unsupported on attempt to dump a
+                 *  literal containing a double quote character. */
+                throw (new Unsupported())->setMessageContext(
+                    [
+                        'feature'
+                            => "dumping a literal containing a double quote",
+                        'inData' => (string)$literal
+                    ]
+                );
+            }
+
+            return "\"$literal\"";
+        }
 
         if (static::INTERNAL_ENCODING == $this->encoding_) {
             return $this->adjustOutputLength($literal->getValue());
@@ -58,6 +76,22 @@ class StringSerializer extends AbstractSerializer
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
+        if ($this->encoding_ == 'DUMP') {
+            if (!preg_match('/^"[^"]*"$/', $input)) {
+                /** @throw alcamo::exception::SyntaxError on attempt to
+                 *  deserialize with DUMP encoding an input which is not a
+                 *  string without double quotes enclosed in double quotes. */
+                throw (new SyntaxError())->setMessageContext(
+                    [ 'inData' => $input ]
+                );
+            }
+
+            return $this->literalWorkbench_->createLiteral(
+                trim($input, '"'),
+                $datatype ?? $this->datatype_
+            );
+        }
+
         $this->validateInputLength($input);
 
         /** Remove trailing spaces from input. */

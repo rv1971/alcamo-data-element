@@ -23,7 +23,7 @@ class BitStringSerializerTest extends TestCase
         $serializer = BitStringSerializer::newFromProps(
             (object)[
                 'lengthRange' => new NonNegativeRange($minLength, $maxLength),
-                'flags' => $encoding == 'X.690'
+                'flags' => $encoding == 'DUMP' || $encoding == 'X.690'
                     ? 0
                     : SerializerInterface::TRUNCATE_SILENTLY,
                 'encoding' => $encoding
@@ -95,6 +95,14 @@ class BitStringSerializerTest extends TestCase
                 new BitStringLiteral('00110011'),
                 "\x00\x33",
                 '00110011'
+            ],
+            [
+                null,
+                null,
+                'DUMP',
+                new BitStringLiteral('111'),
+                '"111"',
+                '111'
             ]
         ];
     }

@@ -4,6 +4,7 @@ namespace alcamo\data_element;
 
 use alcamo\binary_data\BinaryString;
 use alcamo\dom\schema\component\SimpleTypeInterface;
+use alcamo\exception\SyntaxError;
 use alcamo\rdf_literal\LiteralInterface;
 
 /**
@@ -24,6 +25,7 @@ class IntegerSerializer extends AbstractSerializer
     public const ENCODINGS = [
         'ASCII'      => [ 8, ' ' ],
         'BIG-ENDIAN' => [ 8, "\x00" ],
+        'DUMP'       => [ 8, '' ],
         'EBCDIC'     => [ 8, "\x40" ]
     ];
 
@@ -32,6 +34,10 @@ class IntegerSerializer extends AbstractSerializer
     public function serialize(LiteralInterface $literal): string
     {
         $this->validateLiteralClass($literal);
+
+        if ($this->encoding_ == 'DUMP') {
+            return $literal->toInt();
+        }
 
         $value = $literal->toInt();
 
@@ -78,6 +84,19 @@ class IntegerSerializer extends AbstractSerializer
             case 'BIG-ENDIAN':
                 $value = (new BinaryString($input))
                     ->toInt($this->datatype_->isSigned());
+                break;
+
+            case 'DUMP':
+                if (!is_numeric($input) || (int)$input != $input) {
+                    /** @throw alcamo::exception::SyntaxError on attempt to
+                     *  deserialize with DUMP encoding an input which is not
+                     *  an integer. */
+                    throw (new SyntaxError())->setMessageContext(
+                        [ 'inData' => $input ]
+                    );
+                }
+
+                $value = $input;
                 break;
 
             case 'EBCDIC':

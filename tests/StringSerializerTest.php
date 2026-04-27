@@ -2,7 +2,7 @@
 
 namespace alcamo\data_element;
 
-use alcamo\exception\{InvalidType, LengthOutOfRange};
+use alcamo\exception\{InvalidType, LengthOutOfRange, SyntaxError, Unsupported};
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\{QNameLiteral, StringLiteral};
 use PHPUnit\Framework\TestCase;
@@ -26,7 +26,9 @@ class StringSerializerTest extends TestCase
             (object)[
                 'datatypeXName' => $datatypeXName,
                 'lengthRange' => new NonNegativeRange($minLength, $maxLength),
-                'flags' => SerializerInterface::TRUNCATE_SILENTLY,
+                'flags' => $encoding == 'DUMP'
+                    ? 0
+                    : SerializerInterface::TRUNCATE_SILENTLY,
                 'encoding' => $encoding
             ]
         );
@@ -78,6 +80,14 @@ class StringSerializerTest extends TestCase
                 'ISO-8859-1',
                 new StringLiteral('consätetur', self::XSD_NS . '#NMTOKEN'),
                 "cons\xE4te"
+            ],
+            [
+                self::XSD_NS . ' string',
+                null,
+                null,
+                'DUMP',
+                new StringLiteral('dolor sit amet'),
+                '"dolor sit amet"'
             ]
         ];
     }
@@ -129,5 +139,30 @@ class StringSerializerTest extends TestCase
 
         (new StringSerializer(null, null, new NonNegativeRange(5, null)))
             ->deserialize('sed');
+    }
+
+    public function testDumpException(): void
+    {
+        $this->expectException(Unsupported::class);
+
+        $this->expectExceptionMessage(
+            '"dumping a literal containing a double..." not supported '
+                . 'in "foo"bar"'
+        );
+
+        StringSerializer::newFromProps([ 'encoding' => 'DUMP' ])
+            ->serialize(new StringLiteral('foo"bar'));
+    }
+
+    public function testUndumpException(): void
+    {
+        $this->expectException(SyntaxError::class);
+
+        $this->expectExceptionMessage(
+            'Syntax error in ""foo"'
+        );
+
+        StringSerializer::newFromProps([ 'encoding' => 'DUMP' ])
+            ->deserialize('"foo');
     }
 }

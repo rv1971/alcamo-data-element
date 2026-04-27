@@ -11,19 +11,24 @@ use alcamo\rdf_literal\{FourBitCharStringLiteral, LiteralInterface};
  *
  * @date Last reviewed 2026-04-21
  */
-class FourBitCharStringSerializer extends AbstractSerializer
+class FourBitCharStringSerializer extends StringSerializer
 {
     public const SUPPORTED_DATATYPE_XNAMES =
         [ FourBitCharStringLiteral::DEFAULT_DATATYPE_XNAME ];
 
     public const ENCODINGS = [
         'ASCII'    => [ 8, ' ' ],
+        'DUMP'     => [ 8, '' ],
         'FOUR-BIT' => [ 4, 'F' ]
     ];
 
     public function serialize(LiteralInterface $literal): string
     {
         $this->validateLiteralClass($literal);
+
+        if ($this->encoding_ == 'DUMP') {
+            return parent::serialize($literal);
+        }
 
         switch ($this->encoding_) {
             case 'ASCII':
@@ -43,6 +48,9 @@ class FourBitCharStringSerializer extends AbstractSerializer
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
         switch ($this->encoding_) {
+            case 'DUMP':
+                return parent::deserialize($input, $datatype);
+
             case 'FOUR-BIT':
                 $input = bin2hex($input);
 

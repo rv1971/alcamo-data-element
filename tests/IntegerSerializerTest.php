@@ -2,6 +2,7 @@
 
 namespace alcamo\data_element;
 
+use alcamo\exception\SyntaxError;
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\{
     BooleanLiteral,
@@ -33,7 +34,9 @@ class IntegerSerializerTest extends TestCase
             (object)[
                 'datatypeXName' => $datatypeXName,
                 'lengthRange' => new NonNegativeRange($minLength, $maxLength),
-                'flags' => SerializerInterface::TRUNCATE_SILENTLY,
+                'flags' => $encoding == 'DUMP'
+                    ? 0
+                    : SerializerInterface::TRUNCATE_SILENTLY,
                 'encoding' => $encoding
             ]
         );
@@ -124,7 +127,28 @@ class IntegerSerializerTest extends TestCase
                 new IntegerLiteral(-7, self::XSD_NS . '#byte'),
                 "\x60\xF0\xF7",
                 -7
+            ],
+            [
+                null,
+                null,
+                null,
+                'DUMP',
+                new IntegerLiteral(1905),
+                '1905',
+                1905
             ]
         ];
+    }
+
+    public function testUndumpException(): void
+    {
+        $this->expectException(SyntaxError::class);
+
+        $this->expectExceptionMessage(
+            'Syntax error in "42x"'
+        );
+
+        IntegerSerializer::newFromProps([ 'encoding' => 'DUMP' ])
+            ->deserialize('42x');
     }
 }
