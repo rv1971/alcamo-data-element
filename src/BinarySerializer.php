@@ -19,45 +19,9 @@ class BinarySerializer extends AbstractSerializer
         self::XSD_NS . ' base64Binary'
     ];
 
-    public static function newFromProps(object $props): SerializerInterface
-    {
-        return new static(
-            $props->datatypeXName ?? null,
-            $props->lengthRange ?? null,
-            $props->flags ?? null,
-            $props->literalWorkbench ?? null
-        );
-    }
+    public const DEFAULT_ENCODING = 'BINARY';
 
-    /**
-     * @param $datatypeXName Datatype to use for deserialized literals
-     * [default first item in SUPPORTED_DATATYPE_XNAMES]
-     *
-     * @param $lengthRange Allowed length of serialized data, in
-     * encoding-dependent units (bytes or nibbles).
-     *
-     * @param $flags Bitwise-OR-combination of the constants in
-     * alcamo::data_element::SerializerInterface.
-     *
-     * @param $literalWorkbench Workbench used in deserialize() and in
-     * validateLiteralClass(). [default
-     * alcamo::data_element::LiteralWorkbench::getMainInstance()]
-     */
-    public function __construct(
-        ?string $datatypeXName = null,
-        ?NonNegativeRange $lengthRange = null,
-        ?int $flags = null,
-        ?LiteralWorkbench $literalWorkbench = null
-    ) {
-        parent::__construct(
-            $datatypeXName,
-            $lengthRange,
-            "\x00",
-            STR_PAD_RIGHT,
-            $flags,
-            $literalWorkbench
-        );
-    }
+    public const ENCODING_TO_PAD_STRING = [ 'BINARY' => "\x00" ];
 
     public function serialize(LiteralInterface $literal): string
     {

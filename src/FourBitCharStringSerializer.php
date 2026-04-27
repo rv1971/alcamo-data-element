@@ -13,7 +13,7 @@ use alcamo\exception\InvalidEnumerator;
  *
  * @date Last reviewed 2026-04-21
  */
-class FourBitCharStringSerializer extends AbstractSerializerWithEncoding
+class FourBitCharStringSerializer extends AbstractSerializer
 {
     public const SUPPORTED_DATATYPE_XNAMES =
         [ FourBitCharStringLiteral::DEFAULT_DATATYPE_XNAME ];

@@ -13,7 +13,7 @@ use alcamo\time\PosixFormat;
  *
  * @date Last reviewed 2026-04-21
  */
-class DateTimeSerializer extends AbstractSerializerWithEncoding
+class DateTimeSerializer extends AbstractSerializer
 {
     public const SUPPORTED_DATATYPE_XNAMES = [
         self::XSD_NS . ' dateTime',

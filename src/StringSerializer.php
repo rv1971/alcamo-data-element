@@ -20,68 +20,13 @@ class StringSerializer extends AbstractSerializer
         self::XSD_NS . ' QName'
     ];
 
+    public const ENCODING_TO_PAD_STRING = [ '*' => ' ' ];
+
     /// String encoding used internally
     public const INTERNAL_ENCODING = 'UTF-8';
 
     /// Default encoding in serialized data
     public const DEFAULT_ENCODING = 'UTF-8';
-
-    protected $encoding_; ///< string
-
-    public static function newFromProps(object $props): SerializerInterface
-    {
-        return new static(
-            $props->datatypeXName ?? null,
-            $props->lengthRange ?? null,
-            $props->flags ?? null,
-            $props->encoding ?? null,
-            $props->literalWorkbench ?? null
-        );
-    }
-
-    /**
-     * @param $datatypeXName Datatype for deserialized literals [default first
-     * item in SUPPORTED_DATATYPE_XNAMES)
-     *
-     * @param $lengthRange Allowed length of serialized data, in
-     * encoding-dependent units (bytes or nibbles).
-     *
-     * @param $flags Bitwise-OR-combination of the constants in
-     * alcamo::data_element::SerializerInterface.
-     *
-     * @parm $encoding [default
-     * alcamo::data_element::StringSerializer::DEFAULT_ENCODING]
-     *
-     * @param $literalWorkbench Workbench used in deserialize() and in
-     * validateLiteralClass(). [default
-     * alcamo::data_element::LiteralWorkbench::getMainInstance()]
-     *
-     * Unlike alcamo::data_element::AbstractSerializerWithEncoding, in
-     * this class it is not checked if $encoding is supported.
-     */
-    public function __construct(
-        ?string $datatypeXName = null,
-        ?NonNegativeRange $lengthRange = null,
-        ?int $flags = null,
-        ?string $encoding = null,
-        ?FactoryGroup $literalWorkbench = null
-    ) {
-        parent::__construct(
-            $datatypeXName,
-            $lengthRange,
-            ' ',
-            STR_PAD_RIGHT,
-            $flags,
-            $literalWorkbench
-        );
-
-        $this->encoding_ = $encoding ?? static::DEFAULT_ENCODING;
-    }
-
-    public function getEncoding(): string
-    {
-        return $this->encoding_;
-    }
 
     public function serialize(LiteralInterface $literal): string
     {

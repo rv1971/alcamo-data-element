@@ -13,7 +13,7 @@ use alcamo\exception\InvalidEnumerator;
  *
  * @date Last reviewed 2026-04-21
  */
-class IntegerSerializer extends AbstractSerializerWithEncoding
+class IntegerSerializer extends AbstractSerializer
 {
     public const SUPPORTED_DATATYPE_XNAMES = [
         self::XSD_NS . ' integer',

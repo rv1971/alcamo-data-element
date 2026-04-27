@@ -3,7 +3,12 @@
 namespace alcamo\data_element;
 
 use alcamo\dom\schema\component\{AbstractSimpleType, SimpleTypeInterface};
-use alcamo\exception\{InvalidType, LengthOutOfRange};
+use alcamo\exception\{
+    InvalidEnumerator,
+    InvalidType,
+    LengthOutOfRange,
+    Unsupported
+};
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\LiteralInterface;
 
@@ -21,6 +26,33 @@ abstract class AbstractSerializer implements SerializerInterface
      */
     public const SUPPORTED_DATATYPE_XNAMES = [];
 
+    /// Map of supported encodings to number of bits per encoded character
+    public const ENCODING_TO_BITS = null;
+
+    /**
+     * @brief Map of supported encodings to pad string
+     *
+     * If an encoding has an empty pad string, this means that the length of a
+     * serialization result MUST NOT be changed, neither padded nor truncated.
+     */
+    public const ENCODING_TO_PAD_STRING = null;
+
+    /// Default encoding
+    public const DEFAULT_ENCODING = 'ASCII';
+
+    public static function newFromProps(object $props): SerializerInterface
+    {
+        return new static(
+            $props->datatypeXName ?? null,
+            $props->lengthRange ?? null,
+            $props->padString ?? null,
+            $props->padType ?? null,
+            $props->flags ?? null,
+            $props->encoding ?? null,
+            $props->literalWorkbench ?? null
+        );
+    }
+
     protected $datatype_; ///< SimpleTypeInterface
 
     /**
@@ -35,6 +67,7 @@ abstract class AbstractSerializer implements SerializerInterface
     protected $padString_;        ///< string
     protected $padType_;          ///< one of STR_PAD_RIGHT or STR_PAD_LEFT
     protected $flags_;            ///< int
+    protected $encoding_;         ///< string
     protected $literalWorkbench_; ///< LiteralWorkbench
 
     /**
@@ -63,6 +96,7 @@ abstract class AbstractSerializer implements SerializerInterface
         ?string $padString = null,
         ?int $padType = null,
         ?int $flags = null,
+        ?string $encoding = null,
         ?LiteralWorkbench $literalWorkbench = null
     ) {
         $this->literalWorkbench_ =
@@ -102,8 +136,43 @@ abstract class AbstractSerializer implements SerializerInterface
             }
         }
 
+        if (isset($encoding)) {
+            if (
+                static::ENCODING_TO_BITS
+                    && !isset(static::ENCODING_TO_BITS[$encoding])
+            ) {
+                /** @throw alcamo::exception::InvalidEnumerator if $encoding
+                 *  is not supported. */
+                throw (new InvalidEnumerator())->setMessageContext(
+                    [
+                        'value' => $encoding,
+                        'expectedOneOf' => array_keys(static::ENCODING_TO_BITS)
+                    ]
+                );
+            }
+
+            $this->encoding_ = $encoding;
+        } else {
+            $this->encoding_ = static::DEFAULT_ENCODING;
+        }
+
+        if (
+            static::ENCODING_TO_PAD_STRING
+                && (static::ENCODING_TO_PAD_STRING[$this->encoding_]
+                    ?? static::ENCODING_TO_PAD_STRING['*']) == ''
+                && $flags & self::TRUNCATE_SILENTLY
+        ) {
+            /** @throw alcamo::exception::Unsupported if the output length
+             *  MUST NOT be changed but TRUNCATE_SILENTLY is activated. */
+            throw (new Unsupported())->setMessageContext(
+                [ 'feature' => "truncation of $encoding" ]
+            );
+        }
+
         $this->lengthRange_ = $lengthRange;
-        $this->padString_ = $padString ?? ' ';
+        $this->padString_ = $padString
+            ?? static::ENCODING_TO_PAD_STRING[$this->encoding_]
+            ?? static::ENCODING_TO_PAD_STRING['*'];
         $this->padType_ = $padType ?? STR_PAD_RIGHT;
         $this->flags_ = (int)$flags;
     }
@@ -133,6 +202,11 @@ abstract class AbstractSerializer implements SerializerInterface
         return $this->flags_;
     }
 
+    public function getEncoding(): string
+    {
+        return $this->encoding_;
+    }
+
     public function getLiteralWorkbench(): LiteralWorkbench
     {
         return $this->literalWorkbench_;
@@ -140,7 +214,9 @@ abstract class AbstractSerializer implements SerializerInterface
 
     public function getBitsPerCharacter(): int
     {
-        return 8;
+        return static::ENCODING_TO_BITS
+            ? static::ENCODING_TO_BITS[$this->encoding_]
+            : 8;
     }
 
     /// Check whether $literal is supported for this serializer class

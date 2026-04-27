@@ -22,6 +22,8 @@ class ConstructedSerializer extends AbstractSerializer implements
 
     public const SUPPORTED_DATATYPE_XNAMES = [ self::XSD_NS . ' string' ];
 
+    public const DEFAULT_ENCODING = 'BINARY';
+
     private $separator_; ///< ?string
 
     public static function newFromProps(object $props): SerializerInterface
@@ -39,8 +41,7 @@ class ConstructedSerializer extends AbstractSerializer implements
      *
      * @parm $separator String to separate items in (de)serialization.
      *
-     * @param $lengthRange Allowed length of serialized data, in
-     * encoding-dependent bytes.
+     * @param $lengthRange Allowed length of serialized data, in bytes.
      *
      * @param $flags Bitwise-OR-combination of the constants in
      * alcamo::data_element::SerializerInterface.
@@ -74,6 +75,7 @@ class ConstructedSerializer extends AbstractSerializer implements
             $serializer->padString_,
             $serializer->padType_,
             $flags,
+            static::DEFAULT_ENCODING,
             $serializer->literalWorkbench_
         );
 
