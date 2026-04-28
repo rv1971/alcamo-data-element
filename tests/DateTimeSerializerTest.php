@@ -125,6 +125,14 @@ class DateTimeSerializerTest extends TestCase
                 new TimeLiteral('06:23-03:00'),
                 "\x23\x06",
                 new TimeLiteral('06:23')
+            ],
+            [
+                self::XSD_NS . ' dateTime',
+                null,
+                'DUMP',
+                new DateTimeLiteral('2026-04-28T22:03:17'),
+                '2026-04-28T22:03:17',
+                new DateTimeLiteral('2026-04-28T22:03:17'),
             ]
         ];
     }

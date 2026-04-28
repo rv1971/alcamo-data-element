@@ -29,6 +29,7 @@ class DateTimeSerializer extends AbstractSerializer
     public const ENCODINGS = [
         'ASCII'  => [ 8, ' ' ],
         'BCD'    => [ 4, 'F' ],
+        'DUMP'   => [ 8, '' ],
         'EBCDIC' => [ 8, "\x40" ]
     ];
 
@@ -39,7 +40,7 @@ class DateTimeSerializer extends AbstractSerializer
         ],
         self::XSD_NS . ' dateTime' => [
             'BCD' => '%Y%m%d%H%M%S',
-            '*'   => '%Y-%m-%dT%H-%M-%S'
+            '*'   => '%Y-%m-%dT%H:%M:%S'
         ],
         self::XSD_NS . ' gDay' => [
             '*' => '%d'
@@ -166,6 +167,7 @@ class DateTimeSerializer extends AbstractSerializer
 
         switch ($this->encoding_) {
             case 'ASCII':
+            case 'DUMP':
                 return $value;
 
             case 'BCD':
@@ -197,6 +199,7 @@ class DateTimeSerializer extends AbstractSerializer
         switch ($this->encoding_) {
             case 'ASCII':
             case 'BCD':
+            case 'DUMP':
                 $value = $input;
                 break;
 
