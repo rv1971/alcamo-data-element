@@ -5,6 +5,7 @@ namespace alcamo\data_element;
 use alcamo\collection\ReadonlyCollectionTrait;
 use alcamo\dom\schema\component\SimpleTypeInterface;
 use alcamo\exception\{DataValidationFailed, Eof, InvalidType, SyntaxError};
+use alcamo\input_stream\StringInputStream;
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\{HexBinaryLiteral, LiteralInterface};
 
@@ -22,7 +23,16 @@ class ConstructedSerializer extends AbstractSerializer implements
 
     public const SUPPORTED_DATATYPE_XNAMES = [ self::XSD_NS . ' string' ];
 
-    public const ENCODINGS = [ 'BINARY' => [ 8, "\x00" ] ];
+    /**
+     * @copydoc alcamo::data_element::AbstractSerializer::ENCODINGS
+     *
+     * Here the padding string for DUMP is nonempyt to allow for the
+     * TRUNCATE_SILENTLY flag. It has no other effect.
+     */
+    public const ENCODINGS = [
+        'BINARY' => [ 8, "\x00" ],
+        'DUMP'   => [ 8, ' ' ]
+    ];
 
     public static function newFromProps($props): SerializerInterface
     {
@@ -41,7 +51,9 @@ class ConstructedSerializer extends AbstractSerializer implements
     /**
      * @parm $serializers Iterable of SerializerInterface objects
      *
-     * @parm $separator String to separate items in (de)serialization.
+     * @parm $separator String to separate items in
+     * (de)serialization. [default one space for `DUMP` encoding, otherwise
+     * empty string]
      *
      * @param $lengthRange NonNegativeRange|array Allowed length of serialized
      * data, in bytes or nibbles. If given a an array, it must have 1 to 2
@@ -82,6 +94,10 @@ class ConstructedSerializer extends AbstractSerializer implements
             $serializer->padType_,
             $serializer->literalWorkbench_
         );
+
+        if (!isset($separator) && $this->encoding_ == 'DUMP') {
+            $separator = ' ';
+        }
 
         $this->separator_ = $separator;
     }
@@ -132,13 +148,21 @@ class ConstructedSerializer extends AbstractSerializer implements
             }
         }
 
-        return $this->adjustOutputLength($result);
+        /** For `DUMP` encoding, surround the result by separator and
+         *  brackets. */
+        return $this->encoding_ == 'DUMP'
+            ? return "[{$this->separator_}$result{$this->separator_}]"
+            : $this->adjustOutputLength($result);
     }
 
     public function deserialize(
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
+        if ($this->encoding_ == 'DUMP') {
+            return $this->deserializeDump($input, $datatype);
+        }
+
         $this->validateInputLength($input);
 
         $result = [];
@@ -217,11 +241,9 @@ class ConstructedSerializer extends AbstractSerializer implements
         if (
             $pos < strlen($input) && !($this->flags_ & self::TRUNCATE_SILENTLY)
         ) {
-            /**
-             * @throw alcamo::exception::SyntaxError if there is input left
+            /** @throw alcamo::exception::SyntaxError if there is input left
              * after all deserializers have been applied and $flags do not
-             * contain TRUNCATE_SILENTLY.
-             */
+             * contain TRUNCATE_SILENTLY. */
             throw (new SyntaxError())->setMessageContext(
                 [
                     'inData' => $input,
@@ -229,6 +251,105 @@ class ConstructedSerializer extends AbstractSerializer implements
                     'extraMessage' => 'spurious trailing data'
                 ]
             );
+        }
+
+        return new Constructedliteral($result, $datatype);
+    }
+
+    protected function deserializeDump(
+        string $input,
+        ?SimpleTypeInterface $datatype = null
+    ): LiteralInterface {
+        $separatorLen = strlen($this->separator_);
+        $surroundLen = strlen($separatorLen) + 1;
+
+        if (
+            substr($input, 0, $surroundLen) != "[{$this->separator_}"
+                || substr($input, 0, -$surroundLen) != "{$this->separator_}]"
+        ) {
+            /** @throw alcamo::exception::SyntaxError on attempt to
+             *  deserialize an input which is not surrounded by a separator
+             *  and brackets. */
+            throw (new SyntaxError())->setMessageContext(
+                [
+                    'inData' => $input,
+                    'extraMessage' => "not surrounded by "
+                        . "\"[{$this->separator_}\" and "
+                        . "\"{$this->separator_}]\""
+                ]
+            );
+        }
+
+        /* Data without left surrounding and without right bracket but with
+         * right separator, so that the last item needs no special
+         * handling. */
+        $stream = new StringInputStream(
+            substr($input, $surroundLen, strlen($input) - $surroundLen - 1)
+        );
+
+        $result = [];
+
+        foreach ($this as $key => $serializer) {
+             /* This splits the stream syntactically into items regardless of
+             * the item's serializers. The deserialize() below will check
+             * whether the item syntax matches the expectation of the
+             * serializer. */
+            $item = $stream->extractToken($this->separator_);
+
+            if (!isset($item)) {
+                break;
+            }
+
+            $result[] = $serializer->deserialize($item);
+
+            $separator = $stream->extract($separatorLen);
+
+            if (!isset($separator)) {
+                break;
+            } elseif ($separator != $this->separator_) {
+                /** @throw alcamo::exception::SyntaxError on attempt to
+                 *  deserialize an input where a separator is wrong. */
+                throw (new SyntaxError())->setMessageContext(
+                    [
+                        'inData' => $input,
+                        'atOffset' => $surroundLen + $stream->getOffset()
+                            - $separatorLen,
+                        'extraMessage' => "expected separator "
+                            . "\"{$this->separator_}\", found \"$separator\"",
+                        'forKey' => $key
+                    ]
+                );
+            }
+        }
+
+        if (!($this->flags_ & self::TRUNCATE_SILENTLY)) {
+            if ($stream->isGood()) {
+                /** @throw alcamo::exception::SyntaxError if there is input
+                 * left after all deserializers have been applied and $flags
+                 * do not contain TRUNCATE_SILENTLY. */
+                throw (new SyntaxError())->setMessageContext(
+                    [
+                        'inData' => $input,
+                        'atOffset' => $surroundLen + $stream->getOffset(),
+                        'extraMessage' => 'spurious trailing data'
+                        ]
+                );
+            }
+
+            if (count($result) < count($this)) {
+                /** @throw alcamo::exception::Eof if input ends before all
+                 * deserializers have been applied and $flags do not contain
+                 * TRUNCATE_SILENTLY. */
+
+                throw (new Eof('Failed to read from {object}'))
+                    ->setMessageContext(
+                        [
+                            'object' => $input,
+                            'atOffset' => $surroundLen + $stream->getOffset(),
+                            'forKey' => $key
+                        ]
+                    );
+            }
         }
 
         return new Constructedliteral($result, $datatype);
