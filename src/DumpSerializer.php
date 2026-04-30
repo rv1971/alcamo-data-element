@@ -2,7 +2,11 @@
 
 namespace alcamo\data_element;
 
+use alcamo\dom\schema\component\SimpleTypeInterface;
 use alcamo\dom\schema\TypeMap;
+use alcamo\input_stream\StringInputStream;
+use alcamo\range\NonNegativeRange;
+use alcamo\rdf_literal\LiteralInterface;
 use alcamo\exception\SyntaxError;
 
 class DumpSerializer implements SerializerInterface
@@ -12,7 +16,7 @@ class DumpSerializer implements SerializerInterface
      *
      * Any other type will be mapped to a StringSerializer.
      */
-    protected const TYPE_XNAME_TO_SERIALIZER_CLASS = [
+    public const TYPE_XNAME_TO_SERIALIZER_CLASS = [
         self::XSD_NS . ' base64Binary'  => BinarySerializer::class,
         self::XSD_NS . ' hexBinary'     => BinarySerializer::class,
         self::XSD_NS . ' date'          => DateTimeSerializer::class,
@@ -27,6 +31,17 @@ class DumpSerializer implements SerializerInterface
         self::XSD_NS . ' integer'       => IntegerSerializer::class
     ];
 
+    public static function newFromProps($props): SerializerInterface
+    {
+        $props = (object)$props;
+
+        return new static(
+            $props->flags ?? null,
+            $props->separator ?? null,
+            $props->literalWorkbench ?? null
+        );
+    }
+
     protected $flags_;            ///< int
     protected $literalWorkbench_; ///< LiteralWorkbench
 
@@ -35,11 +50,16 @@ class DumpSerializer implements SerializerInterface
     private $dateTimeSerializer_; ///< DateTimeSerializer
     private $integerSerializer_;  ///< IntegerSerializer
     private $stringSerializer_;   ///< StringSerializer
+    private $separator_;          ///< ?string
 
     /**
      * @param $flags Bitwise-OR-combination of the constants in
      * alcamo::data_element::SerializerInterface. Currently the flags have no
      * effect.
+     *
+     * @param $separator String to separate items in (de)serialization for
+     * constructed literals. [default one space in serialization and any
+     * whitespace in deserialization]
      *
      * @param $literalWorkbench Workbench used in deserialize() and in
      * validateLiteralClass(). [default
@@ -47,9 +67,12 @@ class DumpSerializer implements SerializerInterface
      */
     public function __construct(
         ?int $flags = null,
+        ?string $separator = null,
         ?LiteralWorkbench $literalWorkbench = null
     ) {
         $this->flags_ = (int)$flags;
+
+        $this->separator_ = $separator;
 
         $this->literalWorkbench_ =
             $literalWorkbench ?? LiteralWorkbench::getMainInstance();
@@ -74,6 +97,12 @@ class DumpSerializer implements SerializerInterface
 
         $this->binarySerializer_ =
             $typeXNameToSerializer[self::XSD_NS . ' hexBinary'];
+
+        $this->dateTimeSerializer_ =
+            $typeXNameToSerializer[self::XSD_NS . ' dateTime'];
+
+        $this->integerSerializer_ =
+            $typeXNameToSerializer[self::XSD_NS . ' integer'];
 
         $this->stringSerializer_ = StringSerializer::newFromProps(
             [
@@ -122,20 +151,27 @@ class DumpSerializer implements SerializerInterface
         return $this->literalWorkbench_;
     }
 
+    public function getSeparator(): ?string
+    {
+        return $this->separator_;
+    }
+
     public function serialize(LiteralInterface $literal): string
     {
-        if (!(LiteralInterface instanceof ConstructedLiteral)) {
-            $this->typeToSerializer_
-                ->lookup($this->workbench_->validateLiteral($literal))
+        if (!($literal instanceof ConstructedLiteral)) {
+            return $this->typeToSerializer_
+                ->lookup($this->literalWorkbench_->validateLiteral($literal))
                 ->serialize($literal);
         }
 
-        /* serialize a constructed literal */
+        /* Serialize a constructed literal. */
 
-        $result = '[ ';
+        $separator = $this->separator_ ?? ' ';
+
+        $result = "[$separator";
 
         foreach ($literal as $item) {
-            $result .= $this->serialize($item) . ' ';
+            $result .= $this->serialize($item) . $separator;
         }
 
         return $result . ']';
@@ -144,16 +180,16 @@ class DumpSerializer implements SerializerInterface
     public function deserialize(
         string $input,
         ?SimpleTypeInterface $datatype = null
-    ): LiteralInterface
-    {
+    ): LiteralInterface {
         if ($input[0] != '[' && isset($datatype)) {
             return $this->typeToSerializer_->lookup($datatype)
                 ->deserialize($input, $datatype);
         }
 
         /**
-         * If no $datatype is provided, the serializer to apply is guessed
-         * from the first character of $input:
+         * If no $datatype is provided or the first character is an opening
+         * bracket, the serializer to apply is guessed from the first
+         * character of $input:
          * - " => StringSerializer
          * - ' => BinarySerializer
          * - [ => constructed
@@ -163,10 +199,10 @@ class DumpSerializer implements SerializerInterface
          */
         switch ($input[0]) {
             case '"':
-                return $this->stringSerializer_->deserialize($input);
+                return $this->stringSerializer_->deserialize($input, $datatype);
 
             case "'":
-                return $this->binarySerializer_->deserialize($input);
+                return $this->binarySerializer_->deserialize($input, $datatype);
 
             case '[':
                 break;
@@ -176,52 +212,41 @@ class DumpSerializer implements SerializerInterface
                     $input[0] == '-' && ctype_digit(substr($input, 1))
                         || ctype_digit($input)
                 ) {
-                    return $this->integerSerializer_->deserialize($input);
+                    return $this->integerSerializer_
+                        ->deserialize($input, $datatype);
                 } else {
-                    return $this->dateTimeSerializer_->deserialize($input);
+                    return $this->dateTimeSerializer_
+                        ->deserialize($input, $datatype);
                 }
         }
 
-        /* deserialize a constructed literal */
+        /* Deserialize a constructed literal. */
 
-        if (substr($input, 0, 2) != '[ ' || substr($input, 0, -2) != ' ]') {
+        if ($input[-1] != ']') {
             /** @throw alcamo::exception::SyntaxError on attempt to
-             *  deserialize an input which is not surrounded by a separator
-             *  and brackets. */
+             *  deserialize a constructed input not terminated by a
+             *  bracket. */
             throw (new SyntaxError())->setMessageContext(
                 [
                     'inData' => $input,
-                    'extraMessage' => "not surrounded by \"[ \" and \" ]\""
+                    'extraMessage' => "not terminated by \"]\""
                 ]
             );
         }
 
-        /* Data without left bracket and space and without right bracket but
-         * with right space, so that the last item needs no special
-         * handling. */
-        $stream = new StringInputStream(
-            substr($input, 2, strlen($input) - 3)
-        );
+        /* Data without brackets. */
+        $stream = new StringInputStream(substr($input, 1, strlen($input) - 2));
+
+        /* If separator is whitespace, skip optional whitespace after opening
+         * bracket. */
+        if (!isset($this->separator_)) {
+            $stream->extractWs();
+        }
 
         $result = [];
 
-        while ($item = $stream->extractToken(' ')) {
-            $result[] = $this->unserialize($item);
-
-            $separator = $stream->extract();
-
-            if ($separator != ' ') {
-                /** @throw alcamo::exception::SyntaxError on attempt to
-                 *  deserialize an input where a separator is wrong. */
-                throw (new SyntaxError())->setMessageContext(
-                    [
-                        'inData' => $input,
-                        'atOffset' => 2 + $stream->getOffset() - 1,
-                        'extraMessage' =>
-                            "expected space, found \"$separator\""
-                    ]
-                );
-            }
+        while ($item = $stream->extractToken($this->separator_, true)) {
+            $result[] = $this->deserialize($item);
         }
 
         return new Constructedliteral($result, $datatype);

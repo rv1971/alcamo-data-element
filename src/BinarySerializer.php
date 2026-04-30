@@ -28,7 +28,7 @@ class BinarySerializer extends AbstractSerializer
         $this->validateLiteralClass($literal);
 
         if ($this->encoding_ == 'DUMP') {
-            return "'$literal'";
+            return "'{$literal->getValue()}'";
         }
 
         /* getValue() must return BinaryString. */
