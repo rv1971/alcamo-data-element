@@ -36,7 +36,7 @@ class IntegerSerializer extends AbstractSerializer
         $this->validateLiteralClass($literal);
 
         if ($this->encoding_ == 'DUMP') {
-            return $literal->toInt();
+            return $this->dump($literal);
         }
 
         $value = $literal->toInt();
@@ -87,17 +87,7 @@ class IntegerSerializer extends AbstractSerializer
                 break;
 
             case 'DUMP':
-                if (!is_numeric($input) || (int)$input != $input) {
-                    /** @throw alcamo::exception::SyntaxError on attempt to
-                     *  deserialize with DUMP encoding an input which is not
-                     *  an integer. */
-                    throw (new SyntaxError())->setMessageContext(
-                        [ 'inData' => $input ]
-                    );
-                }
-
-                $value = $input;
-                break;
+                return $this->dedump($input, $datatype);
 
             case 'EBCDIC':
                 $value = (int)strtr(
@@ -110,5 +100,27 @@ class IntegerSerializer extends AbstractSerializer
 
         return $this->literalWorkbench_
             ->createLiteral($value, $datatype ?? $this->datatype_);
+    }
+
+    public function dump(LiteralInterface $literal): string
+    {
+        return $literal->toInt();
+    }
+
+    public function dedump(
+        string $input,
+        ?SimpleTypeInterface $datatype = null
+    ): LiteralInterface {
+        if (!is_numeric($input) || (int)$input != $input) {
+            /** @throw alcamo::exception::SyntaxError on attempt to
+             *  deserialize with DUMP encoding an input which is not
+             *  an integer. */
+            throw (new SyntaxError())->setMessageContext(
+                [ 'inData' => $input ]
+            );
+        }
+
+        return $this->literalWorkbench_
+            ->createLiteral($input, $datatype ?? $this->datatype_);
     }
 }

@@ -11,8 +11,6 @@ use alcamo\rdf_literal\{
     IntegerLiteral,
     StringLiteral
 };
-
-
 use PHPUnit\Framework\TestCase;
 
 class DumpSerializerTest extends TestCase
@@ -85,7 +83,6 @@ class DumpSerializerTest extends TestCase
 
                 $expectedLiteral->next();
             }
-
         } else {
             $this->assertTrue(
                 $literal->equals($expectedLiteral)

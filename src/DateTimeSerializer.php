@@ -163,11 +163,14 @@ class DateTimeSerializer extends AbstractSerializer
     {
         $this->validateLiteralClass($literal);
 
+        if ($this->encoding_ == 'DUMP') {
+            return $this->dump($literal);
+        }
+
         $value = $this->posixFormat_->applyTo($literal->getValue());
 
         switch ($this->encoding_) {
             case 'ASCII':
-            case 'DUMP':
                 return $value;
 
             case 'BCD':
@@ -190,6 +193,10 @@ class DateTimeSerializer extends AbstractSerializer
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
+        if ($this->encoding_ == 'DUMP') {
+            return $this->dedump($input, $datatype);
+        }
+
         if (static::ENCODINGS[$this->encoding_][0] == 4) {
             $input = bin2hex($input);
         }
@@ -199,7 +206,6 @@ class DateTimeSerializer extends AbstractSerializer
         switch ($this->encoding_) {
             case 'ASCII':
             case 'BCD':
-            case 'DUMP':
                 $value = $input;
                 break;
 
@@ -216,6 +222,24 @@ class DateTimeSerializer extends AbstractSerializer
             \DateTime::createFromFormat(
                 $this->posixFormat_->getPhpFormat(),
                 $value
+            ),
+            $datatype ?? $this->datatype_
+        );
+    }
+
+    public function dump(LiteralInterface $literal): string
+    {
+        return $this->posixFormat_->applyTo($literal->getValue());
+    }
+
+    public function dedump(
+        string $input,
+        ?SimpleTypeInterface $datatype = null
+    ): LiteralInterface {
+        return $this->literalWorkbench_->createLiteral(
+            \DateTime::createFromFormat(
+                $this->posixFormat_->getPhpFormat(),
+                $input
             ),
             $datatype ?? $this->datatype_
         );

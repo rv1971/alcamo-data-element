@@ -34,19 +34,7 @@ class StringSerializer extends AbstractSerializer
         $this->validateLiteralClass($literal);
 
         if ($this->encoding_ == 'DUMP') {
-            if (strpos($literal, '"') !== false) {
-                /** @throw alcamo::exception::Unsupported on attempt to dump a
-                 *  literal containing a double quote character. */
-                throw (new Unsupported())->setMessageContext(
-                    [
-                        'feature'
-                            => "dumping a literal containing a double quote",
-                        'inData' => (string)$literal
-                    ]
-                );
-            }
-
-            return "\"$literal\"";
+            return $this->dump($literal);
         }
 
         if (static::INTERNAL_ENCODING == $this->encoding_) {
@@ -77,19 +65,7 @@ class StringSerializer extends AbstractSerializer
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
         if ($this->encoding_ == 'DUMP') {
-            if (!preg_match('/^"[^"]*"$/', $input)) {
-                /** @throw alcamo::exception::SyntaxError on attempt to
-                 *  deserialize with DUMP encoding an input which is not a
-                 *  string without double quotes enclosed in double quotes. */
-                throw (new SyntaxError())->setMessageContext(
-                    [ 'inData' => $input ]
-                );
-            }
-
-            return $this->literalWorkbench_->createLiteral(
-                trim($input, '"'),
-                $datatype ?? $this->datatype_
-            );
+            return $this->dedump($input, $datatype);
         }
 
         $this->validateInputLength($input);
@@ -101,6 +77,42 @@ class StringSerializer extends AbstractSerializer
                     ? $input
                     : iconv($this->encoding_, static::INTERNAL_ENCODING, $input)
             ),
+            $datatype ?? $this->datatype_
+        );
+    }
+
+    public function dump(LiteralInterface $literal): string
+    {
+        if (strpos($literal, '"') !== false) {
+            /** @throw alcamo::exception::Unsupported on attempt to dump a
+             *  literal containing a double quote character. */
+                throw (new Unsupported())->setMessageContext(
+                    [
+                        'feature'
+                            => "dumping a literal containing a double quote",
+                        'inData' => (string)$literal
+                    ]
+                );
+        }
+
+        return "\"$literal\"";
+    }
+
+    public function dedump(
+        string $input,
+        ?SimpleTypeInterface $datatype = null
+    ): LiteralInterface {
+        if (!preg_match('/^"[^"]*"$/', $input)) {
+            /** @throw alcamo::exception::SyntaxError on attempt to
+             *  deserialize with DUMP encoding an input which is not a string
+             *  without double quotes enclosed in double quotes. */
+            throw (new SyntaxError())->setMessageContext(
+                [ 'inData' => $input ]
+            );
+        }
+
+        return $this->literalWorkbench_->createLiteral(
+            trim($input, '"'),
             $datatype ?? $this->datatype_
         );
     }

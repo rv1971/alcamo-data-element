@@ -82,8 +82,7 @@ class DumpSerializer implements SerializerInterface
         $simpleSerializerFlags = $this->flags_ & ~self::TRUNCATE_SILENTLY;
 
         foreach (
-            static::TYPE_XNAME_TO_SERIALIZER_CLASS
-                as $typeXName => $serializerClass
+            static::TYPE_XNAME_TO_SERIALIZER_CLASS as $typeXName => $serializerClass
         ) {
             $typeXNameToSerializer[$typeXName] = $serializerClass::newFromProps(
                 [
@@ -158,6 +157,18 @@ class DumpSerializer implements SerializerInterface
 
     public function serialize(LiteralInterface $literal): string
     {
+        return $this->dump($literal);
+    }
+
+    public function deserialize(
+        string $input,
+        ?SimpleTypeInterface $datatype = null
+    ): LiteralInterface {
+        return $this->dedump($input, $datatype);
+    }
+
+    public function dump(LiteralInterface $literal): string
+    {
         if (!($literal instanceof ConstructedLiteral)) {
             return $this->typeToSerializer_
                 ->lookup($this->literalWorkbench_->validateLiteral($literal))
@@ -171,19 +182,19 @@ class DumpSerializer implements SerializerInterface
         $result = "[$separator";
 
         foreach ($literal as $item) {
-            $result .= $this->serialize($item) . $separator;
+            $result .= $this->dump($item) . $separator;
         }
 
         return $result . ']';
     }
 
-    public function deserialize(
+    public function dedump(
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
         if ($input[0] != '[' && isset($datatype)) {
             return $this->typeToSerializer_->lookup($datatype)
-                ->deserialize($input, $datatype);
+                ->dedump($input, $datatype);
         }
 
         /**
@@ -199,10 +210,10 @@ class DumpSerializer implements SerializerInterface
          */
         switch ($input[0]) {
             case '"':
-                return $this->stringSerializer_->deserialize($input, $datatype);
+                return $this->stringSerializer_->dedump($input, $datatype);
 
             case "'":
-                return $this->binarySerializer_->deserialize($input, $datatype);
+                return $this->binarySerializer_->dedump($input, $datatype);
 
             case '[':
                 break;
@@ -213,10 +224,10 @@ class DumpSerializer implements SerializerInterface
                         || ctype_digit($input)
                 ) {
                     return $this->integerSerializer_
-                        ->deserialize($input, $datatype);
+                        ->dedump($input, $datatype);
                 } else {
                     return $this->dateTimeSerializer_
-                        ->deserialize($input, $datatype);
+                        ->dedump($input, $datatype);
                 }
         }
 
@@ -246,7 +257,7 @@ class DumpSerializer implements SerializerInterface
         $result = [];
 
         while ($item = $stream->extractToken($this->separator_, true)) {
-            $result[] = $this->deserialize($item);
+            $result[] = $this->dedump($item);
         }
 
         return new Constructedliteral($result, $datatype);

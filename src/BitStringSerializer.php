@@ -35,7 +35,7 @@ class BitStringSerializer extends DigitStringSerializer
                 )->getData();
 
             case 'DUMP':
-                return parent::serialize($literal);
+                return $this->dump($literal);
 
             case 'X.690':
                 $this->validateLiteralClass($literal);
@@ -67,7 +67,7 @@ class BitStringSerializer extends DigitStringSerializer
                     ->createLiteral($value, $datatype ?? $this->datatype_);
 
             case 'DUMP':
-                return parent::deserialize($input, $datatype);
+                return $this->dedump($input, $datatype);
 
             case 'X.690':
                 $this->validateInputLength($input);

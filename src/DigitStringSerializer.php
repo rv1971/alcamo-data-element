@@ -27,7 +27,7 @@ class DigitStringSerializer extends FourBitCharStringSerializer
         $this->validateLiteralClass($literal);
 
         if ($this->encoding_ == 'DUMP') {
-            return parent::serialize($literal);
+            return $this->dump($literal);
         }
 
         switch ($this->encoding_) {
@@ -70,7 +70,7 @@ class DigitStringSerializer extends FourBitCharStringSerializer
                 break;
 
             case 'DUMP':
-                return parent::deserialize($input, $datatype);
+                return $this->dedump($input, $datatype);
 
             case 'EBCDIC':
                 $value = rtrim(

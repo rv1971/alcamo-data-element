@@ -61,4 +61,13 @@ interface SerializerInterface extends NamespaceConstantsInterface
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface;
+
+    /// Serialize in a simple machine- and human-readable format
+    public function dump(LiteralInterface $literal): string;
+
+    /// The opposite of dump()
+    public function dedump(
+        string $input,
+        ?SimpleTypeInterface $datatype = null
+    ): LiteralInterface;
 }

@@ -32,7 +32,7 @@ class NonNegativeIntegerSerializer extends IntegerSerializer
     public function serialize(LiteralInterface $literal): string
     {
         if ($this->encoding_ == 'DUMP') {
-            return parent::serialize($literal);
+            return $this->dump($literal);
         }
 
         if ($this->encoding_ == 'BCD') {
@@ -57,7 +57,7 @@ class NonNegativeIntegerSerializer extends IntegerSerializer
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
         if ($this->encoding_ == 'DUMP') {
-                return parent::deserialize($input, $datatype);
+            return $this->dedump($input, $datatype);
         }
 
         if (static::ENCODINGS[$this->encoding_][0] == 4) {

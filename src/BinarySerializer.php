@@ -28,7 +28,7 @@ class BinarySerializer extends AbstractSerializer
         $this->validateLiteralClass($literal);
 
         if ($this->encoding_ == 'DUMP') {
-            return "'{$literal->getValue()}'";
+            return $this->dump($literal);
         }
 
         /* getValue() must return BinaryString. */
@@ -40,25 +40,37 @@ class BinarySerializer extends AbstractSerializer
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
         if ($this->encoding_ == 'DUMP') {
-            if (!preg_match("/^'[0-9A-Fa-f]*'$/", $input)) {
-                /** @throw alcamo::exception::SyntaxError on attempt to
-                 *  deserialize with DUMP encoding an input which is not a
-                 *  hex string enclosed in single quotes. */
-                throw (new SyntaxError())->setMessageContext(
-                    [ 'inData' => $input ]
-                );
-            }
-
-            return $this->literalWorkbench_->createLiteral(
-                BinaryString::newFromHex(trim($input, "'")),
-                $datatype ?? $this->datatype_
-            );
+            return $this->dedump($input, $datatype);
         }
 
         $this->validateInputLength($input);
 
         return $this->literalWorkbench_->createLiteral(
             new BinaryString($input),
+            $datatype ?? $this->datatype_
+        );
+    }
+
+    public function dump(LiteralInterface $literal): string
+    {
+        return "'{$literal->getValue()}'";
+    }
+
+    public function dedump(
+        string $input,
+        ?SimpleTypeInterface $datatype = null
+    ): LiteralInterface {
+        if (!preg_match("/^'[0-9A-Fa-f]*'$/", $input)) {
+            /** @throw alcamo::exception::SyntaxError on attempt to
+             *  deserialize with DUMP encoding an input which is not a
+             *  hex string enclosed in single quotes. */
+            throw (new SyntaxError())->setMessageContext(
+                [ 'inData' => $input ]
+            );
+        }
+
+        return $this->literalWorkbench_->createLiteral(
+            BinaryString::newFromHex(trim($input, "'")),
             $datatype ?? $this->datatype_
         );
     }
