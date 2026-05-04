@@ -29,7 +29,6 @@ class DateTimeSerializer extends AbstractSerializer
     public const ENCODINGS = [
         'ASCII'  => [ 8, ' ' ],
         'BCD'    => [ 4, 'F' ],
-        'DUMP'   => [ 8, '' ],
         'EBCDIC' => [ 8, "\x40" ]
     ];
 
@@ -61,7 +60,7 @@ class DateTimeSerializer extends AbstractSerializer
         ],
         self::XSD_NS . ' time' => [
             'BCD' => '%H%M%S',
-            '*'   => '%H-%M-%S'
+            '*'   => '%H:%M:%S'
         ]
     ];
 
@@ -80,7 +79,8 @@ class DateTimeSerializer extends AbstractSerializer
         );
     }
 
-    private $posixFormat_; ///< PosixFormat
+    private $posixFormat_;     ///< PosixFormat
+    private $dumpPosixFormat_; ///< PosixFormat
 
     /**
      * @param $datatypeXName Datatype for deserialized literals [default first
@@ -128,14 +128,13 @@ class DateTimeSerializer extends AbstractSerializer
             $literalWorkbench
         );
 
+        $supportedDatatypeXName = (string)$this->supportedDatatype_->getXName();
+
         if (isset($posixFormat)) {
             $this->posixFormat_ = $posixFormat instanceof PosixFormat
                 ? $posixFormat
                 : new PosixFormat($posixFormat);
         } else {
-            $supportedDatatypeXName =
-                (string)$this->supportedDatatype_->getXName();
-
             $this->posixFormat_ = new PosixFormat(
                 static::DEFAULT_POSIX_FORMATS[$supportedDatatypeXName][
                     $this->encoding_
@@ -143,6 +142,10 @@ class DateTimeSerializer extends AbstractSerializer
                 ?? static::DEFAULT_POSIX_FORMATS[$supportedDatatypeXName]['*']
             );
         }
+
+        $this->dumpPosixFormat_ = new PosixFormat(
+            static::DEFAULT_POSIX_FORMATS[$supportedDatatypeXName]['*']
+        );
 
         /* The length of input is validated if the chosen format has a fixed
          * length. */
@@ -162,10 +165,6 @@ class DateTimeSerializer extends AbstractSerializer
     public function serialize(LiteralInterface $literal): string
     {
         $this->validateLiteralClass($literal);
-
-        if ($this->encoding_ == 'DUMP') {
-            return $this->dump($literal);
-        }
 
         $value = $this->posixFormat_->applyTo($literal->getValue());
 
@@ -193,10 +192,6 @@ class DateTimeSerializer extends AbstractSerializer
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
-        if ($this->encoding_ == 'DUMP') {
-            return $this->dedump($input, $datatype);
-        }
-
         if (static::ENCODINGS[$this->encoding_][0] == 4) {
             $input = bin2hex($input);
         }
@@ -229,7 +224,7 @@ class DateTimeSerializer extends AbstractSerializer
 
     public function dump(LiteralInterface $literal): string
     {
-        return $this->posixFormat_->applyTo($literal->getValue());
+        return $this->dumpPosixFormat_->applyTo($literal->getValue());
     }
 
     public function dedump(
@@ -238,7 +233,7 @@ class DateTimeSerializer extends AbstractSerializer
     ): LiteralInterface {
         return $this->literalWorkbench_->createLiteral(
             \DateTime::createFromFormat(
-                $this->posixFormat_->getPhpFormat(),
+                $this->dumpPosixFormat_->getPhpFormat(),
                 $input
             ),
             $datatype ?? $this->datatype_

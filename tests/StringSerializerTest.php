@@ -20,15 +20,14 @@ class StringSerializerTest extends TestCase
         $maxLength,
         $encoding,
         $literal,
-        $expectedOutput
+        $expectedOutput,
+        $expectedDump
     ): void {
         $serializer = StringSerializer::newFromProps(
             (object)[
                 'datatypeXName' => $datatypeXName,
                 'lengthRange' => new NonNegativeRange($minLength, $maxLength),
-                'flags' => $encoding == 'DUMP'
-                    ? 0
-                    : SerializerInterface::TRUNCATE_SILENTLY,
+                'flags' => SerializerInterface::TRUNCATE_SILENTLY,
                 'encoding' => $encoding
             ]
         );
@@ -52,6 +51,12 @@ class StringSerializerTest extends TestCase
         }
 
         $this->assertEquals($datatype->getUri(), $literal2->getDatatypeUri());
+
+        $dump = $serializer->dump($literal);
+
+        $this->assertEquals($expectedDump, $dump);
+
+        $this->assertTrue($literal->equals($serializer->dedump($dump)));
     }
 
     public function serializeProvider(): array
@@ -63,7 +68,8 @@ class StringSerializerTest extends TestCase
                 null,
                 null,
                 new StringLiteral('Lorem ipsum'),
-                'Lorem ipsum'
+                'Lorem ipsum',
+                '"Lorem ipsum"'
             ],
             [
                 self::XSD_NS . ' normalizedString',
@@ -71,7 +77,8 @@ class StringSerializerTest extends TestCase
                 15,
                 'ISO-8859-1',
                 new StringLiteral('dolör sit', self::XSD_NS . '#token'),
-                "dol\xF6r sit  "
+                "dol\xF6r sit  ",
+                '"dolör sit"'
             ],
             [
                 self::XSD_NS . ' NMTOKEN',
@@ -79,15 +86,8 @@ class StringSerializerTest extends TestCase
                 7,
                 'ISO-8859-1',
                 new StringLiteral('consätetur', self::XSD_NS . '#NMTOKEN'),
-                "cons\xE4te"
-            ],
-            [
-                self::XSD_NS . ' string',
-                null,
-                null,
-                'DUMP',
-                new StringLiteral('dolor sit amet'),
-                '"dolor sit amet"'
+                "cons\xE4te",
+                '"consätetur"'
             ]
         ];
     }
@@ -150,11 +150,10 @@ class StringSerializerTest extends TestCase
                 . 'in "foo"bar"'
         );
 
-        StringSerializer::newFromProps([ 'encoding' => 'DUMP' ])
-            ->serialize(new StringLiteral('foo"bar'));
+        (new StringSerializer())->dump(new StringLiteral('foo"bar'));
     }
 
-    public function testUndumpException(): void
+    public function testDedumpException(): void
     {
         $this->expectException(SyntaxError::class);
 
@@ -162,7 +161,6 @@ class StringSerializerTest extends TestCase
             'Syntax error in ""foo"'
         );
 
-        StringSerializer::newFromProps([ 'encoding' => 'DUMP' ])
-            ->deserialize('"foo');
+        (new StringSerializer())->dedump('"foo');
     }
 }

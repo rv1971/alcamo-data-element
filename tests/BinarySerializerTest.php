@@ -22,15 +22,14 @@ class BinarySerializerTest extends TestCase
         $maxLength,
         $literal,
         $expectedOutput,
-        $expectedDeserialization
+        $expectedDeserialization,
+        $expectedDump
     ): void {
         $serializer = BinarySerializer::newFromProps(
             (object)[
                 'datatypeXName' => $datatypeXName,
                 'lengthRange' => new NonNegativeRange($minLength, $maxLength),
-                'flags' => $encoding == 'DUMP'
-                    ? 0
-                    : SerializerInterface::TRUNCATE_SILENTLY,
+                'flags' => SerializerInterface::TRUNCATE_SILENTLY,
                 'encoding' => $encoding
             ]
         );
@@ -59,6 +58,12 @@ class BinarySerializerTest extends TestCase
         );
 
         $this->assertEquals($datatype->getUri(), $literal2->getDatatypeUri());
+
+        $dump = $serializer->dump($literal);
+
+        $this->assertEquals($expectedDump, $dump);
+
+        $this->assertTrue($literal->equals($serializer->dedump($dump)));
     }
 
     public function serializeProvider(): array
@@ -71,7 +76,8 @@ class BinarySerializerTest extends TestCase
                 10,
                 new Base64BinaryLiteral('Zm9v'),
                 "foo\x00\x00",
-                "foo\x00\x00"
+                "foo\x00\x00",
+                "'666F6F'"
             ],
             [
                 self::XSD_NS . ' base64Binary',
@@ -80,7 +86,8 @@ class BinarySerializerTest extends TestCase
                 3,
                 new Base64BinaryLiteral(new BinaryString('dolor')),
                 "dol",
-                "dol"
+                "dol",
+                "'646F6C6F72'"
             ],
             [
                 self::XSD_NS . ' hexBinary',
@@ -89,7 +96,8 @@ class BinarySerializerTest extends TestCase
                 null,
                 new HexBinaryLiteral('DE45'),
                 "\xDE\x45",
-                "\xDE\x45"
+                "\xDE\x45",
+                "'DE45'"
             ],
             [
                 self::XSD_NS . ' hexBinary',
@@ -98,7 +106,8 @@ class BinarySerializerTest extends TestCase
                 null,
                 new HexBinaryLiteral('A1'),
                 "\xA1\x00\x00\x00",
-                "\xA1\x00\x00\x00"
+                "\xA1\x00\x00\x00",
+                "'A1'"
             ],
             [
                 self::XSD_NS . ' hexBinary',
@@ -107,21 +116,13 @@ class BinarySerializerTest extends TestCase
                 3,
                 new HexBinaryLiteral('A1A2A3A4'),
                 "\xA1\xA2\xA3",
-                "\xA1\xA2\xA3"
-            ],
-            [
-                self::XSD_NS . ' hexBinary',
-                'DUMP',
-                null,
-                null,
-                new HexBinaryLiteral('1234ABCD'),
-                "'1234ABCD'",
-                "\x12\x34\xAB\xCD"
+                "\xA1\xA2\xA3",
+                "'A1A2A3A4'"
             ]
         ];
     }
 
-    public function testUndumpException(): void
+    public function testDedumpException(): void
     {
         $this->expectException(SyntaxError::class);
 
@@ -129,7 +130,6 @@ class BinarySerializerTest extends TestCase
             'Syntax error in "\'123X\'"'
         );
 
-        IntegerSerializer::newFromProps([ 'encoding' => 'DUMP' ])
-            ->deserialize("'123X'");
+        (new IntegerSerializer())->dedump("'123X'");
     }
 }

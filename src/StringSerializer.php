@@ -22,7 +22,6 @@ class StringSerializer extends AbstractSerializer
 
     public const ENCODINGS = [
         'UTF-8' => [ 8, ' ' ], // default encoding
-        'DUMP'  => [ 8, '' ],
         '*'     => [ 8, ' ' ]
     ];
 
@@ -32,10 +31,6 @@ class StringSerializer extends AbstractSerializer
     public function serialize(LiteralInterface $literal): string
     {
         $this->validateLiteralClass($literal);
-
-        if ($this->encoding_ == 'DUMP') {
-            return $this->dump($literal);
-        }
 
         if (static::INTERNAL_ENCODING == $this->encoding_) {
             return $this->adjustOutputLength($literal->getValue());
@@ -64,10 +59,6 @@ class StringSerializer extends AbstractSerializer
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
-        if ($this->encoding_ == 'DUMP') {
-            return $this->dedump($input, $datatype);
-        }
-
         $this->validateInputLength($input);
 
         /** Remove trailing spaces from input. */
@@ -103,9 +94,9 @@ class StringSerializer extends AbstractSerializer
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
         if (!preg_match('/^"[^"]*"$/', $input)) {
-            /** @throw alcamo::exception::SyntaxError on attempt to
-             *  deserialize with DUMP encoding an input which is not a string
-             *  without double quotes enclosed in double quotes. */
+            /** @throw alcamo::exception::SyntaxError on attempt to dedump an
+             *  input which is not a string without double quotes enclosed in
+             *  double quotes. */
             throw (new SyntaxError())->setMessageContext(
                 [ 'inData' => $input ]
             );

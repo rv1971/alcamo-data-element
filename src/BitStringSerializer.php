@@ -19,7 +19,6 @@ class BitStringSerializer extends DigitStringSerializer
     public const ENCODINGS = [
         'ASCII'  => [ 8, ' ' ],
         'BINARY' => [ 1, '0' ],
-        'DUMP'   => [ 8, '' ],
         'EBCDIC' => [ 8, "\x40" ],
         'X.690'  => [ 8, '' ]
     ];
@@ -33,9 +32,6 @@ class BitStringSerializer extends DigitStringSerializer
                 return BinaryString::newFromBitString(
                     $this->adjustOutputLength($literal)
                 )->getData();
-
-            case 'DUMP':
-                return $this->dump($literal);
 
             case 'X.690':
                 $this->validateLiteralClass($literal);
@@ -65,9 +61,6 @@ class BitStringSerializer extends DigitStringSerializer
 
                 return $this->literalWorkbench_
                     ->createLiteral($value, $datatype ?? $this->datatype_);
-
-            case 'DUMP':
-                return $this->dedump($input, $datatype);
 
             case 'X.690':
                 $this->validateInputLength($input);

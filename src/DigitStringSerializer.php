@@ -18,17 +18,12 @@ class DigitStringSerializer extends FourBitCharStringSerializer
     public const ENCODINGS = [
         'ASCII'          => [ 8, ' ' ],
         'COMPRESSED-BCD' => [ 4, 'F' ],
-        'DUMP'           => [ 8, '' ],
         'EBCDIC'         => [ 8, "\x40" ]
     ];
 
     public function serialize(LiteralInterface $literal): string
     {
         $this->validateLiteralClass($literal);
-
-        if ($this->encoding_ == 'DUMP') {
-            return $this->dump($literal);
-        }
 
         switch ($this->encoding_) {
             case 'ASCII':
@@ -68,9 +63,6 @@ class DigitStringSerializer extends FourBitCharStringSerializer
 
                 $value = rtrim($input, 'f');
                 break;
-
-            case 'DUMP':
-                return $this->dedump($input, $datatype);
 
             case 'EBCDIC':
                 $value = rtrim(

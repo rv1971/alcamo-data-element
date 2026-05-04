@@ -25,7 +25,6 @@ class IntegerSerializer extends AbstractSerializer
     public const ENCODINGS = [
         'ASCII'      => [ 8, ' ' ],
         'BIG-ENDIAN' => [ 8, "\x00" ],
-        'DUMP'       => [ 8, '' ],
         'EBCDIC'     => [ 8, "\x40" ]
     ];
 
@@ -34,10 +33,6 @@ class IntegerSerializer extends AbstractSerializer
     public function serialize(LiteralInterface $literal): string
     {
         $this->validateLiteralClass($literal);
-
-        if ($this->encoding_ == 'DUMP') {
-            return $this->dump($literal);
-        }
 
         $value = $literal->toInt();
 
@@ -86,9 +81,6 @@ class IntegerSerializer extends AbstractSerializer
                     ->toInt($this->datatype_->isSigned());
                 break;
 
-            case 'DUMP':
-                return $this->dedump($input, $datatype);
-
             case 'EBCDIC':
                 $value = (int)strtr(
                     $input,
@@ -112,9 +104,8 @@ class IntegerSerializer extends AbstractSerializer
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
         if (!is_numeric($input) || (int)$input != $input) {
-            /** @throw alcamo::exception::SyntaxError on attempt to
-             *  deserialize with DUMP encoding an input which is not
-             *  an integer. */
+            /** @throw alcamo::exception::SyntaxError on attempt to dedump an
+             *  input which is not an integer. */
             throw (new SyntaxError())->setMessageContext(
                 [ 'inData' => $input ]
             );

@@ -18,17 +18,12 @@ class FourBitCharStringSerializer extends StringSerializer
 
     public const ENCODINGS = [
         'ASCII'    => [ 8, ' ' ],
-        'DUMP'     => [ 8, '' ],
         'FOUR-BIT' => [ 4, 'F' ]
     ];
 
     public function serialize(LiteralInterface $literal): string
     {
         $this->validateLiteralClass($literal);
-
-        if ($this->encoding_ == 'DUMP') {
-            return $this->dump($literal);
-        }
 
         switch ($this->encoding_) {
             case 'ASCII':
@@ -48,9 +43,6 @@ class FourBitCharStringSerializer extends StringSerializer
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
         switch ($this->encoding_) {
-            case 'DUMP':
-                return $this->dedump($input, $datatype);
-
             case 'FOUR-BIT':
                 $input = bin2hex($input);
 

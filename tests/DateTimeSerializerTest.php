@@ -30,7 +30,8 @@ class DateTimeSerializerTest extends TestCase
         $encoding,
         $literal,
         $expectedOutput,
-        $expectedDeserialization
+        $expectedDeserialization,
+        $expectedDump
     ): void {
         $serializer = DateTimeSerializer::newFromProps(
             (object)[
@@ -57,6 +58,12 @@ class DateTimeSerializerTest extends TestCase
         $this->assertTrue($expectedDeserialization->equals($literal2));
 
         $this->assertEquals($datatype->getUri(), $literal2->getDatatypeUri());
+
+        $dump = $serializer->dump($literal2);
+
+        $this->assertEquals($expectedDump, $dump);
+
+        $this->assertTrue($literal2->equals($serializer->dedump($dump)));
     }
 
     public function serializeProvider(): array
@@ -68,7 +75,8 @@ class DateTimeSerializerTest extends TestCase
                 null,
                 new DateLiteral('2020-02-25'),
                 '2020-02-25',
-                new DateLiteral('2020-02-25')
+                new DateLiteral('2020-02-25'),
+                '2020-02-25'
             ],
             [
                 self::XSD_NS . ' dateTime',
@@ -76,7 +84,8 @@ class DateTimeSerializerTest extends TestCase
                 'BCD',
                 new DateTimeLiteral('2026-02-26T17:22'),
                 "\x20\x26\x02\x26\x17\x22\x00",
-                new DateTimeLiteral('2026-02-26T17:22')
+                new DateTimeLiteral('2026-02-26T17:22'),
+                '2026-02-26T17:22:00'
             ],
             [
                 self::XSD_NS . ' gDay',
@@ -84,7 +93,8 @@ class DateTimeSerializerTest extends TestCase
                 'EBCDIC',
                 new GDayLiteral(28),
                 "\xF2\xF8",
-                new GDayLiteral(28)
+                new GDayLiteral(28),
+                '28'
             ],
             [
                 self::XSD_NS . ' gMonth',
@@ -92,7 +102,8 @@ class DateTimeSerializerTest extends TestCase
                 null,
                 new GMonthLiteral(7),
                 '07',
-                new GMonthLiteral(7)
+                new GMonthLiteral(7),
+                '07'
             ],
             [
                 self::XSD_NS . ' gMonthDay',
@@ -100,7 +111,8 @@ class DateTimeSerializerTest extends TestCase
                 'BCD',
                 new GMonthDayLiteral('05-31'),
                 "\x00\x31\x00\x05",
-                new GMonthDayLiteral('05-31')
+                new GMonthDayLiteral('05-31'),
+                '05-31'
             ],
             [
                 self::XSD_NS . ' gYearMonth',
@@ -108,15 +120,17 @@ class DateTimeSerializerTest extends TestCase
                 'EBCDIC',
                 new GYearMonthLiteral('2006-08'),
                 "\xF0\xF6\x60\xF0\xF8",
-                new GYearMonthLiteral('2006-08')
-                ],
+                new GYearMonthLiteral('2006-08'),
+                '2006-08'
+            ],
             [
                 PositiveGYearLiteral::DEFAULT_DATATYPE_XNAME,
                 '%y',
                 'BCD',
                 new PositiveGYearLiteral('2008'),
                 "\x08",
-                new PositiveGYearLiteral('2008')
+                new PositiveGYearLiteral('2008'),
+                '2008'
             ],
             [
                 self::XSD_NS . ' time',
@@ -124,15 +138,8 @@ class DateTimeSerializerTest extends TestCase
                 'BCD',
                 new TimeLiteral('06:23-03:00'),
                 "\x23\x06",
-                new TimeLiteral('06:23')
-            ],
-            [
-                self::XSD_NS . ' dateTime',
-                null,
-                'DUMP',
-                new DateTimeLiteral('2026-04-28T22:03:17'),
-                '2026-04-28T22:03:17',
-                new DateTimeLiteral('2026-04-28T22:03:17'),
+                new TimeLiteral('06:23'),
+                '06:23:00'
             ]
         ];
     }

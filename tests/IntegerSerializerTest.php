@@ -28,7 +28,8 @@ class IntegerSerializerTest extends TestCase
         $encoding,
         $literal,
         $expectedOutput,
-        $expectedDeserialization
+        $expectedDeserialization,
+        $expectedDump
     ): void {
         $serializer = IntegerSerializer::newFromProps(
             (object)[
@@ -69,6 +70,12 @@ class IntegerSerializerTest extends TestCase
         }
 
         $this->assertEquals($datatype->getUri(), $literal2->getDatatypeUri());
+
+        $dump = $serializer->dump($literal);
+
+        $this->assertEquals($expectedDump, $dump);
+
+        $this->assertTrue($literal->equals($serializer->dedump($dump)));
     }
 
     public function serializeProvider(): array
@@ -81,7 +88,8 @@ class IntegerSerializerTest extends TestCase
                 null,
                 new BooleanLiteral(false),
                 '0',
-                false
+                false,
+                '0'
             ],
             [
                 self::XSD_NS . ' gDay',
@@ -90,7 +98,8 @@ class IntegerSerializerTest extends TestCase
                 'BIG-ENDIAN',
                 new GDayLiteral(24),
                 "\x18",
-                (new GDayLiteral(24))->getValue()
+                (new GDayLiteral(24))->getValue(),
+                '24'
             ],
             [
                 self::XSD_NS . ' gMonth',
@@ -99,7 +108,8 @@ class IntegerSerializerTest extends TestCase
                 'EBCDIC',
                 new GMonthLiteral(12),
                 "\xF0\xF0\xF1\xF2",
-                (new GMonthLiteral(12))->getValue()
+                (new GMonthLiteral(12))->getValue(),
+                '12'
             ],
             [
                 self::XSD_NS . ' gYear',
@@ -108,7 +118,8 @@ class IntegerSerializerTest extends TestCase
                 null,
                 new GYearLiteral(-753),
                 "-0000753",
-                (new GYearLiteral(-753))->getValue()
+                (new GYearLiteral(-753))->getValue(),
+                '-753'
             ],
             [
                 self::XSD_NS . ' long',
@@ -117,7 +128,8 @@ class IntegerSerializerTest extends TestCase
                 'BIG-ENDIAN',
                 new IntegerLiteral(-3, self::XSD_NS . '#short'),
                 "\xFF\xFF\xFF\xFD",
-                -3
+                -3,
+                '-3'
             ],
             [
                 self::XSD_NS . ' short',
@@ -126,16 +138,8 @@ class IntegerSerializerTest extends TestCase
                 'EBCDIC',
                 new IntegerLiteral(-7, self::XSD_NS . '#byte'),
                 "\x60\xF0\xF7",
-                -7
-            ],
-            [
-                null,
-                null,
-                null,
-                'DUMP',
-                new IntegerLiteral(1905),
-                '1905',
-                1905
+                -7,
+                '-7'
             ]
         ];
     }
@@ -148,7 +152,6 @@ class IntegerSerializerTest extends TestCase
             'Syntax error in "42x"'
         );
 
-        IntegerSerializer::newFromProps([ 'encoding' => 'DUMP' ])
-            ->deserialize('42x');
+        (new IntegerSerializer())->dedump('42x');
     }
 }

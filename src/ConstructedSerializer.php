@@ -25,14 +25,8 @@ class ConstructedSerializer extends AbstractSerializer implements
 
     /**
      * @copydoc alcamo::data_element::AbstractSerializer::ENCODINGS
-     *
-     * Here the padding string for DUMP is nonempyt to allow for the
-     * TRUNCATE_SILENTLY flag. It has no other effect.
      */
-    public const ENCODINGS = [
-        'BINARY' => [ 8, "\x00" ],
-        'DUMP'   => [ 8, ' ' ]
-    ];
+    public const ENCODINGS = [ 'BINARY' => [ 8, "\x00" ] ];
 
     public static function newFromProps($props): SerializerInterface
     {
@@ -52,9 +46,7 @@ class ConstructedSerializer extends AbstractSerializer implements
      * @parm $serializers Iterable of SerializerInterface objects
      *
      * @parm $separator String to separate items in
-     * (de)serialization. [default one space in serialization and any
-     * whitespace in deserialization for `DUMP` encoding, otherwise empty
-     * string]
+     * (de)serialization. [default empty string]
      *
      * @param $lengthRange NonNegativeRange|array Allowed length of serialized
      * data, in bytes or nibbles. If given a an array, it must have 1 to 2
@@ -132,10 +124,6 @@ class ConstructedSerializer extends AbstractSerializer implements
             }
         }
 
-        if ($this->encoding_ == 'DUMP') {
-            return $this->dump($literal);
-        }
-
         $this->rewind();
 
         foreach ($literal as $item) {
@@ -161,10 +149,6 @@ class ConstructedSerializer extends AbstractSerializer implements
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
-        if ($this->encoding_ == 'DUMP') {
-            return $this->deDump($input, $datatype);
-        }
-
         $this->validateInputLength($input);
 
         $result = [];

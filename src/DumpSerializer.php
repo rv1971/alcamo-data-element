@@ -9,6 +9,11 @@ use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\{ConstructedLiteral, LiteralInterface};
 use alcamo\exception\SyntaxError;
 
+/**
+ * @brief (De)Serializer using dump() / dedump()
+ *
+ * @date Last reviewed 2026-04-21
+ */
 class DumpSerializer implements SerializerInterface
 {
     /**
@@ -79,16 +84,12 @@ class DumpSerializer implements SerializerInterface
 
         $typeXNameToSerializer = [];
 
-        $simpleSerializerFlags = $this->flags_ & ~self::TRUNCATE_SILENTLY;
-
         foreach (
             static::TYPE_XNAME_TO_SERIALIZER_CLASS as $typeXName => $serializerClass
         ) {
             $typeXNameToSerializer[$typeXName] = $serializerClass::newFromProps(
                 [
                     'datatypeXName' => $typeXName,
-                    'encoding' => 'DUMP',
-                    'flags' => $this->flags_,
                     'literalWorkbench' => $this->literalWorkbench_
                 ]
             );
@@ -104,11 +105,7 @@ class DumpSerializer implements SerializerInterface
             $typeXNameToSerializer[self::XSD_NS . ' integer'];
 
         $this->stringSerializer_ = StringSerializer::newFromProps(
-            [
-                'encoding' => 'DUMP',
-                'flags' => $this->flags_,
-                'literalWorkbench' => $this->literalWorkbench_
-            ]
+            [ 'literalWorkbench' => $this->literalWorkbench_ ]
         );
 
         $this->typeToSerializer_ =
@@ -172,7 +169,7 @@ class DumpSerializer implements SerializerInterface
         if (!($literal instanceof ConstructedLiteral)) {
             return $this->typeToSerializer_
                 ->lookup($this->literalWorkbench_->validateLiteral($literal))
-                ->serialize($literal);
+                ->dump($literal);
         }
 
         /* Serialize a constructed literal. */
