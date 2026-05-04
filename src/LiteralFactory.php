@@ -22,7 +22,7 @@ use alcamo\rdf_literal\{LiteralFactory as RdfLiteralFactory, LiteralInterface};
  * this class does not support creating LangStringLiteral objects, and
  * therefore the create() method does not have a language parameter.
  *
- * @date Last reviewed 2026-04-20
+ * @date Last reviewed 2026-05-04
  */
 class LiteralFactory
 {

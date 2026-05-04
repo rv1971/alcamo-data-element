@@ -11,7 +11,7 @@ use alcamo\uri\FileUriFactory;
 /**
  * @brief Facade for literal factory and literal type map
  *
- * @date Last reviewed 2026-04-21
+ * @date Last reviewed 2026-05-04
  */
 class LiteralWorkbench
 {
@@ -39,8 +39,7 @@ class LiteralWorkbench
         ) {
             /** @throw alcamo::exception::DataValidationFailed on attempt to
              *  create a workbench from objects based on different schema
-             *  factories.
-             */
+             *  factories. */
             throw (new DataValidationFailed())->setMessageContext(
                 [
                     'extraMessage' => 'Literal factory and literal type map '
@@ -137,6 +136,9 @@ class LiteralWorkbench
             $dataElementInstance->getDataElement()->getDatatype()->getXName();
 
         if (!$datatype->isEqualToOrDerivedFrom($dataElementDatatypeXName)) {
+            /** @throw alcamo::exception::DataValidationFailed if the literal
+             *  datatype is not derived from (or equal to) the data element's
+             *  datatype. */
             throw (new DataValidationFailed())->setMessageContext(
                 [
                     'extraMessage' => "literal datatype {$datatype->getXName()}"

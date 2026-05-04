@@ -2,7 +2,6 @@
 
 namespace alcamo\data_element;
 
-use alcamo\collection\ReadonlyCollection;
 use alcamo\dom\schema\component\SimpleTypeInterface;
 use alcamo\dom\schema\SchemaFactory;
 use alcamo\exception\DataValidationFailed;
@@ -11,16 +10,17 @@ use alcamo\rdf_literal\{LangStringLiteral, LiteralInterface, StringLiteral};
 /**
  * @brief Map of literal classes to their datatypes
  *
- * @date Last reviewed 2026-04-20
+ * @date Last reviewed 2026-05-04
  */
 class LiteralTypeMap
 {
     private $schemaFactory_; ///< SchemaFactory
-    private $map_ = [];      ///< map of string to SimpleTypeInterface
 
-    public function __construct(
-        ?SchemaFactory $schemaFactory = null
-    ) {
+    ///< map of string to SimpleTypeInterface
+    private $literalClassToDefaultDatatype_ = [];
+
+    public function __construct(?SchemaFactory $schemaFactory = null)
+    {
         $this->schemaFactory_ = $schemaFactory ?? new SchemaFactory();
     }
 
@@ -31,13 +31,14 @@ class LiteralTypeMap
 
     public function getDefaultDatatype($literalClass): SimpleTypeInterface
     {
-        if (!isset($this->map_[$literalClass])) {
-            $this->map_[$literalClass] = $this->createTypeFromUri(
-                $literalClass::getClassDefaultDatatypeUri()
-            );
+        if (!isset($this->literalClassToDefaultDatatype_[$literalClass])) {
+            $this->literalClassToDefaultDatatype_[$literalClass] =
+                $this->createTypeFromUri(
+                    $literalClass::getClassDefaultDatatypeUri()
+                );
         }
 
-        return $this->map_[$literalClass];
+        return $this->literalClassToDefaultDatatype_[$literalClass];
     }
 
     /**
@@ -55,6 +56,9 @@ class LiteralTypeMap
             $this->getDefaultDatatype(get_class($literal))->getXName();
 
         if (!$datatype->isEqualToOrDerivedFrom($defaultDatatypeXName)) {
+            /** @throw alcamo::exception::DataValidationFailed if the literal
+             *  datatype is not derived from (or equal to) the literal class's
+             *  default datatype. */
             throw (new DataValidationFailed())->setMessageContext(
                 [
                     'extraMessage' => "literal datatype {$datatype->getXName()}"
