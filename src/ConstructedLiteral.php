@@ -94,7 +94,10 @@ class ConstructedLiteral extends AbstractLiteral implements
         $this->rewind();
 
         foreach ($literal as $item) {
-            if (!$item->equals($this->current())) {
+            if (
+                isset($item) != ($this->current() !== null)
+                    || (isset($item) && !$item->equals($this->current()))
+            ) {
                 return false;
             }
 

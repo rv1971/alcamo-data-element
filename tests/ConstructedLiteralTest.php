@@ -60,21 +60,23 @@ class ConstructedLiteralTest extends TestCase
                 new ConstructedLiteral(
                     [
                         new IntegerLiteral(42),
+                        null,
                         new DigitStringLiteral('01234')
                     ]
                 ),
                 new ConstructedLiteral(
                     [
                         new NonNegativeIntegerLiteral(42),
+                        null,
                         new StringLiteral('01234')
                     ]
                 ),
                 true
             ],
             [
-                new ConstructedLiteral([ new IntegerLiteral(42) ]),
+                new ConstructedLiteral([ null, new IntegerLiteral(42) ]),
                 new ConstructedLiteral([ new NonNegativeIntegerLiteral(42) ]),
-                true
+                false
             ],
             [
                 new ConstructedLiteral([ new IntegerLiteral(42) ]),
