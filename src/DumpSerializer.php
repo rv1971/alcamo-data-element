@@ -6,7 +6,7 @@ use alcamo\dom\schema\component\SimpleTypeInterface;
 use alcamo\dom\schema\TypeMap;
 use alcamo\input_stream\StringInputStream;
 use alcamo\range\NonNegativeRange;
-use alcamo\rdf_literal\LiteralInterface;
+use alcamo\rdf_literal\{ConstructedLiteral, LiteralInterface};
 use alcamo\exception\SyntaxError;
 
 class DumpSerializer implements SerializerInterface

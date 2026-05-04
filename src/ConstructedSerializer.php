@@ -7,7 +7,7 @@ use alcamo\dom\schema\component\SimpleTypeInterface;
 use alcamo\exception\{DataValidationFailed, Eof, InvalidType, SyntaxError};
 use alcamo\input_stream\StringInputStream;
 use alcamo\range\NonNegativeRange;
-use alcamo\rdf_literal\{HexBinaryLiteral, LiteralInterface};
+use alcamo\rdf_literal\{ConstructedLiteral, HexBinaryLiteral, LiteralInterface};
 
 /**
  * @brief (De)Serializer for constructed data

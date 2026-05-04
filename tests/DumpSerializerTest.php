@@ -5,6 +5,7 @@ namespace alcamo\data_element;
 use alcamo\exception\SyntaxError;
 use alcamo\rdf_literal\{
     Base64BinaryLiteral,
+    ConstructedLiteral,
     DateLiteral,
     DateTimeLiteral,
     HexBinaryLiteral,

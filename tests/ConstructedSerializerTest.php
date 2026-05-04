@@ -5,6 +5,7 @@ namespace alcamo\data_element;
 use alcamo\exception\{DataValidationFailed, Eof, InvalidType, SyntaxError};
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\{
+    ConstructedLiteral,
     HexBinaryLiteral,
     IntegerLiteral,
     NonNegativeIntegerLiteral,
