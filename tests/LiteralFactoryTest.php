@@ -35,30 +35,6 @@ class LiteralFactoryTest extends TestCase
             );
     }
 
-    public function testBasics(): void
-    {
-        $this->assertInstanceOf(
-            RdfLiteralFactory::class,
-            self::$literalFactory_->getRdfLiteralFactory()
-        );
-
-        $schema = self::$literalFactory_->getSchemaFactory()->getMainSchema();
-
-        $this->assertSame(
-            Base64BinaryLiteral::class,
-            self::$literalFactory_->getTypeToLiteralClass()->lookup(
-                $schema->getGlobalType(self::XSD_NS . ' base64Binary')
-            )
-        );
-
-        $this->assertSame(
-            NonNegativeIntegerLiteral::class,
-            self::$literalFactory_->getTypeToLiteralClass()->lookup(
-                $schema->getGlobalType(self::XSD_NS . ' unsignedInt')
-            )
-        );
-    }
-
     /**
      * @dataProvider createLiteralForDataElementProvider
      */

@@ -14,21 +14,19 @@ use alcamo\rdf_literal\{LiteralFactory as RdfLiteralFactory, LiteralInterface};
  * SimpleTypeInterface object.
  *
  * Unlike alcamo::rdf_literal::LiteralFactory, this class is aware of type
- * hierarchies. For instance, when given a value and a type derived from
- * xsd:integer, it is able to conclude that the needed literal class is that
- * for xsd:integer.
+ * hierarchies. For instance, when given a value and a custom type derived
+ * from `xsd:integer`, it is able to conclude that the needed literal class is
+ * that for xsd:integer.
  *
- * Since there is no XML Schema dataytpe
- * corresponding to LangStringLiteral, this class does not support creaeting
- * LangStringLiteral objects, and therefore the create() method does not have
- * a language parameter.
+ * Since there is no XML Schema datatype corresponding to LangStringLiteral,
+ * this class does not support creating LangStringLiteral objects, and
+ * therefore the create() method does not have a language parameter.
  *
  * @date Last reviewed 2026-04-20
  */
 class LiteralFactory
 {
     private $schemaFactory_;      ///< SchemaFactory
-    private $rdfLiteralFactory_;  ///< RdfLiteralFactory
     private $typeToLiteralClass_; ///< TypeMap
 
     public function __construct(
@@ -37,13 +35,14 @@ class LiteralFactory
     ) {
         $this->schemaFactory_ = $schemaFactory ?? new SchemaFactory();
 
-        $this->rdfLiteralFactory_ =
-            $rdfLiteralFactory ?? new RdfLiteralFactory();
+        if (!isset($rdfLiteralFactory)) {
+            $rdfLiteralFactory = new RdfLiteralFactory();
+        }
 
         $map = [];
 
         foreach (
-            $this->rdfLiteralFactory_::getDatatypeUriToClass() as $uri => $class
+            $rdfLiteralFactory::getDatatypeUriToClass() as $uri => $class
         ) {
             $map[
                 (string)$this->schemaFactory_->createTypeFromUri($uri)
@@ -57,16 +56,6 @@ class LiteralFactory
     public function getSchemaFactory(): SchemaFactory
     {
         return $this->schemaFactory_;
-    }
-
-    public function getRdfLiteralFactory(): RdfLiteralFactory
-    {
-        return $this->rdfLiteralFactory_;
-    }
-
-    public function getTypeToLiteralClass(): TypeMap
-    {
-        return $this->typeToLiteralClass_;
     }
 
     /**
