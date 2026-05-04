@@ -15,7 +15,7 @@ use alcamo\xml\NamespaceConstantsInterface;
 /**
  * @brief Data element with XSD type and metadata
  *
- * @date Last reviewed 2026-04-21
+ * @date Last reviewed 2026-05-04
  */
 interface DataElementInterface extends
     HavingRdfaDataInterface,
