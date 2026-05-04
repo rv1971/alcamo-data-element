@@ -6,6 +6,7 @@ use alcamo\exception\{DataValidationFailed, Eof, InvalidType, SyntaxError};
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\{
     HexBinaryLiteral,
+    IntegerLiteral,
     NonNegativeIntegerLiteral,
     StringLiteral
 };
@@ -24,7 +25,8 @@ class ConstructedSerializerTest extends TestCase
         $lengthRange,
         $literalData,
         $expectedOutput,
-        $expectedDeserializionDigest
+        $expectedDeserializionDigest,
+        $expectedDump
     ): void {
         $serializer = ConstructedSerializer::newFromProps(
             [
@@ -51,6 +53,32 @@ class ConstructedSerializerTest extends TestCase
             ConstructedLiteral::DEFAULT_DATATYPE_URI,
             $literal2->getDatatypeUri()
         );
+
+        $this->assertSame($expectedDump, $serializer->dump($literal));
+
+        $literal3 = $serializer->dedump($expectedDump);
+
+        $this->assertInstanceOf(get_class($literal), $literal3);
+
+        switch ($expectedDeserializionDigest) {
+            case 'bar|foo':
+                $this->assertSame(
+                    $expectedDeserializionDigest,
+                    $literal3->getDigest()
+                );
+
+                break;
+
+            case '':
+                $this->assertSame('3|ABCD', $literal3->getDigest());
+                break;
+
+            default:
+                $this->assertSame(
+                    $literal->getDigest(),
+                    $literal3->getDigest()
+                );
+        }
     }
 
     public function serializeProvider(): array
@@ -75,7 +103,8 @@ class ConstructedSerializerTest extends TestCase
                     new NonNegativeIntegerLiteral(42)
                 ],
                 '7,foo ,,42',
-                '7|foo||42'
+                '7|foo||42',
+                '[7,"foo",,42]'
             ],
             [
                 [ $stringS, $stringS, $intS, $stringS4, $intS ],
@@ -88,7 +117,8 @@ class ConstructedSerializerTest extends TestCase
                     new StringLiteral('foo')
                 ],
                 '/bar/0/foo ',
-                '|bar|0|foo'
+                '|bar|0|foo',
+                '[/"bar"/0/"foo"]'
             ],
             [
                 [ $stringS4, $stringS4 ],
@@ -101,7 +131,8 @@ class ConstructedSerializerTest extends TestCase
                     new NonNegativeIntegerLiteral(7),
                 ],
                 'bar foo   ',
-                'bar|foo'
+                'bar|foo',
+                '[ "bar" "foo" ]'
             ],
             [
                 [ $bcdS, $binS, $binS ],
@@ -112,7 +143,8 @@ class ConstructedSerializerTest extends TestCase
                     new HexBinaryLiteral('abcd'),
                 ],
                 "\x03\xFF\xAB\xCD\x00",
-                '3|ABCD00'
+                '3|ABCD00',
+                "[3\xFF'ABCD']"
             ]
         ];
     }
@@ -203,5 +235,74 @@ class ConstructedSerializerTest extends TestCase
 
         (new ConstructedSerializer([ new StringSerializer() ], '|'))
             ->deserialize('foo|bar');
+    }
+
+    public function testDedumpException1(): void
+    {
+        $this->expectException(SyntaxError::class);
+        $this->expectExceptionMessage(
+            'Syntax error in "[42"; not surrounded by "[" and "]"'
+        );
+
+        (new ConstructedSerializer([ new StringSerializer() ]))->dedump('[42');
+    }
+
+    public function testDedumpException2(): void
+    {
+
+        $serializer = ConstructedSerializer::newFromProps(
+            [
+                'serializers' => [ new IntegerSerializer() ],
+                'flags' => ConstructedSerializer::TRUNCATE_SILENTLY
+            ]
+        );
+
+        $this->assertTrue(
+            (new ConstructedLiteral([ new IntegerLiteral(42) ]))
+                ->equals($serializer->dedump('[ 42 43 ]'))
+        );
+
+        $this->expectException(SyntaxError::class);
+        $this->expectExceptionMessage(
+            'Syntax error in "[ 42 43 ]" at offset 5 ("43 ]"); '
+                . 'spurious trailing data'
+        );
+
+        (new ConstructedSerializer([ new IntegerSerializer() ]))
+            ->dedump('[ 42 43 ]');
+    }
+
+    public function testDedumpException3(): void
+    {
+
+        $serializer = ConstructedSerializer::newFromProps(
+            [
+                'serializers' => [
+                    new StringSerializer(),
+                    new IntegerSerializer()
+                ],
+                'flags' => ConstructedSerializer::TRUNCATE_SILENTLY
+            ]
+        );
+
+        $this->assertTrue(
+            (new ConstructedLiteral([ new StringLiteral('foo') ]))
+                ->equals($serializer->dedump('[ "foo" ]'))
+        );
+
+        $this->expectException(Eof::class);
+        $this->expectExceptionMessage(
+            'Failed to read from "[ "foo" ]" at offset 8 for key 1'
+        );
+
+        ConstructedSerializer::newFromProps(
+            [
+                'serializers' => [
+                    new StringSerializer(),
+                    new IntegerSerializer()
+                ]
+            ]
+        )
+            ->dedump('[ "foo" ]');
     }
 }

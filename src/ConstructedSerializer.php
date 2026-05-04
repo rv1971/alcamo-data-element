@@ -262,6 +262,8 @@ class ConstructedSerializer extends AbstractSerializer implements
     {
         $separator = $this->separator_ ?? ' ';
 
+        $this->rewind();
+
         foreach ($literal as $item) {
             if (isset($result)) {
                 $result .= $separator
@@ -322,7 +324,7 @@ class ConstructedSerializer extends AbstractSerializer implements
                 break;
             }
 
-            $result[] = $serializer->dedump($item);
+            $result[] = $item == '' ? null : $serializer->dedump($item);
         }
 
         if (!($this->flags_ & self::TRUNCATE_SILENTLY)) {

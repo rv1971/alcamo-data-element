@@ -257,7 +257,7 @@ class DumpSerializer implements SerializerInterface
         $result = [];
 
         while ($item = $stream->extractToken($this->separator_, true)) {
-            $result[] = $this->dedump($item);
+            $result[] = $item == '' ? null : $this->dedump($item);
         }
 
         return new Constructedliteral($result, $datatype);

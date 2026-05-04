@@ -84,4 +84,23 @@ class ConstructedLiteral extends AbstractLiteral implements
 
         return $result ?? '';
     }
+
+    public function equals(LiteralInterface $literal): bool
+    {
+        if (count($literal) != count($this)) {
+            return false;
+        }
+
+        $this->rewind();
+
+        foreach ($literal as $item) {
+            if (!$item->equals($this->current())) {
+                return false;
+            }
+
+            $this->next();
+        }
+
+        return true;
+    }
 }
