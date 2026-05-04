@@ -35,7 +35,7 @@ class ConstructedLiteralTest extends TestCase
             [
                 [
                     new LangStringLiteral('ciao', 'it'),
-                    null,
+                    new StringLiteral(''),
                     new IntegerLiteral(42)
                 ],
                 'ciao||42',
@@ -60,23 +60,16 @@ class ConstructedLiteralTest extends TestCase
                 new ConstructedLiteral(
                     [
                         new IntegerLiteral(42),
-                        null,
                         new DigitStringLiteral('01234')
                     ]
                 ),
                 new ConstructedLiteral(
                     [
                         new NonNegativeIntegerLiteral(42),
-                        null,
                         new StringLiteral('01234')
                     ]
                 ),
                 true
-            ],
-            [
-                new ConstructedLiteral([ null, new IntegerLiteral(42) ]),
-                new ConstructedLiteral([ new NonNegativeIntegerLiteral(42) ]),
-                false
             ],
             [
                 new ConstructedLiteral([ new IntegerLiteral(42) ]),

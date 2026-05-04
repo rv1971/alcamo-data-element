@@ -93,32 +93,30 @@ class ConstructedSerializerTest extends TestCase
 
         return [
             [
-                [ $intS, $stringS4, $intS, $intS ],
+                [ $intS, $stringS4, $intS ],
                 ',',
                 null,
                 [
                     new NonNegativeIntegerLiteral(7),
                     new StringLiteral('foo'),
-                    null,
                     new NonNegativeIntegerLiteral(42)
                 ],
-                '7,foo ,,42',
-                '7|foo||42',
-                '[7,"foo",,42]'
+                '7,foo ,42',
+                '7|foo|42',
+                '[7,"foo",42]'
             ],
             [
-                [ $stringS, $stringS, $intS, $stringS4, $intS ],
+                [ $stringS, $intS, $stringS4, $intS ],
                 '/',
                 null,
                 [
-                    null,
                     new StringLiteral('bar'),
                     new NonNegativeIntegerLiteral(0),
                     new StringLiteral('foo')
                 ],
-                '/bar/0/foo ',
-                '|bar|0|foo',
-                '[/"bar"/0/"foo"]'
+                'bar/0/foo ',
+                'bar|0|foo',
+                '["bar"/0/"foo"]'
             ],
             [
                 [ $stringS4, $stringS4 ],

@@ -9,7 +9,7 @@ use alcamo\rdf_literal\{AbstractLiteral, LiteralInterface};
 /**
  * @brief RDF constructed literal
  *
- * String literal made of a sequence of literals or `null` values.
+ * String literal made of a sequence of literals, which may be of any type.
  *
  * There is no way to create an XML Schema datatype that semantically
  * expresses a sequence of items of potentially different types, potentially
@@ -49,17 +49,19 @@ class ConstructedLiteral extends AbstractLiteral implements
     public const SEPARATOR = '|';
 
     /**
-     * @param $value Iterable of `null` values and
-     * alcamo::rdf_literal::LiteralInterface objects.
+     * @param $value Iterable of alcamo::rdf_literal::LiteralInterface objects.
      *
      * @param $datatypeUri Datatype IRI.
+     *
+     * Keys if $value are preserved, i.e. the created object supports
+     * iteration and array access with the same keys as used in $value.
      */
     public function __construct(iterable $value = null, $datatypeUri = null)
     {
         foreach ($value as $key => $literal) {
-            if (isset($literal) && !($literal instanceof LiteralInterface)) {
+            if (!($literal instanceof LiteralInterface)) {
                 /** @throw alcamo::exception::InvalidType if an item in $value
-                 *  is neither `null` nor a LiteralInterface object. */
+                 *  is not a LiteralInterface object. */
                 throw (new InvalidType())->setMessageContext(
                     [
                         'value' => $literal,
@@ -78,38 +80,57 @@ class ConstructedLiteral extends AbstractLiteral implements
         $this->value_ =& $this->data_;
     }
 
+
+    /**
+     * @copybrief alcamo::rdf_literal::LiteralInterface::__toString
+     *
+     * @return Concatenation of the return values of the __toString() methods
+     * of each item, separated by
+     * alcamo::rdf_literal::ConstructedLiteral::SEPARATOR.
+     */
     public function __toString(): string
     {
         return implode(static::SEPARATOR, $this->value_);
     }
 
+    /**
+     * @copybrief alcamo::rdf_literal::LiteralInterface::getDigest()
+     *
+     * @return Concatenation of the return values of the getDigest() methods
+     * of each item, separated by
+     * alcamo::rdf_literal::ConstructedLiteral::SEPARATOR.
+     */
     public function getDigest(): string
     {
+        $result = [];
+
         foreach ($this->value_ as $item) {
-            if (isset($result)) {
-                $result .= static::SEPARATOR
-                    . (isset($item) ? $item->getDigest() : '');
-            } else {
-                $result = isset($item) ? $item->getDigest() : '';
-            }
+            $result[] = $item->getDigest();
         }
 
-        return $result ?? '';
+        return implode(static::SEPARATOR, $result);
     }
 
+    /**
+     * @copybrief alcamo::rdf_literal::LiteralInterface::getDigest()
+     *
+     * The values of two constructed literals are considered equal if they
+     * have the same number of items and corresponding items are considered
+     * equal.
+     */
     public function equals(LiteralInterface $literal): bool
     {
-        if (count($literal) != count($this)) {
+        if (
+            $literal::PRIMITIVE_DATATYPE_URI != $this::PRIMITIVE_DATATYPE_URI
+                || count($literal) != count($this)
+        ) {
             return false;
         }
 
         $this->rewind();
 
         foreach ($literal as $item) {
-            if (
-                isset($item) != ($this->current() !== null)
-                    || (isset($item) && !$item->equals($this->current()))
-            ) {
+            if (!$item->equals($this->current())) {
                 return false;
             }
 

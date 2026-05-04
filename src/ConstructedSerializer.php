@@ -203,9 +203,8 @@ class ConstructedSerializer extends AbstractSerializer implements
                     ? strlen($input) - $pos
                     : $pos2 - $pos;
 
-                $result[] = $length
-                    ? $serializer->deserialize(substr($input, $pos, $length))
-                    : null;
+                $result[] =
+                    $serializer->deserialize(substr($input, $pos, $length));
 
                 $pos += $length + strlen($this->separator_);
             }
@@ -324,7 +323,7 @@ class ConstructedSerializer extends AbstractSerializer implements
                 break;
             }
 
-            $result[] = $item == '' ? null : $serializer->dedump($item);
+            $result[] = $serializer->dedump($item);
         }
 
         if (!($this->flags_ & self::TRUNCATE_SILENTLY)) {
