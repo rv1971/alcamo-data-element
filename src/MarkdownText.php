@@ -34,13 +34,15 @@ class MarkdownText
         return implode("\n", $this->lines_);
     }
 
-    public function appendLine(string $line): self {
+    public function appendLine(string $line): self
+    {
         $this->lines_[] = $line;
 
         return $this;
     }
 
-    public function appendLines(array $lines): self {
+    public function appendLines(array $lines): self
+    {
         $this->lines_ = array_merge($this->lines_, $lines);
 
         return $this;
@@ -53,13 +55,15 @@ class MarkdownText
         return $this;
     }
 
-    public function prependLine(string $line): self {
+    public function prependLine(string $line): self
+    {
         array_unshift($this->lines_, $line);
 
         return $this;
     }
 
-    public function prependLines(array $lines): self {
+    public function prependLines(array $lines): self
+    {
         $this->lines_ = array_merge($lines, $this->lines_);
 
         return $this;

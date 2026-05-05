@@ -12,4 +12,40 @@
   <xsd:simpleType name="MyString" id="MyString" rdfs:label="My string">
     <xsd:restriction base="xsd:string"/>
   </xsd:simpleType>
+
+  <xsd:simpleType name="MyToken" id="MyToken" rdfs:label="My token">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <rdfs:label xml:lang="de">Mein Token</rdfs:label>
+      </xsd:appinfo>
+    </xsd:annotation>
+
+    <xsd:restriction base="xsd:token"/>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="FooBar" id="FooBar" rdfs:label="Foo/bar">
+    <xsd:restriction base="MyToken">
+      <xsd:enumeration value="FOO" rdfs:label="Foo">
+        <xsd:annotation>
+          <xsd:appinfo>
+            <rdfs:label xml:lang="it">il valore "Foo"</rdfs:label>
+          </xsd:appinfo>
+        </xsd:annotation>
+      </xsd:enumeration>
+
+      <xsd:enumeration value="BAR"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="FooBarBazQux" id="FooBarBazQux">
+    <xsd:union memberTypes="FooBar">
+      <xsd:simpleType>
+        <xsd:restriction base="xsd:string">
+          <xsd:enumeration value="BAZ" rdfs:label="Baz"/>
+
+          <xsd:enumeration value="QUX"/>
+        </xsd:restriction>
+      </xsd:simpleType>
+    </xsd:union>
+  </xsd:simpleType>
 </xsd:schema>
