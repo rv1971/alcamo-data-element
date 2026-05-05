@@ -7,7 +7,7 @@ use alcamo\rdf_literal\LiteralInterface;
 /**
  * @brief Data element instance
  *
- * @date Last reviewed 2026-04-24
+ * @date Last reviewed 2026-05-05
  */
 class DataElementInstance implements DataElementInstanceInterface
 {

@@ -8,9 +8,9 @@ use alcamo\exception\InvalidType;
 use alcamo\rdfa\RdfaData;
 
 /**
- * @brief Constructed data element containing data eelements for subfields
+ * @brief Constructed data element containing data elements for subfields
  *
- * @date Last reviewed 2026-04-27
+ * @date Last reviewed 2026-05-04
  */
 class ConstructedDataElement extends DataElement implements
     \Countable,
