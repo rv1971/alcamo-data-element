@@ -69,7 +69,7 @@ class LiteralWorkbenchTest extends TestCase
         );
     }
 
-    public function testValidateDataElementInstance(): void
+    public function testValidateDeInstance(): void
     {
         $literalWorkbench = LiteralWorkbench::getMainInstance();
 
@@ -79,8 +79,8 @@ class LiteralWorkbenchTest extends TestCase
             )
         );
 
-        $type = $literalWorkbench->validateDataElementInstance(
-            new DataElementInstance(
+        $type = $literalWorkbench->validateDeInstance(
+            new DeInstance(
                 $dataElement,
                 new LanguageLiteral('cr')
             )
@@ -102,8 +102,8 @@ class LiteralWorkbenchTest extends TestCase
                 . 'http://www.w3.org/2001/XMLSchema string'
         );
 
-        $literalWorkbench->validateDataElementInstance(
-            new DataElementInstance(
+        $literalWorkbench->validateDeInstance(
+            new DeInstance(
                 $dataElement,
                 new IntegerLiteral(42)
             )

@@ -20,6 +20,6 @@ interface ExplainerInterface
     public function getLiteralLabel(LiteralInterface $literal): ?string;
 
     public function explainAsMarkdownText(
-        DataElementInstanceInterface $instance
+        DeInstanceInterface $deInstance
     ): MarkdownText;
 }

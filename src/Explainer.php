@@ -60,24 +60,24 @@ class Explainer implements ExplainerInterface
     }
 
     public function explainAsMarkdownText(
-        DataElementInstanceInterface $instance
+        DeInstanceInterface $deInstance
     ): MarkdownText {
         $result = new MarkdownText();
 
         $dataElementLabel =
-            $this->getDataElementLabel($instance->getDataElement());
+            $this->getDataElementLabel($deInstance->getDataElement());
 
-        if ($instance instanceof ConstructedDataElementInstance) {
+        if ($deInstance instanceof ConstructedDeInstance) {
             $result->appendLine($dataElementLabel);
 
             $i = 1;
-            foreach ($instance as $item) {
+            foreach ($deInstance as $item) {
                 $result->appendMarkdownText(
                     $this->explainAsMarkdownText($item)->toOrderedListItem($i++)
                 );
             }
         } else {
-            $literalLabel = $this->getLiteralLabel($instance->getLiteral());
+            $literalLabel = $this->getLiteralLabel($deInstance->getLiteral());
 
             $result->appendLine(
                 isset($literalLabel)

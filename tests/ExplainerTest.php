@@ -14,7 +14,7 @@ class ExplainerTest extends TestCase
      * @dataProvider explainAsMarkdownTextProvider
      */
     public function testExplainAsMarkdownText(
-        $dataElementInstance,
+        $deInstance,
         $lang,
         $expectedText
     ): void {
@@ -22,7 +22,7 @@ class ExplainerTest extends TestCase
 
         $this->assertSame(
             $expectedText,
-            (string)$explainer->explainAsMarkdownText($dataElementInstance)
+            (string)$explainer->explainAsMarkdownText($deInstance)
         );
     }
 
@@ -66,7 +66,7 @@ class ExplainerTest extends TestCase
 
         return [
             [
-                new DataElementInstance(
+                new DeInstance(
                     $myTokenDataElement,
                     new StringLiteral('foofoo', $myTokenUri)
                 ),
@@ -74,7 +74,7 @@ class ExplainerTest extends TestCase
                 "My token"
             ],
             [
-                new DataElementInstance(
+                new DeInstance(
                     $myTokenDataElement,
                     new StringLiteral('barbar', $myTokenUri)
                 ),
@@ -82,7 +82,7 @@ class ExplainerTest extends TestCase
                 "Mein Token"
             ],
             [
-                new DataElementInstance(
+                new DeInstance(
                     $fooBarDataElement,
                     new StringLiteral('FOO', $fooBarUri)
                 ),
@@ -90,7 +90,7 @@ class ExplainerTest extends TestCase
                 "Foo/bar: Foo"
             ],
             [
-                new DataElementInstance(
+                new DeInstance(
                     $fooBarDataElement,
                     new StringLiteral('FOO', $fooBarUri)
                 ),
@@ -98,7 +98,7 @@ class ExplainerTest extends TestCase
                 'Foo/bar: il valore "Foo"'
             ],
             [
-                new DataElementInstance(
+                new DeInstance(
                     $fooBarDataElement,
                     new StringLiteral('BAR', $fooBarUri)
                 ),
@@ -106,7 +106,7 @@ class ExplainerTest extends TestCase
                 'Foo/bar'
             ],
             [
-                new DataElementInstance(
+                new DeInstance(
                     $fooBarBazQuxDataElement,
                     new StringLiteral('FOO', $fooBarBazQuxUri)
                 ),
@@ -114,7 +114,7 @@ class ExplainerTest extends TestCase
                 'FBBQ: il valore "Foo"'
             ],
             [
-                new DataElementInstance(
+                new DeInstance(
                     $fooBarBazQuxDataElement,
                     new StringLiteral('BAZ', $fooBarBazQuxUri)
                 ),
@@ -122,7 +122,7 @@ class ExplainerTest extends TestCase
                 'FBBQ: Baz'
             ],
             [
-                new DataElementInstance(
+                new DeInstance(
                     $fooBarBazQuxDataElement,
                     new StringLiteral('QUX', $fooBarBazQuxUri)
                 ),
@@ -130,7 +130,7 @@ class ExplainerTest extends TestCase
                 'FBBQ'
             ],
             [
-                new ConstructedDataElementInstance(
+                new ConstructedDeInstance(
                     $constructedDataElement,
                     new ConstructedLiteral(
                         [

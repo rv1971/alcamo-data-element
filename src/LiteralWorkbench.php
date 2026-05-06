@@ -127,13 +127,13 @@ class LiteralWorkbench
         return $this->literalTypeMap_->validateLiteral($literal);
     }
 
-    public function validateDataElementInstance(
-        DataElementInstanceInterface $dataElementInstance
+    public function validateDeInstance(
+        DeInstanceInterface $deInstance
     ): SimpleTypeInterface {
-        $datatype = $this->validateLiteral($dataElementInstance->getLiteral());
+        $datatype = $this->validateLiteral($deInstance->getLiteral());
 
         $dataElementDatatypeXName =
-            $dataElementInstance->getDataElement()->getDatatype()->getXName();
+            $deInstance->getDataElement()->getDatatype()->getXName();
 
         if (!$datatype->isEqualToOrDerivedFrom($dataElementDatatypeXName)) {
             /** @throw alcamo::exception::DataValidationFailed if the literal
