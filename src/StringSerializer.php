@@ -97,8 +97,8 @@ class StringSerializer extends AbstractSerializer
                 && $value == str_repeat($value[0], strlen($value)):
                 return strlen($value) . " * \"{$value[0]}\"";
 
-            /** If the literal has more than six characters and consists of
-             *  a repetition of the same characters, represent it as a
+            /** If the literal has more than six characters and consists of a
+             *  repetition of the same two characters, represent it as a
              *  repetition, e.g. `ABABABAB` as `4 * "AB"`. */
             case strlen($value) > 6 && $value == str_repeat(
                 $value[0] . $value[1],
