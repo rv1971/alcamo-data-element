@@ -72,31 +72,60 @@ class StringSerializer extends AbstractSerializer
         );
     }
 
+    /** @copydoc alcamo::data_element::SerializerInterface::dump() */
     public function dump(LiteralInterface $literal): string
     {
-        if (strpos($literal, '"') !== false) {
+        $value = (string)$literal;
+
+        if (strpos($value, '"') !== false) {
             /** @throw alcamo::exception::Unsupported on attempt to dump a
              *  literal containing a double quote character. */
                 throw (new Unsupported())->setMessageContext(
                     [
                         'feature'
                             => "dumping a literal containing a double quote",
-                        'inData' => (string)$literal
+                        'inData' => (string)$value
                     ]
                 );
         }
 
-        return "\"$literal\"";
+        switch (true) {
+            /** If the literal has more than three characters and consists of
+             *  a repetition of the same character, represent it as a
+             *  repetition, e.g. `AAAA` as `4 * "A"`. */
+            case strlen($value) > 3
+                && $value == str_repeat($value[0], strlen($value)):
+                return strlen($value) . " * \"{$value[0]}\"";
+
+            /** If the literal has more than six characters and consists of
+             *  a repetition of the same characters, represent it as a
+             *  repetition, e.g. `ABABABAB` as `4 * "AB"`. */
+            case strlen($value) > 6 && $value == str_repeat(
+                $value[0] . $value[1],
+                strlen($value) >> 1
+            ):
+                return (strlen($value) >> 1) . " * \"{$value[0]}{$value[1]}\"";
+
+            default:
+                return "\"$value\"";
+        }
     }
 
     public function dedump(
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
+        if (preg_match('/^(\d+)\s*\*\s*"([^"]+)"$/', $input, $matches)) {
+            return $this->literalWorkbench_->createLiteral(
+                str_repeat($matches[2], $matches[1]),
+                $datatype ?? $this->datatype_
+            );
+        }
+
         if (!preg_match('/^"[^"]*"$/', $input)) {
             /** @throw alcamo::exception::SyntaxError on attempt to dedump an
-             *  input which is not a string without double quotes enclosed in
-             *  double quotes. */
+             *  input which is neither a repetition as explained above nor a
+             *  string without double quotes enclosed in double quotes. */
             throw (new SyntaxError())->setMessageContext(
                 [ 'inData' => $input ]
             );

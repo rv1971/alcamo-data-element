@@ -67,9 +67,27 @@ class StringSerializerTest extends TestCase
                 null,
                 null,
                 null,
-                new StringLiteral('Lorem ipsum'),
-                'Lorem ipsum',
-                '"Lorem ipsum"'
+                new StringLiteral('AAA'),
+                'AAA',
+                '"AAA"'
+            ],
+            [
+                self::XSD_NS . ' string',
+                null,
+                null,
+                null,
+                new StringLiteral('BBBB'),
+                'BBBB',
+                '4 * "B"'
+            ],
+            [
+                self::XSD_NS . ' string',
+                null,
+                null,
+                null,
+                new StringLiteral('CDCDCDCDCD'),
+                'CDCDCDCDCD',
+                '5 * "CD"'
             ],
             [
                 self::XSD_NS . ' normalizedString',
