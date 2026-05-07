@@ -2,6 +2,7 @@
 
 namespace alcamo\data_element;
 
+use alcamo\binary_data\BinaryString;
 use alcamo\dom\schema\component\SimpleTypeInterface;
 use alcamo\dom\schema\TypeMap;
 use alcamo\input_stream\StringInputStream;
@@ -201,30 +202,53 @@ class DumpSerializer implements SerializerInterface
          * - " => StringSerializer
          * - ' => BinarySerializer
          * - [ => constructed
+         * - repetition of a string => StringSerializer
+         * - repetition of a binary => BinarySerializer
          * - all digits, optionally preceded by a minus sign =>
          *   IntegerSerializer
          * - else DateTimeSerializer, assuming a complete ISO 8601 date and time
          */
         switch ($input[0]) {
             case '"':
-                return $this->stringSerializer_->dedump($input, $datatype);
+                return $this->stringSerializer_->dedump($input);
 
             case "'":
-                return $this->binarySerializer_->dedump($input, $datatype);
+                return $this->binarySerializer_->dedump($input);
 
             case '[':
                 break;
 
             default:
-                if (
-                    $input[0] == '-' && ctype_digit(substr($input, 1))
-                        || ctype_digit($input)
-                ) {
-                    return $this->integerSerializer_
-                        ->dedump($input, $datatype);
-                } else {
-                    return $this->dateTimeSerializer_
-                        ->dedump($input, $datatype);
+                switch (true) {
+                    case $input[0] == '-' && ctype_digit(substr($input, 1))
+                        || ctype_digit($input):
+                        return $this->integerSerializer_
+                            ->dedump($input, $datatype);
+
+                    case preg_match(
+                        '/^(\d+)\s*\*\s*"([^"]+)"$/',
+                        $input,
+                        $matches
+                    ):
+                        return $this->literalWorkbench_->createLiteral(
+                            str_repeat($matches[2], $matches[1]),
+                            $this->stringSerializer_->getDatatype()
+                        );
+
+                    case preg_match(
+                        '/^(\d+)\s*\*\s*\'([^\']+)\'$/',
+                        $input,
+                        $matches
+                    ):
+                        return $this->literalWorkbench_->createLiteral(
+                            BinaryString::newFromHex(
+                                str_repeat($matches[2], $matches[1])
+                            ),
+                            $this->binarySerializer_->getDatatype()
+                        );
+
+                    default:
+                        return $this->dateTimeSerializer_->dedump($input);
                 }
         }
 

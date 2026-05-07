@@ -94,20 +94,20 @@ class BinarySerializerTest extends TestCase
                 'BINARY',
                 null,
                 null,
-                new HexBinaryLiteral('DEDEDEDE'),
-                "\xDE\xDE\xDE\xDE",
-                "\xDE\xDE\xDE\xDE",
-                "4 * 'DE'"
+                new HexBinaryLiteral('DEDEDE'),
+                "\xDE\xDE\xDE",
+                "\xDE\xDE\xDE",
+                "'DEDEDE'"
             ],
             [
                 self::XSD_NS . ' hexBinary',
                 'BINARY',
                 null,
                 null,
-                new HexBinaryLiteral('123412341234123412341234'),
-                "\x12\x34\x12\x34\x12\x34\x12\x34\x12\x34\x12\x34",
-                "\x12\x34\x12\x34\x12\x34\x12\x34\x12\x34\x12\x34",
-                "6 * '1234'"
+                new HexBinaryLiteral('123412341234'),
+                "\x12\x34\x12\x34\x12\x34",
+                "\x12\x34\x12\x34\x12\x34",
+                "3 * '1234'"
             ],
             [
                 self::XSD_NS . ' hexBinary',

@@ -159,6 +159,20 @@ class DumpSerializerTest extends TestCase
                     ]
                 ),
                 "[\"foo\"|41|'AABBCC']"
+            ],
+            [
+                null,
+                null,
+                '7*"@"',
+                new StringLiteral('@@@@@@@'),
+                '7 * "@"'
+            ],
+            [
+                null,
+                null,
+                "2  *   'FE98'",
+                new HexBinaryLiteral('FE98FE98'),
+                "'FE98FE98'"
             ]
         ];
     }

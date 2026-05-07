@@ -53,10 +53,10 @@ class BinarySerializer extends AbstractSerializer
                 return strlen($data)
                     . " * '" . (new BinaryString($data[0])) . "'";
 
-            /** If the data have have more than six bytes and consist of a
+            /** If the data have have more than four bytes and consist of a
              *  repetition of the same two bytes, represent it as a
-             *  repetition, e.g. `ABCDABCDABCDABCD` as `4 * 'ABCD'`. */
-            case strlen($data) > 6 && $data == str_repeat(
+             *  repetition, e.g. `ABCDABCDABCD` as `3 * 'ABCD'`. */
+            case strlen($data) > 4 && $data == str_repeat(
                 $data[0] . $data[1],
                 strlen($data) >> 1
             ):
