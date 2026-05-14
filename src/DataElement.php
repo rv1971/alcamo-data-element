@@ -45,8 +45,8 @@ class DataElement implements DataElementInterface
         return $this->rdfaData_;
     }
 
-    public function getLabel($lang = null, ?int $fallbackFlags = null): string
+    public function getLabel($lang = null, ?int $flags = null): string
     {
-        return $this->rdfaData_->getLabel($lang, $fallbackFlags);
+        return $this->rdfaData_->getLabel($lang, $flags);
     }
 }
