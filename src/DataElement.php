@@ -3,7 +3,7 @@
 namespace alcamo\data_element;
 
 use alcamo\dom\schema\component\SimpleTypeInterface;
-use alcamo\rdfa\RdfaData;
+use alcamo\rdfa\{HavingLabelInterface, RdfaData};
 
 /**
  * @brief Data element with XSD type and metadata
@@ -45,8 +45,8 @@ class DataElement implements DataElementInterface
         return $this->rdfaData_;
     }
 
-    public function getLabel($lang = null): string
+    public function getLabel($lang = null, ?int $fallbackFlags = null): string
     {
-        return $this->rdfaData_->findStmtWithLang('rdfs:label', $lang);
+        return $this->rdfaData_->getLabel($lang, $fallbackFlags);
     }
 }

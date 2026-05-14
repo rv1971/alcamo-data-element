@@ -9,7 +9,7 @@
 namespace alcamo\data_element;
 
 use alcamo\dom\schema\component\SimpleTypeInterface;
-use alcamo\rdfa\HavingRdfaDataInterface;
+use alcamo\rdfa\{HavingLabelInterface, HavingRdfaDataInterface};
 use alcamo\xml\NamespaceConstantsInterface;
 
 /**
@@ -18,10 +18,9 @@ use alcamo\xml\NamespaceConstantsInterface;
  * @date Last reviewed 2026-05-04
  */
 interface DataElementInterface extends
+    HavingLabelInterface,
     HavingRdfaDataInterface,
     NamespaceConstantsInterface
 {
     public function getDatatype(): SimpleTypeInterface;
-
-    public function getLabel($lang = null): string;
 }

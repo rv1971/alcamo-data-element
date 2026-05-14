@@ -4,6 +4,7 @@ namespace alcamo\data_element;
 
 use alcamo\dom\schema\component\EnumerationTypeInterface;
 use alcamo\rdf_literal\{Lang, LiteralInterface};
+use alcamo\rdfa\HavingLabelInterface;
 
 /**
  * @brief Class that explains a data element instance
@@ -33,14 +34,6 @@ class Explainer implements ExplainerInterface
         return $this->lang_;
     }
 
-    /** The label taken from the data element may be richer than that from the
-     *  literal type since the former may have additional RDFa data. */
-    public function getDataElementLabel(
-        DataElementInterface $dataElement
-    ): string {
-        return $dataElement->getLabel($this->lang_);
-    }
-
     /** The label for the literal value taken based on the literal data type
      *  may be richer than that from the datatype type since it is possible
      *  that the latter is an enumeration while the former is not. */
@@ -51,8 +44,10 @@ class Explainer implements ExplainerInterface
 
         if ($datatype instanceof EnumerationTypeInterface) {
             return $datatype->getEnumerators()[(string)$literal]
-            ->getRdfaData()
-                  ->findStmtWithLang('rdfs:label', $this->lang_);
+            ->getRdfaData()->getLabel(
+                $this->lang_,
+                HavingLabelInterface::FALLBACK_TO_DIFFERENT_LANG
+            );
         }
 
         return null;
@@ -63,8 +58,13 @@ class Explainer implements ExplainerInterface
     ): MarkdownText {
         $result = new MarkdownText();
 
-        $dataElementLabel =
-            $this->getDataElementLabel($deInstance->getDataElement());
+        /** Use the label taken from the data element, which may be richer
+         *  than that from the literal type since the former may have
+         *  additional RDFa data. */
+        $dataElementLabel = $deInstance->getDataElement()->getLabel(
+            $this->lang_,
+            HavingLabelInterface::FALLBACK_TO_DIFFERENT_LANG
+        );
 
         if ($deInstance instanceof ConstructedDeInstance) {
             $result->appendLine($dataElementLabel);
