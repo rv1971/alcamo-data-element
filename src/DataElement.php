@@ -44,4 +44,9 @@ class DataElement implements DataElementInterface
     {
         return $this->rdfaData_;
     }
+
+    public function getLabel($lang = null): string
+    {
+        return $this->rdfaData_->findStmtWithLang('rdfs:label', $lang);
+    }
 }

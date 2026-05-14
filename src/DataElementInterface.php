@@ -22,4 +22,6 @@ interface DataElementInterface extends
     NamespaceConstantsInterface
 {
     public function getDatatype(): SimpleTypeInterface;
+
+    public function getLabel($lang = null): string;
 }

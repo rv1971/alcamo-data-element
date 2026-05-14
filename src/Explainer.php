@@ -38,8 +38,7 @@ class Explainer implements ExplainerInterface
     public function getDataElementLabel(
         DataElementInterface $dataElement
     ): string {
-        return $dataElement->getRdfaData()
-            ->findStmtWithLang('rdfs:label', $this->lang_);
+        return $dataElement->getLabel($this->lang_);
     }
 
     /** The label for the literal value taken based on the literal data type
