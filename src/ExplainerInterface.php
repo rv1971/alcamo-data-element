@@ -13,6 +13,8 @@ interface ExplainerInterface
 {
     public function getLang(): ?Lang;
 
+    public function getFlags(): int;
+
     public function getLiteralLabel(LiteralInterface $literal): ?string;
 
     public function explainAsMarkdownText(

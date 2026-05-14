@@ -13,17 +13,24 @@ use alcamo\rdfa\HavingLabelInterface;
  */
 class Explainer implements ExplainerInterface
 {
-    protected $lang_;              ///< ?Lang
+    public const DEFAULT_FLAGS =
+        HavingLabelInterface::FALLBACK_TO_DIFFERENT_LANG;
+
+    protected $lang_;             ///< ?Lang
+    protected $flags_;            ///< int
     protected $literalWorkbench_; ///< LiteralWorkbench
 
     public function __construct(
         $lang = null,
+        ?int $flags = null,
         ?LiteralWorkbench $literalWorkbench = null
     ) {
         if (isset($lang)) {
             $this->lang_ =
                 $lang instanceof Lang ? $lang : Lang::newFromString($lang);
         }
+
+        $this->flags_ = $flags ?? static::DEFAULT_FLAGS;
 
         $this->literalWorkbench_ =
             $literalWorkbench ?? LiteralWorkbench::getMainInstance();
@@ -32,6 +39,11 @@ class Explainer implements ExplainerInterface
     public function getLang(): ?Lang
     {
         return $this->lang_;
+    }
+
+    public function getFlags(): int
+    {
+        return $this->flags_;
     }
 
     /** The label for the literal value taken based on the literal data type
@@ -44,10 +56,7 @@ class Explainer implements ExplainerInterface
 
         if ($datatype instanceof EnumerationTypeInterface) {
             return $datatype->getEnumerators()[(string)$literal]
-            ->getRdfaData()->getLabel(
-                $this->lang_,
-                HavingLabelInterface::FALLBACK_TO_DIFFERENT_LANG
-            );
+            ->getRdfaData()->getLabel($this->lang_, $this->flags_);
         }
 
         return null;
@@ -61,10 +70,8 @@ class Explainer implements ExplainerInterface
         /** Use the label taken from the data element, which may be richer
          *  than that from the literal type since the former may have
          *  additional RDFa data. */
-        $dataElementLabel = $deInstance->getDataElement()->getLabel(
-            $this->lang_,
-            HavingLabelInterface::FALLBACK_TO_DIFFERENT_LANG
-        );
+        $dataElementLabel = $deInstance->getDataElement()
+            ->getLabel($this->lang_, $this->flags_);
 
         if ($deInstance instanceof ConstructedDeInstance) {
             $result->appendLine($dataElementLabel);
