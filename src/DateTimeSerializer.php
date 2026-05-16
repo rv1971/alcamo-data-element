@@ -72,6 +72,7 @@ class DateTimeSerializer extends AbstractSerializer
             $props->datatypeXName ?? null,
             $props->encoding ?? null,
             $props->posixFormat ?? null,
+            $props->asUtc ?? null,
             $props->flags ?? null,
             $props->padString ?? null,
             $props->padType ?? null,
@@ -81,6 +82,7 @@ class DateTimeSerializer extends AbstractSerializer
 
     private $posixFormat_;     ///< PosixFormat
     private $dumpPosixFormat_; ///< PosixFormat
+    private $asUtc_;           ///< boolean
 
     /**
      * @param $datatypeXName Datatype for deserialized literals [default first
@@ -110,6 +112,7 @@ class DateTimeSerializer extends AbstractSerializer
         ?string $datatypeXName = null,
         ?string $encoding = null,
         $posixFormat = null,
+        ?bool $asUtc = null,
         ?int $flags = null,
         ?string $padString = null,
         ?int $padType = null,
@@ -147,6 +150,8 @@ class DateTimeSerializer extends AbstractSerializer
             static::DEFAULT_POSIX_FORMATS[$supportedDatatypeXName]['*']
         );
 
+        $this->asUtc_ = (boolean)$asUtc;
+
         /* The length of input is validated if the chosen format has a fixed
          * length. */
 
@@ -162,11 +167,16 @@ class DateTimeSerializer extends AbstractSerializer
         return $this->posixFormat_;
     }
 
+    public function getAsUtc(): bool
+    {
+        return $this->asUtc_;
+    }
+
     public function serialize(LiteralInterface $literal): string
     {
         $this->validateLiteralClass($literal);
 
-        $value = $this->posixFormat_->applyTo($literal->getValue());
+        $value = $this->posixFormat_->applyTo($this->getDateTime($literal));
 
         switch ($this->encoding_) {
             case 'ASCII':
@@ -214,17 +224,22 @@ class DateTimeSerializer extends AbstractSerializer
         }
 
         return $this->literalWorkbench_->createLiteral(
-            \DateTime::createFromFormat(
-                $this->posixFormat_->getPhpFormat(),
-                $value
-            ),
+            $this->asUtc_
+                ? \DateTime::createFromFormat(
+                    $this->posixFormat_->getPhpFormat() . 'O',
+                    "$value+0000"
+                )
+                : \DateTime::createFromFormat(
+                    $this->posixFormat_->getPhpFormat(),
+                    $value
+                ),
             $datatype ?? $this->datatype_
         );
     }
 
     public function dump(LiteralInterface $literal): string
     {
-        return $this->dumpPosixFormat_->applyTo($literal->getValue());
+        return $this->dumpPosixFormat_->applyTo($this->getDateTime($literal));
     }
 
     public function dedump(
@@ -232,11 +247,29 @@ class DateTimeSerializer extends AbstractSerializer
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
         return $this->literalWorkbench_->createLiteral(
-            \DateTime::createFromFormat(
-                $this->dumpPosixFormat_->getPhpFormat(),
-                $input
-            ),
+            $this->asUtc_
+                ? \DateTime::createFromFormat(
+                    $this->dumpPosixFormat_->getPhpFormat() . 'O',
+                    "$input+0000"
+                )
+                : \DateTime::createFromFormat(
+                    $this->dumpPosixFormat_->getPhpFormat(),
+                    $input
+                ),
             $datatype ?? $this->datatype_
         );
+    }
+
+    private function getDateTime(LiteralInterface $literal): \DateTime
+    {
+        static $utcTimeZone;
+
+        if (!isset($utcTimeZone)) {
+            $utcTimeZone = new \DateTimeZone('UTC');
+        }
+
+        return $this->asUtc_
+            ? (clone $literal->getValue())->setTimezone($utcTimeZone)
+            : $literal->getValue();
     }
 }
