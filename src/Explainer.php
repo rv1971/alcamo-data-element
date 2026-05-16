@@ -46,6 +46,12 @@ class Explainer implements ExplainerInterface
         return $this->flags_;
     }
 
+    public function getDataElementLabel(
+        DataElementInterface $dataElement
+    ): ?string {
+        return $dataElement->getLabel($this->lang_, $this->flags_);
+    }
+
     /** The label for the literal value taken based on the literal data type
      *  may be richer than that from the datatype type since it is possible
      *  that the latter is an enumeration while the former is not. */
@@ -70,8 +76,8 @@ class Explainer implements ExplainerInterface
         /** Use the label taken from the data element, which may be richer
          *  than that from the literal type since the former may have
          *  additional RDFa data. */
-        $dataElementLabel = $deInstance->getDataElement()
-            ->getLabel($this->lang_, $this->flags_);
+        $dataElementLabel =
+            $this->getDataElementLabel($deInstance->getDataElement());
 
         if ($deInstance instanceof ConstructedDeInstance) {
             $result->appendLine($dataElementLabel);
