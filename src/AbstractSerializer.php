@@ -58,6 +58,23 @@ abstract class AbstractSerializer implements SerializerInterface
         );
     }
 
+    /**
+     * @brief Create from named properties an instance of a given class
+     *
+     * The class to construct an insatnce of is given as the `class`
+     * property. Useful to create from configuration parameters an instance of
+     * a class which is not yet known at compile time.
+     *
+     * @param $props object or array of named properties corresponding to the
+     * constructor parameters, plus a `class` item.
+     */
+    public static function createFromProps($props): SerializerInterface
+    {
+        $props = (object)$props;
+
+        return ($props->class)::newFromProps($props);
+    }
+
     protected $datatype_; ///< SimpleTypeInterface
 
     /**
