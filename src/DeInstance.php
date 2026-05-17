@@ -18,8 +18,14 @@ class DeInstance implements DeInstanceInterface
         DataElementInterface $dataElement,
         LiteralInterface $literal
     ) {
-        $this->dataElement_ = $dataElement;
-        $this->literal_ = $literal;
+        $this->dataElement_ = clone $dataElement;
+        $this->literal_ = clone $literal;
+    }
+
+    public function __clone()
+    {
+        $this->dataElement_ = clone $this->dataElement_;
+        $this->literal_ = clone $this->literal_;
     }
 
     public function getDataElement(): DataElementInterface

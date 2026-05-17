@@ -39,9 +39,26 @@ class DataElementTest extends TestCase
 
         $this->assertSame($datatype, $dataElement->getDatatype());
 
+        $rdfaData2 = RdfaData::newFromIterable((array)$expectedRdfaData);
+
+        $this->assertEquals($rdfaData2, $dataElement->getRdfaData());
+
+        $dataElement2 = new DataElement($datatype, $rdfaData2);
+
+        $this->assertNotSame($rdfaData2, $dataElement2->getRdfaData());
+
+        $this->assertEquals($rdfaData2, $dataElement2->getRdfaData());
+
+        $dataElement3 = clone $dataElement2;
+
+        $this->assertNotSame(
+            $dataElement2->getRdfaData(),
+            $dataElement3->getRdfaData()
+        );
+
         $this->assertEquals(
-            RdfaData::newFromIterable((array)$expectedRdfaData),
-            $dataElement->getRdfaData()
+            $dataElement2->getRdfaData(),
+            $dataElement3->getRdfaData()
         );
     }
 

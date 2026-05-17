@@ -35,6 +35,11 @@ class DataElement implements DataElementInterface
             : clone $datatype->getRdfaData();
     }
 
+    public function __clone()
+    {
+        $this->rdfaData_ = clone $this->rdfaData_;
+    }
+
     public function getDatatype(): SimpleTypeInterface
     {
         return $this->datatype_;

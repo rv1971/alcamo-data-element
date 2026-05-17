@@ -41,13 +41,13 @@ class ConstructedDeInstanceTest extends TestCase
 
         $this->assertSame(2, count($deInstance));
 
-        $this->assertSame($dataElement1, $deInstance['i']->getDataElement());
+        $this->assertEquals($dataElement1, $deInstance['i']->getDataElement());
 
-        $this->assertSame($dataElement2, $deInstance['s']->getDataElement());
+        $this->assertEquals($dataElement2, $deInstance['s']->getDataElement());
 
-        $this->assertSame($literal1, $deInstance['i']->getLiteral());
+        $this->assertEquals($literal1, $deInstance['i']->getLiteral());
 
-        $this->assertSame($literal2, $deInstance['s']->getLiteral());
+        $this->assertEquals($literal2, $deInstance['s']->getLiteral());
     }
 
     public function testContructorException(): void

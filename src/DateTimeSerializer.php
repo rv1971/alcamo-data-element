@@ -225,11 +225,11 @@ class DateTimeSerializer extends AbstractSerializer
 
         return $this->literalWorkbench_->createLiteral(
             $this->asUtc_
-                ? \DateTime::createFromFormat(
+                ? \DateTimeImmutable::createFromFormat(
                     $this->posixFormat_->getPhpFormat() . 'O',
                     "$value+0000"
                 )
-                : \DateTime::createFromFormat(
+                : \DateTimeImmutable::createFromFormat(
                     $this->posixFormat_->getPhpFormat(),
                     $value
                 ),
@@ -248,11 +248,11 @@ class DateTimeSerializer extends AbstractSerializer
     ): LiteralInterface {
         return $this->literalWorkbench_->createLiteral(
             $this->asUtc_
-                ? \DateTime::createFromFormat(
+                ? \DateTimeImmutable::createFromFormat(
                     $this->dumpPosixFormat_->getPhpFormat() . 'O',
                     "$input+0000"
                 )
-                : \DateTime::createFromFormat(
+                : \DateTimeImmutable::createFromFormat(
                     $this->dumpPosixFormat_->getPhpFormat(),
                     $input
                 ),
@@ -260,7 +260,7 @@ class DateTimeSerializer extends AbstractSerializer
         );
     }
 
-    private function getDateTime(LiteralInterface $literal): \DateTime
+    private function getDateTime(LiteralInterface $literal): \DateTimeImmutable
     {
         static $utcTimeZone;
 

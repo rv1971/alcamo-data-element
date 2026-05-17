@@ -16,7 +16,7 @@ class LiteralTypeMap
 {
     private $schemaFactory_; ///< SchemaFactory
 
-    ///< map of string to SimpleTypeInterface
+    /// map of string to SimpleTypeInterface
     private $literalClassToDefaultDatatype_ = [];
 
     public function __construct(?SchemaFactory $schemaFactory = null)
