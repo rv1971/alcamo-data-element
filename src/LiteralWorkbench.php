@@ -7,6 +7,7 @@ use alcamo\dom\schema\component\SimpleTypeInterface;
 use alcamo\exception\DataValidationFailed;
 use alcamo\rdf_literal\LiteralInterface;
 use alcamo\uri\FileUriFactory;
+use Composer\InstalledVersions;
 
 /**
  * @brief Facade for literal factory and literal type map
@@ -15,14 +16,15 @@ use alcamo\uri\FileUriFactory;
  */
 class LiteralWorkbench
 {
-    /// Absolute path to the vendor directory, including trailing separator
-    public const VENDOR_PATH = __DIR__ . DIRECTORY_SEPARATOR
-        . '..' . DIRECTORY_SEPARATOR
-        . 'vendor' . DIRECTORY_SEPARATOR;
-
-    /// Absolute paths to additional XSDs to load
+    /**
+     * @brief Absolute paths to additional XSDs to load
+     *
+     * Paths that begin with `vendor` are automatically prefixed with the
+     * parnet directory of _composer_autoload_path.
+     */
     public const ADDTIONAL_XSD_PATHS = [
-        self::VENDOR_PATH . 'alcamo' . DIRECTORY_SEPARATOR
+        'vendor' . DIRECTORY_SEPARATOR
+            . 'alcamo' . DIRECTORY_SEPARATOR
             . 'rdf-literal' . DIRECTORY_SEPARATOR
             . 'xsd' . DIRECTORY_SEPARATOR . 'alcamo.rdf.xsd'
     ];
@@ -87,6 +89,15 @@ class LiteralWorkbench
         $xsdUris = [];
 
         foreach (static::ADDTIONAL_XSD_PATHS as $xsdPath) {
+            if (substr($xsdPath, 0, 7) == 'vendor' . DIRECTORY_SEPARATOR) {
+                $xsdPath = substr($xsdPath, 7);
+
+                $a = explode(DIRECTORY_SEPARATOR, $xsdPath, 3);
+
+                $xsdPath = InstalledVersions::getInstallPath("{$a[0]}/{$a[1]}")
+                    . DIRECTORY_SEPARATOR . $a[2];
+            }
+
             $xsdUris[] = $fileUriFactory->create($xsdPath);
         }
 

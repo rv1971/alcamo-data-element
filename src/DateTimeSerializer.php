@@ -150,7 +150,7 @@ class DateTimeSerializer extends AbstractSerializer
             static::DEFAULT_POSIX_FORMATS[$supportedDatatypeXName]['*']
         );
 
-        $this->asUtc_ = (boolean)$asUtc;
+        $this->asUtc_ = (bool)$asUtc;
 
         /* The length of input is validated if the chosen format has a fixed
          * length. */
