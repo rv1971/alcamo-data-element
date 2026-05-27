@@ -54,7 +54,7 @@ abstract class AbstractSerializer implements SerializerInterface
             $props->flags ?? null,
             $props->padString ?? null,
             $props->padType ?? null,
-            $props->literalWorkbench ?? null
+            $props->deWorkbench ?? null
         );
     }
 
@@ -90,7 +90,7 @@ abstract class AbstractSerializer implements SerializerInterface
     protected $flags_;            ///< int
     protected $padString_;        ///< string
     protected $padType_;          ///< one of STR_PAD_RIGHT or STR_PAD_LEFT
-    protected $literalWorkbench_; ///< LiteralWorkbench
+    protected $deWorkbench_; ///< DeWorkbench
 
     /**
      * @param $datatypeXName Datatype to use for deserialized literals
@@ -114,9 +114,9 @@ abstract class AbstractSerializer implements SerializerInterface
      * necessary, takes place on the same side as padding. [default
      * alcamo::data_element::AbstractSerializer::PAD_TYPE]
      *
-     * @param $literalWorkbench Workbench used in deserialize() and in
+     * @param $deWorkbench Workbench used in deserialize() and in
      * validateLiteralClass(). [default
-     * alcamo::data_element::LiteralWorkbench::getMainInstance()]
+     * alcamo::data_element::DeWorkbench::getMainInstance()]
      */
     public function __construct(
         ?string $datatypeXName = null,
@@ -125,13 +125,13 @@ abstract class AbstractSerializer implements SerializerInterface
         ?int $flags = null,
         ?string $padString = null,
         ?int $padType = null,
-        ?LiteralWorkbench $literalWorkbench = null
+        ?DeWorkbench $deWorkbench = null
     ) {
-        $this->literalWorkbench_ =
-            $literalWorkbench ?? LiteralWorkbench::getMainInstance();
+        $this->deWorkbench_ =
+            $deWorkbench ?? DeWorkbench::getMainInstance();
 
         if (isset($datatypeXName)) {
-            $this->datatype_ = $this->literalWorkbench_->getSchema()
+            $this->datatype_ = $this->deWorkbench_->getSchema()
                 ->getGlobalType($datatypeXName);
 
             foreach (
@@ -160,7 +160,7 @@ abstract class AbstractSerializer implements SerializerInterface
                 );
             }
         } else {
-            $this->datatype_ = $this->literalWorkbench_->getSchema()
+            $this->datatype_ = $this->deWorkbench_->getSchema()
                 ->getGlobalType(static::SUPPORTED_DATATYPE_XNAMES[0]);
 
             $this->supportedDatatype_ = $this->datatype_;
@@ -239,9 +239,9 @@ abstract class AbstractSerializer implements SerializerInterface
         return $this->padType_;
     }
 
-    public function getLiteralWorkbench(): LiteralWorkbench
+    public function getDeWorkbench(): DeWorkbench
     {
-        return $this->literalWorkbench_;
+        return $this->deWorkbench_;
     }
 
     public function getBitsPerCharacter(): int
@@ -253,7 +253,7 @@ abstract class AbstractSerializer implements SerializerInterface
     /// Check whether $literal is supported for this serializer class
     protected function validateLiteralClass(LiteralInterface $literal): void
     {
-        $literalDatatype = $this->literalWorkbench_->validateLiteral($literal);
+        $literalDatatype = $this->deWorkbench_->validateLiteral($literal);
 
         if (
             !$literalDatatype

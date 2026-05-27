@@ -44,12 +44,12 @@ class DumpSerializer implements SerializerInterface
         return new static(
             $props->flags ?? null,
             $props->separator ?? null,
-            $props->literalWorkbench ?? null
+            $props->deWorkbench ?? null
         );
     }
 
     protected $flags_;            ///< int
-    protected $literalWorkbench_; ///< LiteralWorkbench
+    protected $deWorkbench_;      ///< DeWorkbench
 
     private $typeToSerializer_;   ///< TypeMap
     private $binarySerializer_;   ///< BinarySerializer
@@ -67,21 +67,21 @@ class DumpSerializer implements SerializerInterface
      * constructed literals. [default one space in serialization and any
      * whitespace in deserialization]
      *
-     * @param $literalWorkbench Workbench used in deserialize() and in
+     * @param $deWorkbench Workbench used in deserialize() and in
      * validateLiteralClass(). [default
-     * alcamo::data_element::LiteralWorkbench::getMainInstance()]
+     * alcamo::data_element::DeWorkbench::getMainInstance()]
      */
     public function __construct(
         ?int $flags = null,
         ?string $separator = null,
-        ?LiteralWorkbench $literalWorkbench = null
+        ?DeWorkbench $deWorkbench = null
     ) {
         $this->flags_ = (int)$flags;
 
         $this->separator_ = $separator;
 
-        $this->literalWorkbench_ =
-            $literalWorkbench ?? LiteralWorkbench::getMainInstance();
+        $this->deWorkbench_ =
+            $deWorkbench ?? DeWorkbench::getMainInstance();
 
         $typeXNameToSerializer = [];
 
@@ -91,7 +91,7 @@ class DumpSerializer implements SerializerInterface
             $typeXNameToSerializer[$typeXName] = $serializerClass::newFromProps(
                 [
                     'datatypeXName' => $typeXName,
-                    'literalWorkbench' => $this->literalWorkbench_
+                    'deWorkbench' => $this->deWorkbench_
                 ]
             );
         }
@@ -106,7 +106,7 @@ class DumpSerializer implements SerializerInterface
             $typeXNameToSerializer[self::XSD_NS . ' integer'];
 
         $this->stringSerializer_ = StringSerializer::newFromProps(
-            [ 'literalWorkbench' => $this->literalWorkbench_ ]
+            [ 'deWorkbench' => $this->deWorkbench_ ]
         );
 
         $this->typeToSerializer_ =
@@ -115,7 +115,7 @@ class DumpSerializer implements SerializerInterface
 
     public function getDatatype(): SimpleTypeInterface
     {
-        return $this->literalWorkbench_->getSchema()->getAnySimpleType();
+        return $this->deWorkbench_->getSchema()->getAnySimpleType();
     }
 
     public function getEncoding(): string
@@ -143,9 +143,9 @@ class DumpSerializer implements SerializerInterface
         return 0;
     }
 
-    public function getLiteralWorkbench(): LiteralWorkbench
+    public function getDeWorkbench(): DeWorkbench
     {
-        return $this->literalWorkbench_;
+        return $this->deWorkbench_;
     }
 
     public function getSeparator(): ?string
@@ -169,7 +169,7 @@ class DumpSerializer implements SerializerInterface
     {
         if (!($literal instanceof ConstructedLiteral)) {
             return $this->typeToSerializer_
-                ->lookup($this->literalWorkbench_->validateLiteral($literal))
+                ->lookup($this->deWorkbench_->validateLiteral($literal))
                 ->dump($literal);
         }
 
@@ -230,7 +230,7 @@ class DumpSerializer implements SerializerInterface
                         $input,
                         $matches
                     ):
-                        return $this->literalWorkbench_->createLiteral(
+                        return $this->deWorkbench_->createLiteral(
                             str_repeat($matches[2], $matches[1]),
                             $this->stringSerializer_->getDatatype()
                         );
@@ -240,7 +240,7 @@ class DumpSerializer implements SerializerInterface
                         $input,
                         $matches
                     ):
-                        return $this->literalWorkbench_->createLiteral(
+                        return $this->deWorkbench_->createLiteral(
                             BinaryString::newFromHex(
                                 str_repeat($matches[2], $matches[1])
                             ),

@@ -7,57 +7,57 @@ use alcamo\exception\DataValidationFailed;
 use alcamo\rdf_literal\{IntegerLiteral, LanguageLiteral, StringLiteral};
 use PHPUnit\Framework\TestCase;
 
-class LiteralWorkbenchTest extends TestCase
+class DeWorkbenchTest extends TestCase
 {
     public function testCreation(): void
     {
-        $literalWorkbench = LiteralWorkbench::getMainInstance();
+        $deWorkbench = DeWorkbench::getMainInstance();
 
         $this->assertInstanceOf(
             SchemaFactory::class,
-            $literalWorkbench->getSchemaFactory()
+            $deWorkbench->getSchemaFactory()
         );
 
         $this->assertInstanceOf(
             LiteralFactory::class,
-            $literalWorkbench->getLiteralFactory()
+            $deWorkbench->getLiteralFactory()
         );
 
         $this->assertInstanceOf(
             LiteralTypeMap::class,
-            $literalWorkbench->getLiteralTypeMap()
+            $deWorkbench->getLiteralTypeMap()
         );
 
         $this->assertSame(
-            $literalWorkbench->getSchemaFactory(),
-            $literalWorkbench->getLiteralFactory()->getSchemaFactory()
+            $deWorkbench->getSchemaFactory(),
+            $deWorkbench->getLiteralFactory()->getSchemaFactory()
         );
 
         $this->assertSame(
-            $literalWorkbench->getSchemaFactory(),
-            $literalWorkbench->getLiteralTypeMap()->getSchemaFactory()
+            $deWorkbench->getSchemaFactory(),
+            $deWorkbench->getLiteralTypeMap()->getSchemaFactory()
         );
 
-        $literalWorkbench2 = LiteralWorkbench::newFromFactories(
-            $literalWorkbench->getLiteralFactory(),
-            $literalWorkbench->getLiteralTypeMap()
-        );
-
-        $this->assertSame(
-            $literalWorkbench->getLiteralFactory(),
-            $literalWorkbench2->getLiteralFactory()
+        $deWorkbench2 = DeWorkbench::newFromFactories(
+            $deWorkbench->getLiteralFactory(),
+            $deWorkbench->getLiteralTypeMap()
         );
 
         $this->assertSame(
-            $literalWorkbench->getLiteralTypeMap(),
-            $literalWorkbench2->getLiteralTypeMap()
+            $deWorkbench->getLiteralFactory(),
+            $deWorkbench2->getLiteralFactory()
+        );
+
+        $this->assertSame(
+            $deWorkbench->getLiteralTypeMap(),
+            $deWorkbench2->getLiteralTypeMap()
         );
 
         $datatypeXName = SchemaFactory::XSD_NS . ' token';
 
         $rdfaData = [ [ 'rdfs:label', 'foo' ] ];
 
-        $dataElement = $literalWorkbench->createDataElementFromXName(
+        $dataElement = $deWorkbench->createDataElementFromXName(
             $datatypeXName,
             $rdfaData
         );
@@ -79,7 +79,7 @@ class LiteralWorkbenchTest extends TestCase
                 . 'different schema factories'
         );
 
-        LiteralWorkbench::newFromFactories(
+        DeWorkbench::newFromFactories(
             new LiteralFactory(new SchemaFactory()),
             new LiteralTypeMap(new SchemaFactory()),
         );
@@ -87,15 +87,15 @@ class LiteralWorkbenchTest extends TestCase
 
     public function testValidateDeInstance(): void
     {
-        $literalWorkbench = LiteralWorkbench::getMainInstance();
+        $deWorkbench = DeWorkbench::getMainInstance();
 
         $dataElement = new DataElement(
-            $literalWorkbench->getSchemaFactory()->createTypeFromUri(
+            $deWorkbench->getSchemaFactory()->createTypeFromUri(
                 StringLiteral::getClassDefaultDatatypeUri()
             )
         );
 
-        $type = $literalWorkbench->validateDeInstance(
+        $type = $deWorkbench->validateDeInstance(
             new DeInstance(
                 $dataElement,
                 new LanguageLiteral('cr')
@@ -103,7 +103,7 @@ class LiteralWorkbenchTest extends TestCase
         );
 
         $this->assertSame(
-            $literalWorkbench->getSchemaFactory()->createTypeFromUri(
+            $deWorkbench->getSchemaFactory()->createTypeFromUri(
                 LanguageLiteral::getClassDefaultDatatypeUri()
             ),
             $type
@@ -118,7 +118,7 @@ class LiteralWorkbenchTest extends TestCase
                 . 'http://www.w3.org/2001/XMLSchema string'
         );
 
-        $literalWorkbench->validateDeInstance(
+        $deWorkbench->validateDeInstance(
             new DeInstance(
                 $dataElement,
                 new IntegerLiteral(42)

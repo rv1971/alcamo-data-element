@@ -48,7 +48,7 @@ class FourBitCharStringSerializer extends StringSerializer
 
                 $this->validateInputLength($input);
 
-                return $this->literalWorkbench_->createLiteral(
+                return $this->deWorkbench_->createLiteral(
                     BinaryString::newFromHex($input)->toFourBitCharString(),
                     $datatype ?? $this->datatype_
                 );
@@ -57,7 +57,7 @@ class FourBitCharStringSerializer extends StringSerializer
                 $this->validateInputLength($input);
 
                 /** Remove trailing spaces from input. */
-                return $this->literalWorkbench_->createLiteral(
+                return $this->deWorkbench_->createLiteral(
                     rtrim($input),
                     $datatype ?? $this->datatype_
                 );

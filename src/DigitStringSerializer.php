@@ -75,7 +75,7 @@ class DigitStringSerializer extends FourBitCharStringSerializer
                 break;
         }
 
-        return $this->literalWorkbench_
+        return $this->deWorkbench_
             ->createLiteral($value, $datatype ?? $this->datatype_);
     }
 }

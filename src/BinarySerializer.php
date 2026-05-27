@@ -34,7 +34,7 @@ class BinarySerializer extends AbstractSerializer
     ): LiteralInterface {
         $this->validateInputLength($input);
 
-        return $this->literalWorkbench_->createLiteral(
+        return $this->deWorkbench_->createLiteral(
             new BinaryString($input),
             $datatype ?? $this->datatype_
         );
@@ -73,7 +73,7 @@ class BinarySerializer extends AbstractSerializer
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
         if (preg_match('/^(\d+)\s*\*\s*\'([^\']+)\'$/', $input, $matches)) {
-            return $this->literalWorkbench_->createLiteral(
+            return $this->deWorkbench_->createLiteral(
                 BinaryString::newFromHex(str_repeat($matches[2], $matches[1])),
                 $datatype ?? $this->datatype_
             );
@@ -88,7 +88,7 @@ class BinarySerializer extends AbstractSerializer
             );
         }
 
-        return $this->literalWorkbench_->createLiteral(
+        return $this->deWorkbench_->createLiteral(
             BinaryString::newFromHex(trim($input, "'")),
             $datatype ?? $this->datatype_
         );

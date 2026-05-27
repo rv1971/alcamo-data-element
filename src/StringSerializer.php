@@ -62,7 +62,7 @@ class StringSerializer extends AbstractSerializer
         $this->validateInputLength($input);
 
         /** Remove trailing spaces from input. */
-        return $this->literalWorkbench_->createLiteral(
+        return $this->deWorkbench_->createLiteral(
             rtrim(
                 static::INTERNAL_ENCODING == $this->encoding_
                     ? $input
@@ -116,7 +116,7 @@ class StringSerializer extends AbstractSerializer
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
         if (preg_match('/^(\d+)\s*\*\s*"([^"]+)"$/', $input, $matches)) {
-            return $this->literalWorkbench_->createLiteral(
+            return $this->deWorkbench_->createLiteral(
                 str_repeat($matches[2], $matches[1]),
                 $datatype ?? $this->datatype_
             );
@@ -131,7 +131,7 @@ class StringSerializer extends AbstractSerializer
             );
         }
 
-        return $this->literalWorkbench_->createLiteral(
+        return $this->deWorkbench_->createLiteral(
             trim($input, '"'),
             $datatype ?? $this->datatype_
         );

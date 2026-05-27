@@ -28,7 +28,7 @@ class ExplainerTest extends TestCase
 
     public function explainAsMarkdownTextProvider(): array
     {
-        $schema = LiteralWorkbench::getMainInstance()->getSchema();
+        $schema = DeWorkbench::getMainInstance()->getSchema();
 
         $schema->addUris(
             [

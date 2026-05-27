@@ -56,7 +56,7 @@ class NonNegativeIntegerSerializer extends IntegerSerializer
 
             $this->validateInputLength($input);
 
-            return $this->literalWorkbench_
+            return $this->deWorkbench_
                 ->createLiteral((int)$input, $datatype ?? $this->datatype_);
         }
 

@@ -90,7 +90,7 @@ class IntegerSerializer extends AbstractSerializer
                 break;
         }
 
-        return $this->literalWorkbench_
+        return $this->deWorkbench_
             ->createLiteral($value, $datatype ?? $this->datatype_);
     }
 
@@ -111,7 +111,7 @@ class IntegerSerializer extends AbstractSerializer
             );
         }
 
-        return $this->literalWorkbench_
+        return $this->deWorkbench_
             ->createLiteral($input, $datatype ?? $this->datatype_);
     }
 }

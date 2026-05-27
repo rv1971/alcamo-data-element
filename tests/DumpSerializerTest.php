@@ -53,10 +53,10 @@ class DumpSerializerTest extends TestCase
 
         $this->assertSame($separator, $serializer->getSeparator());
 
-        $workbench = $serializer->getLiteralWorkbench();
+        $deWorkbench = $serializer->getDeWorkbench();
 
         $datatype = isset($datatypeXName)
-            ? $workbench->getSchema()->getGlobalType($datatypeXName)
+            ? $deWorkbench->getSchema()->getGlobalType($datatypeXName)
             : null;
 
         $literal = $serializer->deserialize($text, $datatype);
@@ -78,8 +78,8 @@ class DumpSerializerTest extends TestCase
                 );
 
                 $this->assertSame(
-                    $workbench->validateLiteral($expectedItem),
-                    $workbench->validateLiteral($item)
+                    $deWorkbench->validateLiteral($expectedItem),
+                    $deWorkbench->validateLiteral($item)
                 );
 
                 $expectedLiteral->next();
@@ -90,8 +90,8 @@ class DumpSerializerTest extends TestCase
             );
 
             $this->assertSame(
-                $workbench->validateLiteral($expectedLiteral)->getXName(),
-                $workbench->validateLiteral($literal)->getXName()
+                $deWorkbench->validateLiteral($expectedLiteral)->getXName(),
+                $deWorkbench->validateLiteral($literal)->getXName()
             );
 
             $this->assertSame(

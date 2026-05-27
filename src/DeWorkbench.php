@@ -14,7 +14,7 @@ use Composer\InstalledVersions;
  *
  * @date Last reviewed 2026-05-04
  */
-class LiteralWorkbench
+class DeWorkbench
 {
     /**
      * @brief Absolute paths to additional XSDs to load

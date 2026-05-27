@@ -59,7 +59,7 @@ class BitStringSerializer extends DigitStringSerializer
 
                 $this->validateInputLength($value);
 
-                return $this->literalWorkbench_
+                return $this->deWorkbench_
                     ->createLiteral($value, $datatype ?? $this->datatype_);
 
             case 'X.690':
@@ -73,7 +73,7 @@ class BitStringSerializer extends DigitStringSerializer
                     $value = substr($value, 0, -$unusedBits);
                 }
 
-                return $this->literalWorkbench_
+                return $this->deWorkbench_
                     ->createLiteral($value, $datatype ?? $this->datatype_);
 
             default:

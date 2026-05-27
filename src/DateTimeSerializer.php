@@ -76,7 +76,7 @@ class DateTimeSerializer extends AbstractSerializer
             $props->flags ?? null,
             $props->padString ?? null,
             $props->padType ?? null,
-            $props->literalWorkbench ?? null
+            $props->deWorkbench ?? null
         );
     }
 
@@ -104,9 +104,9 @@ class DateTimeSerializer extends AbstractSerializer
      * necessary, takes place on the same side as padding. [default
      * alcamo::data_element::AbstractSerializer::PAD_TYPE]
      *
-     * @param $literalWorkbench Workbench used in deserialize() and in
+     * @param $deWorkbench Workbench used in deserialize() and in
      * validateLiteralClass(). [default
-     * alcamo::data_element::LiteralWorkbench::getMainInstance()]
+     * alcamo::data_element::DeWorkbench::getMainInstance()]
      */
     public function __construct(
         ?string $datatypeXName = null,
@@ -116,7 +116,7 @@ class DateTimeSerializer extends AbstractSerializer
         ?int $flags = null,
         ?string $padString = null,
         ?int $padType = null,
-        ?LiteralWorkbench $literalWorkbench = null
+        ?DeWorkbench $deWorkbench = null
     ) {
         /* No padding will take place since the output strings are created at
          * the exact length of the chosen format (which may contain padding
@@ -128,7 +128,7 @@ class DateTimeSerializer extends AbstractSerializer
             $flags,
             $padString,
             $padType,
-            $literalWorkbench
+            $deWorkbench
         );
 
         $supportedDatatypeXName = (string)$this->supportedDatatype_->getXName();
@@ -223,7 +223,7 @@ class DateTimeSerializer extends AbstractSerializer
                 break;
         }
 
-        return $this->literalWorkbench_->createLiteral(
+        return $this->deWorkbench_->createLiteral(
             $this->asUtc_
                 ? \DateTimeImmutable::createFromFormat(
                     $this->posixFormat_->getPhpFormat() . 'O',
@@ -246,7 +246,7 @@ class DateTimeSerializer extends AbstractSerializer
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
-        return $this->literalWorkbench_->createLiteral(
+        return $this->deWorkbench_->createLiteral(
             $this->asUtc_
                 ? \DateTimeImmutable::createFromFormat(
                     $this->dumpPosixFormat_->getPhpFormat() . 'O',

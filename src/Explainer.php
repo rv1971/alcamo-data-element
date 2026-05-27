@@ -16,14 +16,14 @@ class Explainer implements ExplainerInterface
     public const DEFAULT_FLAGS =
         HavingLabelInterface::FALLBACK_TO_DIFFERENT_LANG;
 
-    protected $lang_;             ///< ?Lang
-    protected $flags_;            ///< int
-    protected $literalWorkbench_; ///< LiteralWorkbench
+    protected $lang_;        ///< ?Lang
+    protected $flags_;       ///< int
+    protected $deWorkbench_; ///< DeWorkbench
 
     public function __construct(
         $lang = null,
         ?int $flags = null,
-        ?LiteralWorkbench $literalWorkbench = null
+        ?DeWorkbench $deWorkbench = null
     ) {
         if (isset($lang)) {
             $this->lang_ =
@@ -32,8 +32,7 @@ class Explainer implements ExplainerInterface
 
         $this->flags_ = $flags ?? static::DEFAULT_FLAGS;
 
-        $this->literalWorkbench_ =
-            $literalWorkbench ?? LiteralWorkbench::getMainInstance();
+        $this->deWorkbench_ = $deWorkbench ?? DeWorkbench::getMainInstance();
     }
 
     public function getLang(): ?Lang
@@ -58,7 +57,7 @@ class Explainer implements ExplainerInterface
     public function getLiteralLabel(
         LiteralInterface $literal
     ): ?string {
-        $datatype = $this->literalWorkbench_->validateLiteral($literal);
+        $datatype = $this->deWorkbench_->validateLiteral($literal);
 
         if ($datatype instanceof EnumerationTypeInterface) {
             return $datatype->getEnumerators()[(string)$literal]

@@ -85,7 +85,7 @@ class ConstructedSerializer extends AbstractSerializer implements
             $flags,
             $serializer->padString_,
             $serializer->padType_,
-            $serializer->literalWorkbench_
+            $serializer->deWorkbench_
         );
 
         $this->separator_ = $separator;
