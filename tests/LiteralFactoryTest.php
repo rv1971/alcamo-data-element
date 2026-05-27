@@ -70,6 +70,11 @@ class LiteralFactoryTest extends TestCase
                 new BooleanLiteral(true)
             ],
             [
+                self::XSD_NS . ' boolean',
+                42,
+                new BooleanLiteral(true)
+            ],
+            [
                 self::XSD_NS . ' hexBinary',
                 '123ABC',
                 new HexBinaryLiteral(
