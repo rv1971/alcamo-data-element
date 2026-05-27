@@ -52,6 +52,22 @@ class LiteralWorkbenchTest extends TestCase
             $literalWorkbench->getLiteralTypeMap(),
             $literalWorkbench2->getLiteralTypeMap()
         );
+
+        $datatypeXName = SchemaFactory::XSD_NS . ' token';
+
+        $rdfaData = [ [ 'rdfs:label', 'foo' ] ];
+
+        $dataElement = $literalWorkbench->createDataElementFromXName(
+            $datatypeXName,
+            $rdfaData
+        );
+
+        $this->assertSame(
+            $datatypeXName,
+            (string)$dataElement->getDatatype()->getXName()
+        );
+
+        $this->assertSame('foo', $dataElement->getLabel());
     }
 
     public function testException(): void

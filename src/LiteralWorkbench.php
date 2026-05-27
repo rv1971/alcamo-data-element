@@ -124,6 +124,16 @@ class LiteralWorkbench
         return $this->literalTypeMap_;
     }
 
+    public function createDataElementFromXName(
+        $datatypeXName,
+        $rdfaData = null
+    ): DataElementInterface {
+        return new DataElement(
+            $this->schema_->getGlobalType($datatypeXName),
+            $rdfaData
+        );
+    }
+
     public function createLiteral(
         $value,
         SimpleTypeInterface $datatype
