@@ -26,16 +26,8 @@ class ConstructedDataElementTest extends TestCase
             [ 'i' => $dataElement1, 's' => $dataElement2 ]
         );
 
-        $this->assertNotSame($dataElement1, $dataElement['i']);
-        $this->assertEquals($dataElement1, $dataElement['i']);
-
-        $this->assertNotSame($dataElement2, $dataElement['s']);
-        $this->assertEquals($dataElement2, $dataElement['s']);
-
-        $dataElement2 = clone $dataElement;
-
-        $this->assertNotSame($dataElement2['i'], $dataElement['i']);
-        $this->assertEquals($dataElement2['i'], $dataElement['i']);
+        $this->assertSame($dataElement1, $dataElement['i']);
+        $this->assertSame($dataElement2, $dataElement['s']);
     }
 
     public function testContructorException(): void

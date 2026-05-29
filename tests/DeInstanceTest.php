@@ -27,34 +27,8 @@ class DeInstanceTest extends TestCase
 
         $deInstance1 = new DeInstance($dataElement, $literal);
 
-        $this->assertNotSame($dataElement, $deInstance1->getDataElement());
+        $this->assertSame($dataElement, $deInstance1->getDataElement());
 
-        $this->assertEquals($dataElement, $deInstance1->getDataElement());
-
-        $this->assertNotSame($literal, $deInstance1->getLiteral());
-
-        $this->assertEquals($literal, $deInstance1->getLiteral());
-
-        $deInstance2 = clone $deInstance1;
-
-        $this->assertNotSame(
-            $deInstance1->getDataElement(),
-            $deInstance2->getDataElement()
-        );
-
-        $this->assertEquals(
-            $deInstance1->getDataElement(),
-            $deInstance2->getDataElement()
-        );
-
-        $this->assertNotSame(
-            $deInstance1->getLiteral(),
-            $deInstance2->getLiteral(),
-        );
-
-        $this->assertEquals(
-            $deInstance1->getLiteral(),
-            $deInstance2->getLiteral(),
-        );
+        $this->assertSame($literal, $deInstance1->getLiteral());
     }
 }

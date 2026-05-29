@@ -2,7 +2,7 @@
 
 namespace alcamo\data_element;
 
-use alcamo\binary_data\BinaryString;
+use alcamo\binary_data\ImmutableBinaryString;
 use alcamo\exception\SyntaxError;
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\{Base64BinaryLiteral, HexBinaryLiteral};
@@ -84,7 +84,7 @@ class BinarySerializerTest extends TestCase
                 'BINARY',
                 null,
                 3,
-                new Base64BinaryLiteral(new BinaryString('dolor')),
+                new Base64BinaryLiteral(new ImmutableBinaryString('dolor')),
                 "dol",
                 "dol",
                 "'646F6C6F72'"

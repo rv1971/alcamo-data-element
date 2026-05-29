@@ -40,9 +40,6 @@ class ConstructedDeInstance extends DeInstance implements
 
         parent::__construct($dataElement, $literal);
 
-        /* Get the clone created by the parent constructor. */
-        $literal = $this->getLiteral();
-
         $literal->rewind();
 
         foreach ($dataElement as $key => $dataElementItem) {

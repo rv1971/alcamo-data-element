@@ -7,6 +7,8 @@ use alcamo\rdf_literal\LiteralInterface;
 /**
  * @brief Data element instance
  *
+ * @invariant Immutable class.
+ *
  * @date Last reviewed 2026-05-05
  */
 class DeInstance implements DeInstanceInterface
@@ -18,14 +20,8 @@ class DeInstance implements DeInstanceInterface
         DataElementInterface $dataElement,
         LiteralInterface $literal
     ) {
-        $this->dataElement_ = clone $dataElement;
-        $this->literal_ = clone $literal;
-    }
-
-    public function __clone()
-    {
-        $this->dataElement_ = clone $this->dataElement_;
-        $this->literal_ = clone $this->literal_;
+        $this->dataElement_ = $dataElement;
+        $this->literal_ = $literal;
     }
 
     public function getDataElement(): DataElementInterface

@@ -269,7 +269,7 @@ class DateTimeSerializer extends AbstractSerializer
         }
 
         return $this->asUtc_
-            ? (clone $literal->getValue())->setTimezone($utcTimeZone)
+            ? $literal->getValue()->setTimezone($utcTimeZone)
             : $literal->getValue();
     }
 }

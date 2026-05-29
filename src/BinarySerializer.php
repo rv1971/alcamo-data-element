@@ -2,7 +2,7 @@
 
 namespace alcamo\data_element;
 
-use alcamo\binary_data\BinaryString;
+use alcamo\binary_data\ImmutableBinaryString;
 use alcamo\dom\schema\component\SimpleTypeInterface;
 use alcamo\rdf_literal\LiteralInterface;
 
@@ -24,7 +24,7 @@ class BinarySerializer extends AbstractSerializer
     {
         $this->validateLiteralClass($literal);
 
-        /* getValue() must return BinaryString. */
+        /* getValue() must return ImmutableBinaryString. */
         return $this->adjustOutputLength($literal->getValue()->getData());
     }
 
@@ -35,7 +35,7 @@ class BinarySerializer extends AbstractSerializer
         $this->validateInputLength($input);
 
         return $this->deWorkbench_->createLiteral(
-            new BinaryString($input),
+            new ImmutableBinaryString($input),
             $datatype ?? $this->datatype_
         );
     }
@@ -51,7 +51,7 @@ class BinarySerializer extends AbstractSerializer
             case strlen($data) > 3
                 && $data == str_repeat($data[0], strlen($data)):
                 return strlen($data)
-                    . " * '" . (new BinaryString($data[0])) . "'";
+                    . " * '" . (new ImmutableBinaryString($data[0])) . "'";
 
             /** If the data have have more than four bytes and consist of a
              *  repetition of the same two bytes, represent it as a
@@ -60,8 +60,9 @@ class BinarySerializer extends AbstractSerializer
                 $data[0] . $data[1],
                 strlen($data) >> 1
             ):
-                return (strlen($data) >> 1)
-                    . " * '" . (new BinaryString($data[0] . $data[1])) . "'";
+                return (strlen($data) >> 1) . " * '"
+                    . (new ImmutableBinaryString($data[0] . $data[1]))
+                    . "'";
 
             default:
                 return "'{$literal->getValue()}'";
@@ -74,7 +75,9 @@ class BinarySerializer extends AbstractSerializer
     ): LiteralInterface {
         if (preg_match('/^(\d+)\s*\*\s*\'([^\']+)\'$/', $input, $matches)) {
             return $this->deWorkbench_->createLiteral(
-                BinaryString::newFromHex(str_repeat($matches[2], $matches[1])),
+                ImmutableBinaryString::newFromHex(
+                    str_repeat($matches[2], $matches[1])
+                ),
                 $datatype ?? $this->datatype_
             );
         }
@@ -89,7 +92,7 @@ class BinarySerializer extends AbstractSerializer
         }
 
         return $this->deWorkbench_->createLiteral(
-            BinaryString::newFromHex(trim($input, "'")),
+            ImmutableBinaryString::newFromHex(trim($input, "'")),
             $datatype ?? $this->datatype_
         );
     }

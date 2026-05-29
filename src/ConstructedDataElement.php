@@ -43,7 +43,7 @@ class ConstructedDataElement extends DataElement implements
                 );
             }
 
-            $this->data_[$key] = clone $dataElement;
+            $this->data_[$key] = $dataElement;
         }
 
         parent::__construct(
@@ -51,12 +51,5 @@ class ConstructedDataElement extends DataElement implements
                 ->getGlobalType(self::XSD_NS . ' string'),
             $rdfaData
         );
-    }
-
-    public function __clone()
-    {
-        foreach ($this->data_ as $key => $value) {
-            $this->data_[$key] = clone $value;
-        }
     }
 }

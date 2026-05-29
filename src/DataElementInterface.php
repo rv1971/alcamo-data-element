@@ -15,6 +15,8 @@ use alcamo\xml\NamespaceConstantsInterface;
 /**
  * @brief Data element with XSD type and metadata
  *
+ * @invariant Implementations should be immutable.
+ *
  * @date Last reviewed 2026-05-04
  */
 interface DataElementInterface extends
