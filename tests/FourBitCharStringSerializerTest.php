@@ -2,6 +2,7 @@
 
 namespace alcamo\data_element;
 
+use alcamo\exception\SyntaxError;
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\FourBitCharStringLiteral;
 use alcamo\uri\Uri;
@@ -18,7 +19,9 @@ class FourBitCharStringSerializerTest extends TestCase
         $encoding,
         $literal,
         $expectedOutput,
-        $expectedDeserialization
+        $expectedHexOutput,
+        $expectedDeserialization,
+        $expectedHexDeserialization
     ): void {
         $serializer = FourBitCharStringSerializer::newFromProps(
             (object)[
@@ -34,6 +37,10 @@ class FourBitCharStringSerializerTest extends TestCase
 
         $this->assertSame($expectedOutput, $output);
 
+        $hexOutput = $serializer->serializeToHex($literal);
+
+        $this->assertSame($expectedHexOutput, $hexOutput);
+
         $literal2 = $serializer->deserialize($output);
 
         $this->assertInstanceOf(FourBitCharStringLiteral::class, $literal2);
@@ -41,6 +48,14 @@ class FourBitCharStringSerializerTest extends TestCase
         $this->assertEquals($expectedDeserialization, $literal2->getValue());
 
         $this->assertEquals($datatype->getUri(), $literal2->getDatatypeUri());
+
+        $literal3 = $serializer->deserializeFromHex($hexOutput);
+
+        $this->assertInstanceOf(FourBitCharStringLiteral::class, $literal3);
+
+        $this->assertEquals($expectedHexDeserialization, $literal3->getValue());
+
+        $this->assertEquals($datatype->getUri(), $literal3->getDatatypeUri());
     }
 
     public function serializeProvider(): array
@@ -52,6 +67,8 @@ class FourBitCharStringSerializerTest extends TestCase
                 null,
                 new FourBitCharStringLiteral(';1234=456<7:8>9?'),
                 ';1234=456<7:8>9?',
+                '3B313233343D3435363C373A383E393F',
+                ';1234=456<7:8>9?',
                 ';1234=456<7:8>9?'
             ],
             [
@@ -60,6 +77,8 @@ class FourBitCharStringSerializerTest extends TestCase
                 'ASCII',
                 new FourBitCharStringLiteral('42<<'),
                 '42<< ',
+                '34323C3C20',
+                '42<<',
                 '42<<'
             ],
             [
@@ -68,7 +87,9 @@ class FourBitCharStringSerializerTest extends TestCase
                 'FOUR-BIT',
                 new FourBitCharStringLiteral('1=2'),
                 "\x1D\x2F",
-                '1=2?'
+                '1D2',
+                '1=2?',
+                '1=2'
             ],
             [
                 5,
@@ -76,7 +97,9 @@ class FourBitCharStringSerializerTest extends TestCase
                 'FOUR-BIT',
                 new FourBitCharStringLiteral('7==2'),
                 "\x7D\xD2\xFF",
-                '7==2??'
+                '7DD2F',
+                '7==2??',
+                '7==2?'
             ],
             [
                 6,
@@ -84,6 +107,8 @@ class FourBitCharStringSerializerTest extends TestCase
                 'FOUR-BIT',
                 new FourBitCharStringLiteral('7==2'),
                 "\x7D\xD2\xFF",
+                '7DD2FF',
+                '7==2??',
                 '7==2??'
             ],
             /* The following changes the last character to a filler because
@@ -94,8 +119,28 @@ class FourBitCharStringSerializerTest extends TestCase
                 'FOUR-BIT',
                 new FourBitCharStringLiteral(':2<>'),
                 "\xA2\xCF",
-                ':2<?'
+                'A2C',
+                ':2<',
+                ':2<'
             ]
         ];
+    }
+
+    public function testInvalidPaddingException(): void
+    {
+        $serializer = FourBitCharStringSerializer::newFromProps(
+            [
+                'lengthRange' => new NonNegativeRange(0, 3),
+                'encoding' => 'FOUR-BIT'
+            ]
+        );
+
+        $this->expectException(SyntaxError::class);
+
+        $this->expectExceptionMessage(
+            'Syntax error in "ABC0"; invalid padding character "0"'
+        );
+
+        $serializer->deserializeFromHex('ABC0');
     }
 }

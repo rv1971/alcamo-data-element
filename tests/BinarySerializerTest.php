@@ -42,6 +42,10 @@ class BinarySerializerTest extends TestCase
 
         $this->assertSame($expectedOutput, $output);
 
+        $hexOutput = $serializer->serializeToHex($literal);
+
+        $this->assertSame($expectedOutput, hex2bin($hexOutput));
+
         $literal2 = $serializer->deserialize($output);
 
         $this->assertInstanceOf(
@@ -58,6 +62,23 @@ class BinarySerializerTest extends TestCase
         );
 
         $this->assertEquals($datatype->getUri(), $literal2->getDatatypeUri());
+
+        $literal3 = $serializer->deserializeFromHex(bin2hex($output));
+
+        $this->assertInstanceOf(
+            $serializer->getDatatype()->getXName()->getLocalName()
+                == 'base64Binary'
+            ? Base64BinaryLiteral::class
+            : HexBinaryLiteral::class,
+            $literal3
+        );
+
+        $this->assertEquals(
+            $expectedDeserialization,
+            $literal3->getValue()->getData()
+        );
+
+        $this->assertEquals($datatype->getUri(), $literal3->getDatatypeUri());
 
         $dump = $serializer->dump($literal);
 

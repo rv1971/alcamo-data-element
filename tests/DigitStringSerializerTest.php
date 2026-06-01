@@ -18,7 +18,9 @@ class DigitStringSerializerTest extends TestCase
         $encoding,
         $literal,
         $expectedOutput,
-        $expectedDeserialization
+        $expectedHexOutput,
+        $expectedDeserialization,
+        $expectedHexDeserialization
     ): void {
         $serializer = DigitStringSerializer::newFromProps(
             (object)[
@@ -34,6 +36,10 @@ class DigitStringSerializerTest extends TestCase
 
         $this->assertSame($expectedOutput, $output);
 
+        $hexOutput = $serializer->serializeToHex($literal);
+
+        $this->assertSame($expectedHexOutput, $hexOutput);
+
         $literal2 = $serializer->deserialize($output);
 
         $this->assertInstanceOf(DigitStringLiteral::class, $literal2);
@@ -41,6 +47,14 @@ class DigitStringSerializerTest extends TestCase
         $this->assertEquals($expectedDeserialization, $literal2->getValue());
 
         $this->assertEquals($datatype->getUri(), $literal2->getDatatypeUri());
+
+        $literal3 = $serializer->deserializeFromHex($hexOutput);
+
+        $this->assertInstanceOf(DigitStringLiteral::class, $literal3);
+
+        $this->assertEquals($expectedHexDeserialization, $literal3->getValue());
+
+        $this->assertEquals($datatype->getUri(), $literal3->getDatatypeUri());
     }
 
     public function serializeProvider(): array
@@ -52,6 +66,8 @@ class DigitStringSerializerTest extends TestCase
                 null,
                 new DigitStringLiteral('000123456789'),
                 '000123456789',
+                '303030313233343536373839',
+                '000123456789',
                 '000123456789'
             ],
             [
@@ -60,6 +76,8 @@ class DigitStringSerializerTest extends TestCase
                 'ASCII',
                 new DigitStringLiteral('42'),
                 '42   ',
+                '3432202020',
+                '42',
                 '42'
             ],
             [
@@ -68,6 +86,8 @@ class DigitStringSerializerTest extends TestCase
                 'COMPRESSED-BCD',
                 new DigitStringLiteral('421'),
                 "\x42\x1F",
+                '421',
+                '421',
                 '421'
             ],
             [
@@ -76,6 +96,8 @@ class DigitStringSerializerTest extends TestCase
                 'COMPRESSED-BCD',
                 new DigitStringLiteral('002026'),
                 "\x00\x20\x26\xFF",
+                '002026F',
+                '002026',
                 '002026'
             ],
             [
@@ -84,6 +106,8 @@ class DigitStringSerializerTest extends TestCase
                 'COMPRESSED-BCD',
                 new DigitStringLiteral('002026'),
                 "\x00\x20\x26\xFF",
+                '002026FF',
+                '002026',
                 '002026'
             ],
             [
@@ -92,6 +116,8 @@ class DigitStringSerializerTest extends TestCase
                 'COMPRESSED-BCD',
                 new DigitStringLiteral('1234'),
                 "\x12\x3F",
+                '123',
+                '123',
                 '123'
             ],
             [
@@ -100,6 +126,8 @@ class DigitStringSerializerTest extends TestCase
                 'EBCDIC',
                 new DigitStringLiteral('17'),
                 "\xF1\xF7\x40",
+                'F1F740',
+                '17',
                 '17'
             ]
         ];

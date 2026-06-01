@@ -31,6 +31,7 @@ class DateTimeSerializerTest extends TestCase
         $encoding,
         $literal,
         $expectedOutput,
+        $expectedHexOutput,
         $expectedDeserialization,
         $expectedDump
     ): void {
@@ -59,6 +60,10 @@ class DateTimeSerializerTest extends TestCase
 
         $this->assertSame($expectedOutput, $output);
 
+        $hexOutput = $serializer->serializeToHex($literal);
+
+        $this->assertSame($expectedHexOutput, $hexOutput);
+
         $literal2 = $serializer->deserialize($output);
 
         $this->assertInstanceOf(get_class($literal), $literal2);
@@ -66,6 +71,14 @@ class DateTimeSerializerTest extends TestCase
         $this->assertTrue($expectedDeserialization->equals($literal2));
 
         $this->assertEquals($datatype->getUri(), $literal2->getDatatypeUri());
+
+        $literal3 = $serializer->deserializeFromHex($hexOutput);
+
+        $this->assertInstanceOf(get_class($literal), $literal3);
+
+        $this->assertTrue($expectedDeserialization->equals($literal3));
+
+        $this->assertEquals($datatype->getUri(), $literal3->getDatatypeUri());
 
         $dump = $serializer->dump($literal2);
 
@@ -84,6 +97,7 @@ class DateTimeSerializerTest extends TestCase
                 null,
                 new DateLiteral('2020-02-25'),
                 '2020-02-25',
+                '323032302D30322D3235',
                 new DateLiteral('2020-02-25'),
                 '2020-02-25'
             ],
@@ -94,6 +108,7 @@ class DateTimeSerializerTest extends TestCase
                 'BCD',
                 new DateTimeLiteral('2026-02-26T17:22'),
                 "\x20\x26\x02\x26\x17\x22\x00",
+                '20260226172200',
                 new DateTimeLiteral('2026-02-26T17:22'),
                 '2026-02-26T17:22:00'
             ],
@@ -104,6 +119,7 @@ class DateTimeSerializerTest extends TestCase
                 'EBCDIC',
                 new GDayLiteral(28),
                 "\xF2\xF8",
+                'F2F8',
                 new GDayLiteral(28),
                 '28'
             ],
@@ -114,6 +130,7 @@ class DateTimeSerializerTest extends TestCase
                 null,
                 new GMonthLiteral(7),
                 '07',
+                '3037',
                 new GMonthLiteral(7),
                 '07'
             ],
@@ -124,6 +141,7 @@ class DateTimeSerializerTest extends TestCase
                 'BCD',
                 new GMonthDayLiteral('05-31'),
                 "\x00\x31\x00\x05",
+                '00310005',
                 new GMonthDayLiteral('05-31'),
                 '05-31'
             ],
@@ -134,6 +152,7 @@ class DateTimeSerializerTest extends TestCase
                 'EBCDIC',
                 new GYearMonthLiteral('2006-08'),
                 "\xF0\xF6\x60\xF0\xF8",
+                'F0F660F0F8',
                 new GYearMonthLiteral('2006-08'),
                 '2006-08'
             ],
@@ -144,6 +163,7 @@ class DateTimeSerializerTest extends TestCase
                 'BCD',
                 new PositiveGYearLiteral('2008'),
                 "\x08",
+                '08',
                 new PositiveGYearLiteral('2008'),
                 '2008'
             ],
@@ -154,6 +174,7 @@ class DateTimeSerializerTest extends TestCase
                 'BCD',
                 new TimeLiteral('06:23-03:00'),
                 "\x23\x09",
+                '2309',
                 new TimeLiteral('09:23'),
                 '09:23:00'
             ]

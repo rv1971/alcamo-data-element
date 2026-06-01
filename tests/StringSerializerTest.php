@@ -40,6 +40,10 @@ class StringSerializerTest extends TestCase
 
         $this->assertSame($expectedOutput, $output);
 
+        $hexOutput = $serializer->serializeToHex($literal);
+
+        $this->assertSame($expectedOutput, hex2bin($hexOutput));
+
         $literal2 = $serializer->deserialize($output);
 
         $this->assertInstanceOf(StringLiteral::class, $literal2);
@@ -51,6 +55,18 @@ class StringSerializerTest extends TestCase
         }
 
         $this->assertEquals($datatype->getUri(), $literal2->getDatatypeUri());
+
+        $literal3 = $serializer->deserializeFromHex(bin2hex($output));
+
+        $this->assertInstanceOf(StringLiteral::class, $literal3);
+
+        if ($maxLength !== 7) {
+            $this->assertEquals($literal->getValue(), $literal3->getValue());
+        } else {
+            $this->assertEquals('consäte', $literal3->getValue());
+        }
+
+        $this->assertEquals($datatype->getUri(), $literal3->getDatatypeUri());
 
         $dump = $serializer->dump($literal);
 

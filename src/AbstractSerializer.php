@@ -7,6 +7,7 @@ use alcamo\exception\{
     InvalidEnumerator,
     InvalidType,
     LengthOutOfRange,
+    SyntaxError,
     Unsupported
 };
 use alcamo\range\NonNegativeRange;
@@ -250,6 +251,18 @@ abstract class AbstractSerializer implements SerializerInterface
             (static::ENCODINGS[$this->encoding_] ?? static::ENCODINGS['*'])[0];
     }
 
+    public function serializeToHex(LiteralInterface $literal): string
+    {
+        return strtoupper(bin2hex($this->serialize($literal)));
+    }
+
+    public function deserializeFromHex(
+        string $input,
+        ?SimpleTypeInterface $datatype = null
+    ): LiteralInterface {
+        return $this->deserialize(hex2bin($input), $datatype);
+    }
+
     /// Check whether $literal is supported for this serializer class
     protected function validateLiteralClass(LiteralInterface $literal): void
     {
@@ -286,9 +299,9 @@ abstract class AbstractSerializer implements SerializerInterface
                     /** If $value is too long and TRUNCATE_SILENTLY is set in
                      * the flags, truncate to the left or to the right,
                      * depending on $this->padType_. */
-                    $value = $this->padType_ == STR_PAD_RIGHT
-                        ? substr($value, 0, $maxLength)
-                        : substr($value, -$maxLength);
+                    $value = $this->padType_ == STR_PAD_LEFT
+                        ? substr($value, -$maxLength)
+                        : substr($value, 0, $maxLength);
                 } else {
                     /** @throw alcamo::exception::LengthOutOfRange if $value
                      *  is too long and TRUNCATE_SILENTLY is not set. */
@@ -324,15 +337,8 @@ abstract class AbstractSerializer implements SerializerInterface
             }
         }
 
-        /** Add padding as needed to get complete bytes in hte output. */
-        if (strlen($value) & 1 && $this->getBitsPerCharacter() == 4) {
-            $value = str_pad(
-                $value,
-                strlen($value) + 1,
-                $this->padString_,
-                $this->padType_
-            );
-        } elseif (strlen($value) & 7 && $this->getBitsPerCharacter() == 1) {
+        /** Add padding as needed to get complete bytes in the output. */
+        if (strlen($value) & 7 && $this->getBitsPerCharacter() == 1) {
             $value = str_pad(
                 $value,
                 (strlen($value) + 7) >> 3 << 3,
@@ -344,6 +350,20 @@ abstract class AbstractSerializer implements SerializerInterface
         return $value;
     }
 
+    protected function hexToBin(string $hexData): string
+    {
+        if (strlen($hexData) & 1) {
+            $hexData = str_pad(
+                $hexData,
+                strlen($hexData) + 1,
+                $this->padString_,
+                $this->padType_
+            );
+        }
+
+        return hex2bin($hexData);
+    }
+
     /// Check the input length
     protected function validateInputLength(string $input): void
     {
@@ -353,11 +373,65 @@ abstract class AbstractSerializer implements SerializerInterface
         ) {
             [ $minLength, $maxLength ] = $this->lengthRange_->getMinMax();
 
-            if ($maxLength & 1 && $this->getBitsPerCharacter() == 4) {
-                /** Add a padding nibble to maxLength if length is measured in
-                 *  nibbles and maximum length is odd. */
-                $maxLength++;
-            } elseif ($maxLength & 7 && $this->getBitsPerCharacter() == 1) {
+            if ($maxLength & 7 && $this->getBitsPerCharacter() == 1) {
+                /** Add padding bits to maxLength if length is measured in
+                 *  bits and maximum length is not a multiple of 8. */
+                $maxLength = ($maxLength + 7) >> 3 << 3;
+            }
+
+            /** @throw alcamo::exception::LengthOutOfRange is
+             *  SKIP_LENGTH_CHECK is not set in the flags and the value is too
+             *  short or too long. */
+            LengthOutOfRange::throwIfOutside($input, $minLength, $maxLength);
+        }
+    }
+
+
+    /// Check the input length for four-bit encodings
+    protected function validateFourBitInputLength(string &$input): void
+    {
+        /* Remove padding character if necessary. */
+        if (isset($this->lengthRange_)) {
+            $maxLength = $this->lengthRange_->getMax();
+
+            if (isset($maxLength) && strlen($input) == $maxLength + 1) {
+                /** @throw alcamo::exception::SyntaxError if the padding
+                 *  character is wrong. */
+                if ($this->padType_ == STR_PAD_LEFT) {
+                    if ($input[0] != $this->padString_) {
+                        throw (new SyntaxError())->setMessageContext(
+                            [
+                                'inData' => $input,
+                                'extraMessage' => 'invalid padding character "'
+                                    . $input[0] . '"'
+                            ]
+                        );
+                    }
+
+                    $input = substr($input, 1);
+                } else {
+                    if (strtoupper(substr($input, -1)) != $this->padString_) {
+                        throw (new SyntaxError())->setMessageContext(
+                            [
+                                'inData' => $input,
+                                'extraMessage' => 'invalid padding character "'
+                                    . substr($input, -1) . '"'
+                            ]
+                        );
+                    }
+
+                    $input = substr($input, 0, -1);
+                }
+            }
+        }
+
+        if (
+            isset($this->lengthRange_)
+                && !($this->flags_ & self::SKIP_LENGTH_CHECK)
+        ) {
+            [ $minLength, $maxLength ] = $this->lengthRange_->getMinMax();
+
+            if ($maxLength & 7 && $this->getBitsPerCharacter() == 1) {
                 /** Add padding bits to maxLength if length is measured in
                  *  bits and maximum length is not a multiple of 8. */
                 $maxLength = ($maxLength + 7) >> 3 << 3;

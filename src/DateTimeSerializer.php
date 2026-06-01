@@ -174,27 +174,43 @@ class DateTimeSerializer extends AbstractSerializer
 
     public function serialize(LiteralInterface $literal): string
     {
-        $this->validateLiteralClass($literal);
-
-        $value = $this->posixFormat_->applyTo($this->getDateTime($literal));
-
         switch ($this->encoding_) {
             case 'ASCII':
-                return $value;
+                $this->validateLiteralClass($literal);
+
+                return $this->posixFormat_
+                    ->applyTo($this->getDateTime($literal));
 
             case 'BCD':
+                return $this->hexToBin($this->serializeToHex($literal));
+
+            case 'EBCDIC':
+                $this->validateLiteralClass($literal);
+
+                return strtr(
+                    $this->posixFormat_
+                        ->applyTo($this->getDateTime($literal)),
+                    '-0123456789:T',
+                    "\x60\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9\x7A\xE3"
+                );
+        }
+    }
+
+    public function serializeToHex(LiteralInterface $literal): string
+    {
+        switch ($this->encoding_) {
+            case 'BCD':
+                $this->validateLiteralClass($literal);
+
                 /** @throw alcamo::exception::OutOfRange if encoding is BCD
                  *  and the date is negative. */
                 OutOfRange::throwIfNegative($literal->format('Y'));
 
-                return hex2bin($value);
+                return $this->posixFormat_
+                    ->applyTo($this->getDateTime($literal));
 
-            case 'EBCDIC':
-                return strtr(
-                    $value,
-                    '-0123456789:T',
-                    "\x60\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9\x7A\xE3"
-                );
+            default:
+                return strtoupper(bin2hex($this->serialize($literal)));
         }
     }
 
@@ -202,19 +218,19 @@ class DateTimeSerializer extends AbstractSerializer
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
-        if (static::ENCODINGS[$this->encoding_][0] == 4) {
-            $input = bin2hex($input);
-        }
-
-        $this->validateInputLength($input);
-
         switch ($this->encoding_) {
             case 'ASCII':
-            case 'BCD':
+                $this->validateInputLength($input);
+
                 $value = $input;
                 break;
 
+            case 'BCD':
+                return $this->deserializeFromHex(bin2hex($input));
+
             case 'EBCDIC':
+                $this->validateInputLength($input);
+
                 $value = strtr(
                     $input,
                     "\x60\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9\x7A\xE3",
@@ -235,6 +251,32 @@ class DateTimeSerializer extends AbstractSerializer
                 ),
             $datatype ?? $this->datatype_
         );
+    }
+
+    public function deserializeFromHex(
+        string $input,
+        ?SimpleTypeInterface $datatype = null
+    ): LiteralInterface {
+        switch ($this->encoding_) {
+            case 'BCD':
+                $this->validateFourBitInputLength($input);
+
+                return $this->deWorkbench_->createLiteral(
+                    $this->asUtc_
+                        ? \DateTimeImmutable::createFromFormat(
+                            $this->posixFormat_->getPhpFormat() . 'O',
+                            "$input+0000"
+                        )
+                        : \DateTimeImmutable::createFromFormat(
+                            $this->posixFormat_->getPhpFormat(),
+                            $input
+                        ),
+                    $datatype ?? $this->datatype_
+                );
+
+            default:
+                return $this->deserialize($this->hexToBin($input), $datatype);
+        }
     }
 
     public function dump(LiteralInterface $literal): string

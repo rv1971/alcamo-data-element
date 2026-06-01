@@ -2,6 +2,7 @@
 
 namespace alcamo\data_element;
 
+use alcamo\exception\SyntaxError;
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\{
     BooleanLiteral,
@@ -27,6 +28,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
         $encoding,
         $literal,
         $expectedOutput,
+        $expectedHexOutput,
         $expectedDeserialization
     ): void {
         $serializer = NonNegativeIntegerSerializer::newFromProps(
@@ -48,6 +50,10 @@ class NonNegativeIntegerSerializerTest extends TestCase
 
         $this->assertSame($expectedOutput, $output);
 
+        $hexOutput = $serializer->serializeToHex($literal);
+
+        $this->assertSame($expectedHexOutput, $hexOutput);
+
         $literal2 = $serializer->deserialize($output);
 
         $this->assertInstanceOf(get_class($literal), $literal2);
@@ -66,6 +72,25 @@ class NonNegativeIntegerSerializerTest extends TestCase
         }
 
         $this->assertEquals($datatype->getUri(), $literal2->getDatatypeUri());
+
+        $literal3 = $serializer->deserializeFromHex($hexOutput);
+
+        $this->assertInstanceOf(get_class($literal), $literal3);
+
+        if ($expectedDeserialization instanceof \DateTimeInterface) {
+            $diff = new Duration(
+                $expectedDeserialization->diff($literal3->getValue(), true)
+            );
+
+            $this->assertTrue($diff->getTotalSeconds() < 5);
+        } else {
+            $this->assertEquals(
+                $expectedDeserialization,
+                $literal3->getValue()
+            );
+        }
+
+        $this->assertEquals($datatype->getUri(), $literal3->getDatatypeUri());
     }
 
     public function serializeProvider(): array
@@ -78,6 +103,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 null,
                 new BooleanLiteral(false),
                 '0',
+                '30',
                 false
             ],
             [
@@ -87,6 +113,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 'BCD',
                 new BooleanLiteral(true),
                 "\x01",
+                '1',
                 true
             ],
             [
@@ -96,6 +123,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 'BIG-ENDIAN',
                 new GDayLiteral(24),
                 "\x18",
+                '18',
                 (new GDayLiteral(24))->getValue()
             ],
             [
@@ -105,8 +133,9 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 'EBCDIC',
                 new GMonthLiteral(12),
                 "\xF1\xF2",
+                'F1F2',
                 (new GMonthLiteral(12))->getValue()
-                ],
+            ],
             [
                 PositiveGYearLiteral::DEFAULT_DATATYPE_XNAME,
                 8,
@@ -114,6 +143,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 null,
                 new PositiveGYearLiteral(1975),
                 "00001975",
+                "3030303031393735",
                 (new PositiveGYearLiteral(1975))->getValue()
             ],
             [
@@ -126,6 +156,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
                     self::XSD_NS . '#unsignedShort'
                 ),
                 "\x00\x00\x42",
+                '00042',
                 42
             ],
             [
@@ -135,6 +166,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 'BIG-ENDIAN',
                 new NonNegativeIntegerLiteral(1027),
                 "\x00\x00\x00\x04\x03",
+                '0000000403',
                 1027
             ],
             [
@@ -147,6 +179,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
                     self::XSD_NS . '#unsignedByte'
                 ),
                 "\xF0\xF7",
+                'F0F7',
                 7
             ],
             [
@@ -156,6 +189,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 'ASCII',
                 new NonNegativeIntegerLiteral(123),
                 "23",
+                '3233',
                 23
                 ],
             [
@@ -168,6 +202,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
                     self::XSD_NS . '#unsignedByte'
                 ),
                 "\x55",
+                '55',
                 55
             ],
             [
@@ -180,6 +215,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
                     self::XSD_NS . '#unsignedInt'
                 ),
                 "\x02\x34",
+                '234',
                 234
             ],
             [
@@ -189,6 +225,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 'BIG-ENDIAN',
                 new NonNegativeIntegerLiteral(0x12345),
                 "\x23\x45",
+                '2345',
                 0x2345
             ],
             [
@@ -198,8 +235,27 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 'EBCDIC',
                 new NonNegativeIntegerLiteral(9876),
                 "\xF8\xF7\xF6",
+                'F8F7F6',
                 876
             ]
         ];
+    }
+
+    public function testInvalidPaddingException(): void
+    {
+        $serializer = NonNegativeIntegerSerializer::newFromProps(
+            [
+                'lengthRange' => new NonNegativeRange(0, 5),
+                'encoding' => 'BCD'
+            ]
+        );
+
+        $this->expectException(SyntaxError::class);
+
+        $this->expectExceptionMessage(
+            'Syntax error in "912345"; invalid padding character "9"'
+        );
+
+        $serializer->deserializeFromHex('912345');
     }
 }

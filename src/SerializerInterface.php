@@ -58,7 +58,16 @@ interface SerializerInterface extends NamespaceConstantsInterface
 
     public function serialize(LiteralInterface $literal): string;
 
+    /// Serialize to hexadecimal string
+    public function serializeToHex(LiteralInterface $literal): string;
+
     public function deserialize(
+        string $input,
+        ?SimpleTypeInterface $datatype = null
+    ): LiteralInterface;
+
+    /// Deserialize from hexadecimal string
+    public function deserializeFromHex(
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface;

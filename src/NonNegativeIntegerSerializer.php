@@ -30,36 +30,58 @@ class NonNegativeIntegerSerializer extends IntegerSerializer
 
     public function serialize(LiteralInterface $literal): string
     {
-        if ($this->encoding_ == 'BCD') {
-            $this->validateLiteralClass($literal);
+        switch ($this->encoding_) {
+            case 'BCD':
+                return $this->hexToBin($this->serializeToHex($literal));
 
-            $value = $literal->toInt();
-
-            $minLength = isset($this->lengthRange_)
-                ? $this->lengthRange_->getMin()
-                : null;
-
-            return hex2bin(
-                $this->adjustOutputLength(Bcd::newFromInt($value, $minLength))
-            );
+            default:
+                return parent::serialize($literal);
         }
+    }
 
-        return parent::serialize($literal);
+    public function serializeToHex(LiteralInterface $literal): string
+    {
+        switch ($this->encoding_) {
+            case 'BCD':
+                $this->validateLiteralClass($literal);
+
+                return $this->adjustOutputLength(
+                    Bcd::newFromInt($literal->toInt(), null, true)
+                );
+
+            default:
+                return strtoupper(bin2hex($this->serialize($literal)));
+        }
     }
 
     public function deserialize(
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
-        if (static::ENCODINGS[$this->encoding_][0] == 4) {
-            $input = bin2hex($input);
+        switch ($this->encoding_) {
+            case 'BCD':
+                return $this->deserializeFromHex(bin2hex($input));
 
-            $this->validateInputLength($input);
-
-            return $this->deWorkbench_
-                ->createLiteral((int)$input, $datatype ?? $this->datatype_);
+            default:
+                return parent::deserialize($input, $datatype);
         }
+    }
 
-        return parent::deserialize($input, $datatype);
+    public function deserializeFromHex(
+        string $input,
+        ?SimpleTypeInterface $datatype = null
+    ): LiteralInterface {
+        switch ($this->encoding_) {
+            case 'BCD':
+                $this->validateFourBitInputLength($input);
+
+                return $this->deWorkbench_->createLiteral(
+                    (int)$input,
+                    $datatype ?? $this->datatype_
+                );
+
+            default:
+                return $this->deserialize($this->hexToBin($input), $datatype);
+        }
     }
 }

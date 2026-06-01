@@ -158,11 +158,23 @@ class DumpSerializer implements SerializerInterface
         return $this->dump($literal);
     }
 
+    public function serializeToHex(LiteralInterface $literal): string
+    {
+        return strtoupper(bin2hex($this->serialize($literal)));
+    }
+
     public function deserialize(
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
         return $this->dedump($input, $datatype);
+    }
+
+    public function deserializeFromHex(
+        string $input,
+        ?SimpleTypeInterface $datatype = null
+    ): LiteralInterface {
+        return $this->deserialize(hex2bin($input), $datatype);
     }
 
     public function dump(LiteralInterface $literal): string

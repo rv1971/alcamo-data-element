@@ -52,6 +52,10 @@ class IntegerSerializerTest extends TestCase
 
         $this->assertSame($expectedOutput, $output);
 
+        $hexOutput = $serializer->serializeToHex($literal);
+
+        $this->assertSame($expectedOutput, hex2bin($hexOutput));
+
         $literal2 = $serializer->deserialize($output);
 
         $this->assertInstanceOf(get_class($literal), $literal2);
@@ -70,6 +74,25 @@ class IntegerSerializerTest extends TestCase
         }
 
         $this->assertEquals($datatype->getUri(), $literal2->getDatatypeUri());
+
+        $literal3 = $serializer->deserializeFromHex(bin2hex($output));
+
+        $this->assertInstanceOf(get_class($literal), $literal3);
+
+        if ($expectedDeserialization instanceof \DateTimeInterface) {
+            $diff = new Duration(
+                $expectedDeserialization->diff($literal3->getValue(), true)
+            );
+
+            $this->assertTrue($diff->getTotalSeconds() < 5);
+        } else {
+            $this->assertEquals(
+                $expectedDeserialization,
+                $literal3->getValue()
+            );
+        }
+
+        $this->assertEquals($datatype->getUri(), $literal3->getDatatypeUri());
 
         $dump = $serializer->dump($literal);
 

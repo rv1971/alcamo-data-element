@@ -36,6 +36,10 @@ class BitStringSerializerTest extends TestCase
 
         $this->assertSame($expectedOutput, $output);
 
+        $hexOutput = $serializer->serializeToHex($literal);
+
+        $this->assertSame($expectedOutput, hex2bin($hexOutput));
+
         $literal2 = $serializer->deserialize($output);
 
         $this->assertInstanceOf(BitStringLiteral::class, $literal2);
@@ -43,6 +47,14 @@ class BitStringSerializerTest extends TestCase
         $this->assertEquals($expectedDeserialization, $literal2->getValue());
 
         $this->assertEquals($datatype->getUri(), $literal2->getDatatypeUri());
+
+        $literal3 = $serializer->deserializeFromHex(bin2hex($output));
+
+        $this->assertInstanceOf(BitStringLiteral::class, $literal3);
+
+        $this->assertEquals($expectedDeserialization, $literal3->getValue());
+
+        $this->assertEquals($datatype->getUri(), $literal3->getDatatypeUri());
     }
 
     public function serializeProvider(): array

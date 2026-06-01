@@ -23,17 +23,30 @@ class FourBitCharStringSerializer extends StringSerializer
 
     public function serialize(LiteralInterface $literal): string
     {
-        $this->validateLiteralClass($literal);
-
         switch ($this->encoding_) {
             case 'ASCII':
+                $this->validateLiteralClass($literal);
+
                 return $this->adjustOutputLength($literal);
 
             case 'FOUR-BIT':
-                return hex2bin(
-                    $this->adjustOutputLength(
-                        strtr($literal, ':;<=>?', 'ABCDEF')
-                    )
+                return $this->hexToBin(
+                    $this->serializeToHex($literal)
+                );
+        }
+    }
+
+    public function serializeToHex(LiteralInterface $literal): string
+    {
+        switch ($this->encoding_) {
+            case 'ASCII':
+                return strtoupper(bin2hex($this->serialize($literal)));
+
+            case 'FOUR-BIT':
+                $this->validateLiteralClass($literal);
+
+                return $this->adjustOutputLength(
+                    strtr($literal, ':;<=>?', 'ABCDEF')
                 );
         }
     }
@@ -44,14 +57,7 @@ class FourBitCharStringSerializer extends StringSerializer
     ): LiteralInterface {
         switch ($this->encoding_) {
             case 'FOUR-BIT':
-                $input = bin2hex($input);
-
-                $this->validateInputLength($input);
-
-                return $this->deWorkbench_->createLiteral(
-                    BinaryString::newFromHex($input)->toFourBitCharString(),
-                    $datatype ?? $this->datatype_
-                );
+                return $this->deserializeFromHex(bin2hex($input));
 
             default:
                 $this->validateInputLength($input);
@@ -61,6 +67,24 @@ class FourBitCharStringSerializer extends StringSerializer
                     rtrim($input),
                     $datatype ?? $this->datatype_
                 );
+        }
+    }
+
+    public function deserializeFromHex(
+        string $input,
+        ?SimpleTypeInterface $datatype = null
+    ): LiteralInterface {
+        switch ($this->encoding_) {
+            case 'FOUR-BIT':
+                $this->validateFourBitInputLength($input);
+
+                return $this->deWorkbench_->createLiteral(
+                    strtr($input, 'ABCDEFabcdef', ':;<=>?:;<=>?'),
+                    $datatype ?? $this->datatype_
+                );
+
+            default:
+                return $this->deserialize($this->hexToBin($input), $datatype);
         }
     }
 }
