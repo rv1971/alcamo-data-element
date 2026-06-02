@@ -57,7 +57,7 @@ class FourBitCharStringSerializer extends StringSerializer
     ): LiteralInterface {
         switch ($this->encoding_) {
             case 'FOUR-BIT':
-                return $this->deserializeFromHex(bin2hex($input));
+                return $this->deserializeFromHex(bin2hex($input), $datatype);
 
             default:
                 $this->validateInputLength($input);

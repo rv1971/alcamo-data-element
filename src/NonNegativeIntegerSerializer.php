@@ -60,7 +60,7 @@ class NonNegativeIntegerSerializer extends IntegerSerializer
     ): LiteralInterface {
         switch ($this->encoding_) {
             case 'BCD':
-                return $this->deserializeFromHex(bin2hex($input));
+                return $this->deserializeFromHex(bin2hex($input), $datatype);
 
             default:
                 return parent::deserialize($input, $datatype);

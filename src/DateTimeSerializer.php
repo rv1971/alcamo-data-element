@@ -226,7 +226,7 @@ class DateTimeSerializer extends AbstractSerializer
                 break;
 
             case 'BCD':
-                return $this->deserializeFromHex(bin2hex($input));
+                return $this->deserializeFromHex(bin2hex($input), $datatype);
 
             case 'EBCDIC':
                 $this->validateInputLength($input);

@@ -129,7 +129,7 @@ class ConstructedSerializerTest extends TestCase
                     new NonNegativeIntegerLiteral(0),
                     new NonNegativeIntegerLiteral(7),
                 ],
-                'bar foo   ',
+                "bar foo \xFF\xFF",
                 'bar|foo',
                 '[ "bar" "foo" ]'
             ],
@@ -141,8 +141,8 @@ class ConstructedSerializerTest extends TestCase
                     new NonNegativeIntegerLiteral(3),
                     new HexBinaryLiteral('abcd'),
                 ],
-                "\x03\xFF\xAB\xCD\x00",
-                '3|ABCD00',
+                "\x03\xFF\xAB\xCD ",
+                '3|ABCD20',
                 "[3\xFF'ABCD']"
             ]
         ];
@@ -210,7 +210,7 @@ class ConstructedSerializerTest extends TestCase
     {
         $this->expectException(Eof::class);
         $this->expectExceptionMessage(
-            'Failed to read 3 unit(s) from object "abc" at offset 3 '
+            'Failed to read 6 unit(s) from object "616263" at offset 6 '
                 . 'for key 2'
         );
 

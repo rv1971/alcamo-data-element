@@ -72,7 +72,7 @@ class DigitStringSerializer extends FourBitCharStringSerializer
                 break;
 
             case 'COMPRESSED-BCD':
-                return $this->deserializeFromHex(bin2hex($input));
+                return $this->deserializeFromHex(bin2hex($input), $datatype);
 
             case 'EBCDIC':
                 $value = rtrim(

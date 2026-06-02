@@ -78,13 +78,27 @@ class ConstructedSerializer extends AbstractSerializer implements
             $this->data_[$key] = $serializer;
         }
 
+        if (isset($lengthRange)) {
+            if (!($lengthRange instanceof NonNegativeRange)) {
+                $lengthRange = new NonNegativeRange(...$lengthRange);
+            }
+
+            if (!isset($separator)) {
+                [ $min, $max ] = $lengthRange->getMinMax();
+                $lengthRange = new NonNegativeRange(
+                    $min << 1,
+                    isset($max) ? $max << 1 : null
+                );
+            }
+        }
+
         parent::__construct(
             self::XSD_NS . ' string',
             array_key_first(static::ENCODINGS),
             $lengthRange,
             $flags,
-            $serializer->padString_,
-            $serializer->padType_,
+            isset($separator) ? ' ' : 'F',
+            STR_PAD_RIGHT,
             $serializer->deWorkbench_
         );
 
@@ -98,71 +112,116 @@ class ConstructedSerializer extends AbstractSerializer implements
 
     public function serialize(LiteralInterface $literal): string
     {
-        if (!($literal instanceof ConstructedLiteral)) {
-            /** @throw alcamo::exception::InvalidType if $literal is not
-             *  ConstructedLiteral. */
-            throw (new InvalidType())->setMessageContext(
-                [
-                    'type' => get_class($literal),
-                    'extraMessage' => 'incompatible with ' . static::class
-                ]
-            );
-        }
-
-        if (!($this->flags_ & self::TRUNCATE_SILENTLY)) {
-            if (count($literal) != count($this)) {
-                /** @todo throw alcamo::exception::DataValidationFailed if
-                 *  literal count does not match serializer count and the
-                 *  TRUNCATE_SILENTLY flag is not set. */
-                throw (new DataValidationFailed())->setMessageContext(
+        if (isset($this->separator_)) {
+            if (!($literal instanceof ConstructedLiteral)) {
+                /** @throw alcamo::exception::InvalidType if $literal is not
+                 *  ConstructedLiteral. */
+                throw (new InvalidType())->setMessageContext(
                     [
-                        'extraMessage' => 'literal count ' . count($literal)
-                            . ' does not match serializer count '
-                            . count($this)
+                        'type' => get_class($literal),
+                        'extraMessage' => 'incompatible with ' . static::class
                     ]
                 );
             }
-        }
 
-        $this->rewind();
-
-        foreach ($literal as $item) {
-            if (isset($result)) {
-                $result .= $this->separator_
-                    . (isset($item) ? $this->current()->serialize($item) : '');
-            } else {
-                $result =
-                    isset($item) ? $this->current()->serialize($item) : '';
+            if (!($this->flags_ & self::TRUNCATE_SILENTLY)) {
+                if (count($literal) != count($this)) {
+                    /** @todo throw alcamo::exception::DataValidationFailed if
+                     *  literal count does not match serializer count and the
+                     *  TRUNCATE_SILENTLY flag is not set. */
+                    throw (new DataValidationFailed())->setMessageContext(
+                        [
+                            'extraMessage' => 'literal count ' . count($literal)
+                                . ' does not match serializer count '
+                                . count($this)
+                        ]
+                    );
+                }
             }
 
-            $this->next();
+            $this->rewind();
 
-            if (!$this->valid()) {
-                break;
+            foreach ($literal as $item) {
+                if (isset($result)) {
+                    $result .= $this->separator_
+                        . (isset($item) ? $this->current()->serialize($item) : '');
+                } else {
+                    $result =
+                        isset($item) ? $this->current()->serialize($item) : '';
+                }
+
+                $this->next();
+
+                if (!$this->valid()) {
+                    break;
+                }
             }
-        }
 
-        return $this->adjustOutputLength($result);
+            return $this->adjustOutputLength($result);
+        } else {
+            return $this->hexToBin($this->serializeToHex($literal));
+        }
+    }
+
+    public function serializeToHex(LiteralInterface $literal): string
+    {
+        if (isset($this->separator_)) {
+            return strtoupper(bin2hex($this->serialize($literal)));
+        } else {
+            if (!($literal instanceof ConstructedLiteral)) {
+                /** @throw alcamo::exception::InvalidType if $literal is not
+                 *  ConstructedLiteral. */
+                throw (new InvalidType())->setMessageContext(
+                    [
+                        'type' => get_class($literal),
+                        'extraMessage' => 'incompatible with ' . static::class
+                    ]
+                );
+            }
+
+            if (!($this->flags_ & self::TRUNCATE_SILENTLY)) {
+                if (count($literal) != count($this)) {
+                    /** @todo throw alcamo::exception::DataValidationFailed if
+                     *  literal count does not match serializer count and the
+                     *  TRUNCATE_SILENTLY flag is not set. */
+                    throw (new DataValidationFailed())->setMessageContext(
+                        [
+                            'extraMessage' => 'literal count ' . count($literal)
+                                . ' does not match serializer count '
+                                . count($this)
+                        ]
+                    );
+                }
+            }
+
+            $this->rewind();
+
+            $result = '';
+
+            foreach ($literal as $item) {
+                $result .= $this->current()->serializeToHex($item);
+
+                $this->next();
+
+                if (!$this->valid()) {
+                    break;
+                }
+            }
+
+            return $this->adjustOutputLength($result);
+        }
     }
 
     public function deserialize(
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
-        $this->validateInputLength($input);
-
-        $result = [];
-        $pos = 0;
-
-        /**
-         * If the input ends exactly after application of a deserializer and
-         * $flags contain TRUNCATE_SILENTLY, accept this gracefully.
-         *
-         * @throw alcamo::exception::Eof if input ends before all
-         * deserializers have been applied and either $flags do not contain
-         * TRUNCATE_SILENTLY or there are data left ot read.
-         */
         if (isset($this->separator_)) {
+            $this->validateInputLength($input);
+
+            $result = [];
+            $pos = 0;
+
             /** If there is a separator defined, read up to the separator for
              *  each field and apply a deserializer. */
             foreach ($this as $key => $serializer) {
@@ -192,7 +251,50 @@ class ConstructedSerializer extends AbstractSerializer implements
 
                 $pos += $length + strlen($this->separator_);
             }
+
+            if (
+                $pos < strlen($input)
+                    && !($this->flags_ & self::TRUNCATE_SILENTLY)
+            ) {
+                /** @throw alcamo::exception::SyntaxError if there is input
+                 * left after all deserializers have been applied and $flags
+                 * do not contain TRUNCATE_SILENTLY. */
+                throw (new SyntaxError())->setMessageContext(
+                    [
+                        'inData' => $input,
+                        'atOffset' => $pos,
+                        'extraMessage' => 'spurious trailing data'
+                    ]
+                );
+            }
+
+            return new Constructedliteral($result, $datatype);
         } else {
+            return $this->deserializeFromHex(bin2hex($input), $datatype);
+        }
+    }
+
+    public function deserializeFromHex(
+        string $input,
+        ?SimpleTypeInterface $datatype = null
+    ): LiteralInterface {
+        if (isset($this->separator_)) {
+            return $this->deserialize($this->hexToBin($input), $datatype);
+        } else {
+            $this->validateInputLength($input);
+
+            $result = [];
+            $pos = 0;
+
+            /**
+             * If the input ends exactly after application of a deserializer
+             * and $flags contain TRUNCATE_SILENTLY, accept this gracefully.
+             *
+             * @throw alcamo::exception::Eof if input ends before all
+             * deserializers have been applied and either $flags do not
+             * contain TRUNCATE_SILENTLY or there are data left ot read.
+             */
+
             /** If there is no separator defined, read the minimum length for
              *  each deserializer. */
             foreach ($this as $key => $serializer) {
@@ -205,6 +307,10 @@ class ConstructedSerializer extends AbstractSerializer implements
 
                 $length = $serializer->getLengthRange()->getMin();
 
+                if ($serializer->getBitsPerCharacter() == 8) {
+                    $length <<= 1;
+                }
+
                 if (strlen($input) < $pos + $length) {
                     throw (new Eof())->setMessageContext(
                         [
@@ -216,29 +322,30 @@ class ConstructedSerializer extends AbstractSerializer implements
                     );
                 }
 
-                $result[] =
-                    $serializer->deserialize(substr($input, $pos, $length));
+                $result[] = $serializer
+                    ->deserializeFromHex(substr($input, $pos, $length));
 
                 $pos += $length;
             }
-        }
 
-        if (
-            $pos < strlen($input) && !($this->flags_ & self::TRUNCATE_SILENTLY)
-        ) {
-            /** @throw alcamo::exception::SyntaxError if there is input left
-             * after all deserializers have been applied and $flags do not
-             * contain TRUNCATE_SILENTLY. */
-            throw (new SyntaxError())->setMessageContext(
-                [
-                    'inData' => $input,
-                    'atOffset' => $pos,
-                    'extraMessage' => 'spurious trailing data'
-                ]
-            );
-        }
+            if (
+                $pos < strlen($input)
+                    && !($this->flags_ & self::TRUNCATE_SILENTLY)
+            ) {
+                /** @throw alcamo::exception::SyntaxError if there is input
+                 * left after all deserializers have been applied and $flags
+                 * do not contain TRUNCATE_SILENTLY. */
+                throw (new SyntaxError())->setMessageContext(
+                    [
+                        'inData' => $input,
+                        'atOffset' => $pos,
+                        'extraMessage' => 'spurious trailing data'
+                    ]
+                );
+            }
 
-        return new Constructedliteral($result, $datatype);
+            return new Constructedliteral($result, $datatype);
+        }
     }
 
     public function dump(LiteralInterface $literal): string
