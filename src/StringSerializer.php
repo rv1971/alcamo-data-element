@@ -61,7 +61,7 @@ class StringSerializer extends AbstractSerializer
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
-        $this->validateInputLength($input);
+        $input = $this->preprocessInput($input);
 
         $encoding = $this->encodingParams_->getEncoding();
 

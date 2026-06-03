@@ -220,7 +220,7 @@ class ConstructedSerializer extends AbstractSerializer implements
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
         if (isset($this->separator_)) {
-            $this->validateInputLength($input);
+            $input = $this->preprocessInput($input);
 
             $result = [];
             $pos = 0;
@@ -284,7 +284,7 @@ class ConstructedSerializer extends AbstractSerializer implements
         if (isset($this->separator_)) {
             return $this->deserialize($this->hexToBin($input), $datatype);
         } else {
-            $this->validateInputLength($input);
+            $input = $this->preprocessInput($input);
 
             $result = [];
             $pos = 0;

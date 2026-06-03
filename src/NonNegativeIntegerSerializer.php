@@ -73,7 +73,7 @@ class NonNegativeIntegerSerializer extends IntegerSerializer
     ): LiteralInterface {
         switch ($this->encodingParams_->getEncoding()) {
             case 'BCD':
-                $this->validateFourBitInputLength($input);
+                $input = $this->preprocessInput($input);
 
                 return $this->deWorkbench_->createLiteral(
                     (int)$input,

@@ -282,33 +282,7 @@ abstract class AbstractSerializer implements SerializerInterface
     }
 
     /// Check the input length
-    protected function validateInputLength(string $input): void
-    {
-        if (
-            isset($this->lengthRange_)
-                && !($this->flags_ & self::SKIP_LENGTH_CHECK)
-        ) {
-            [ $minLength, $maxLength ] = $this->lengthRange_->getMinMax();
-
-            if (
-                $maxLength & 7
-                    && $this->encodingParams_->getBitsPerCharacter() == 1
-            ) {
-                /** Add padding bits to maxLength if length is measured in
-                 *  bits and maximum length is not a multiple of 8. */
-                $maxLength = ($maxLength + 7) >> 3 << 3;
-            }
-
-            /** @throw alcamo::exception::LengthOutOfRange if
-             *  SKIP_LENGTH_CHECK is not set in the flags and the value is too
-             *  short or too long. */
-            LengthOutOfRange::throwIfOutside($input, $minLength, $maxLength);
-        }
-    }
-
-
-    /// Check the input length for four-bit encodings
-    protected function validateFourBitInputLength(string &$input): void
+    protected function preprocessInput(string $input): string
     {
         /* Remove padding characters if necessary. */
         if (isset($this->lengthRange_)) {
@@ -317,23 +291,32 @@ abstract class AbstractSerializer implements SerializerInterface
             if ($this->flags_ & self::SKIP_LENGTH_CHECK) {
                 /** Even if SKIP_LENGTH_CHECK is set in the flags, remove a
                  *  padding nibble if necessary. */
-                if (strlen($input) == $maxLength + 1) {
-                    $input = $this->encodingParams_->unpad($input, $maxLength);
+                if (
+                    $this->encodingParams_->getBitsPerCharacter() == 4
+                        && strlen($input) == $maxLength + 1
+                ) {
+                    return $this->encodingParams_->unpad($input, $maxLength);
+                } else {
+                    return $input;
                 }
             } else {
                 $input = $this->encodingParams_->unpad($input, $maxLength);
 
                 if (!($this->flags_ & self::SKIP_LENGTH_CHECK)) {
                     /** @throw alcamo::exception::LengthOutOfRange is
-                     *  SKIP_LENGTH_CHECK is not set in the flags and the value is
-                     *  too short or too long. */
+                     *  SKIP_LENGTH_CHECK is not set in the flags and the
+                     *  value is too short or too long. */
                     LengthOutOfRange::throwIfOutside(
                         $input,
                         $minLength,
                         $maxLength
                     );
                 }
+
+                return $input;
             }
         }
+
+        return $input;
     }
 }

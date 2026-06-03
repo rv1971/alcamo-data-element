@@ -53,17 +53,14 @@ class FourBitCharStringSerializer extends StringSerializer
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
+        /** Remove trailing spaces from input unless four-bit-encoding. */
         switch ($this->encodingParams_->getEncoding()) {
             case 'FOUR-BIT':
                 return $this->deserializeFromHex(bin2hex($input), $datatype);
 
             default:
-                $this->validateInputLength($input);
-
-                /** Remove trailing spaces from input unless
-                 *  four-bit-encoding. */
                 return $this->deWorkbench_->createLiteral(
-                    rtrim($input),
+                    rtrim($this->preprocessInput($input)),
                     $datatype ?? $this->datatype_
                 );
         }
@@ -75,7 +72,7 @@ class FourBitCharStringSerializer extends StringSerializer
     ): LiteralInterface {
         switch ($this->encodingParams_->getEncoding()) {
             case 'FOUR-BIT':
-                $this->validateFourBitInputLength($input);
+                $input = $this->preprocessInput($input);
 
                 return $this->deWorkbench_->createLiteral(
                     strtr($input, 'ABCDEFabcdef', ':;<=>?:;<=>?'),

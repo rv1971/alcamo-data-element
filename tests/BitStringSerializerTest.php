@@ -90,7 +90,7 @@ class BitStringSerializerTest extends TestCase
                 'BINARY',
                 new BitStringLiteral('11111111'),
                 "\xF8",
-                '11111000'
+                '11111'
             ],
             [
                 null,

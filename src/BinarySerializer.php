@@ -32,7 +32,7 @@ class BinarySerializer extends AbstractSerializer
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
-        $this->validateInputLength($input);
+        $input = $this->preprocessInput($input);
 
         return $this->deWorkbench_->createLiteral(
             new ImmutableBinaryString($input),

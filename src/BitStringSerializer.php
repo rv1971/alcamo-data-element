@@ -62,15 +62,16 @@ class BitStringSerializer extends DigitStringSerializer
     ): LiteralInterface {
         switch ($this->encodingParams_->getEncoding()) {
             case 'BINARY':
-                $value = (new BinaryString($input))->toBitString();
-
-                $this->validateInputLength($value);
-
                 return $this->deWorkbench_
-                    ->createLiteral($value, $datatype ?? $this->datatype_);
+                    ->createLiteral(
+                        $this->preprocessInput(
+                            (new BinaryString($input))->toBitString()
+                        ),
+                        $datatype ?? $this->datatype_
+                    );
 
             case 'X.690':
-                $this->validateInputLength($input);
+                $input = $this->preprocessInput($input);
 
                 $unusedBits = unpack('C', $input[0])[1];
 

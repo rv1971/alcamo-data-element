@@ -68,7 +68,7 @@ class IntegerSerializer extends AbstractSerializer
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
-        $this->validateInputLength($input);
+        $input = $this->preprocessInput($input);
 
         switch ($this->encodingParams_->getEncoding()) {
             case 'ASCII':

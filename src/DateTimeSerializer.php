@@ -220,19 +220,15 @@ class DateTimeSerializer extends AbstractSerializer
     ): LiteralInterface {
         switch ($this->encodingParams_->getEncoding()) {
             case 'ASCII':
-                $this->validateInputLength($input);
-
-                $value = $input;
+                $value = $this->preprocessInput($input);
                 break;
 
             case 'BCD':
                 return $this->deserializeFromHex(bin2hex($input), $datatype);
 
             case 'EBCDIC':
-                $this->validateInputLength($input);
-
                 $value = strtr(
-                    $input,
+                    $this->preprocessInput($input),
                     "\x60\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9\x7A\xE3",
                     '-0123456789:T'
                 );
@@ -259,7 +255,7 @@ class DateTimeSerializer extends AbstractSerializer
     ): LiteralInterface {
         switch ($this->encodingParams_->getEncoding()) {
             case 'BCD':
-                $this->validateFourBitInputLength($input);
+                $input = $this->preprocessInput($input);
 
                 return $this->deWorkbench_->createLiteral(
                     $this->asUtc_

@@ -66,20 +66,16 @@ class DigitStringSerializer extends FourBitCharStringSerializer
 
         switch ($this->encodingParams_->getEncoding()) {
             case 'ASCII':
-                $this->validateInputLength($input);
-
-                $value = rtrim($input);
+                $value = rtrim($this->preprocessInput($input));
                 break;
 
             case 'COMPRESSED-BCD':
                 return $this->deserializeFromHex(bin2hex($input), $datatype);
 
             case 'EBCDIC':
-                $this->validateInputLength($input);
-
                 $value = rtrim(
                     strtr(
-                        $input,
+                        $this->preprocessInput($input),
                         "\x40\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9",
                         ' 0123456789'
                     )
@@ -97,7 +93,7 @@ class DigitStringSerializer extends FourBitCharStringSerializer
     ): LiteralInterface {
         switch ($this->encodingParams_->getEncoding()) {
             case 'COMPRESSED-BCD':
-                $this->validateFourBitInputLength($input);
+                $input = $this->preprocessInput($input);
 
                 return $this->deWorkbench_->createLiteral(
                     rtrim($input, 'Ff'),
