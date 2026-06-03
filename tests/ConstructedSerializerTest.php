@@ -129,7 +129,7 @@ class ConstructedSerializerTest extends TestCase
                     new NonNegativeIntegerLiteral(0),
                     new NonNegativeIntegerLiteral(7),
                 ],
-                "bar foo \xFF\xFF",
+                "bar foo \x00\x00",
                 'bar|foo',
                 '[ "bar" "foo" ]'
             ],

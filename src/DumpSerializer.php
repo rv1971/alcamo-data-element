@@ -118,11 +118,6 @@ class DumpSerializer implements SerializerInterface
         return $this->deWorkbench_->getSchema()->getAnySimpleType();
     }
 
-    public function getEncoding(): string
-    {
-        return 'DUMP';
-    }
-
     public function getLengthRange(): ?NonNegativeRange
     {
         return null;
@@ -131,16 +126,6 @@ class DumpSerializer implements SerializerInterface
     public function getFlags(): int
     {
         return $this->flags_;
-    }
-
-    public function getPadString(): string
-    {
-        return '';
-    }
-
-    public function getPadType(): int
-    {
-        return 0;
     }
 
     public function getDeWorkbench(): DeWorkbench

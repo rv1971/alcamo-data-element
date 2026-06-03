@@ -22,15 +22,15 @@ class NonNegativeIntegerSerializer extends IntegerSerializer
     ];
 
     public const ENCODINGS = [
-        'ASCII'      => [ 8, '0' ],
-        'BCD'        => [ 4, '0' ],
-        'BIG-ENDIAN' => [ 8, "\x00" ],
-        'EBCDIC'     => [ 8, "\x40" ]
+        'ASCII'      => [ 8, '0',    STR_PAD_LEFT ],
+        'BCD'        => [ 4, '0',    STR_PAD_LEFT ],
+        'BIG-ENDIAN' => [ 8, "\x00", STR_PAD_LEFT ],
+        'EBCDIC'     => [ 8, "\x40", STR_PAD_LEFT ]
     ];
 
     public function serialize(LiteralInterface $literal): string
     {
-        switch ($this->encoding_) {
+        switch ($this->encodingParams_->getEncoding()) {
             case 'BCD':
                 return $this->hexToBin($this->serializeToHex($literal));
 
@@ -41,7 +41,7 @@ class NonNegativeIntegerSerializer extends IntegerSerializer
 
     public function serializeToHex(LiteralInterface $literal): string
     {
-        switch ($this->encoding_) {
+        switch ($this->encodingParams_->getEncoding()) {
             case 'BCD':
                 $this->validateLiteralClass($literal);
 
@@ -58,7 +58,7 @@ class NonNegativeIntegerSerializer extends IntegerSerializer
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
-        switch ($this->encoding_) {
+        switch ($this->encodingParams_->getEncoding()) {
             case 'BCD':
                 return $this->deserializeFromHex(bin2hex($input), $datatype);
 
@@ -71,7 +71,7 @@ class NonNegativeIntegerSerializer extends IntegerSerializer
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
-        switch ($this->encoding_) {
+        switch ($this->encodingParams_->getEncoding()) {
             case 'BCD':
                 $this->validateFourBitInputLength($input);
 

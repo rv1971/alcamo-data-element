@@ -26,7 +26,10 @@ class ConstructedSerializer extends AbstractSerializer implements
     /**
      * @copydoc alcamo::data_element::AbstractSerializer::ENCODINGS
      */
-    public const ENCODINGS = [ 'BINARY' => [ 8, "\x00" ] ];
+    public const ENCODINGS = [
+        'BINARY' => [ 4, '0', STR_PAD_RIGHT ],
+        'ASCII' =>  [ 8, ' ', STR_PAD_RIGHT ]
+    ];
 
     public static function newFromProps($props): SerializerInterface
     {
@@ -35,6 +38,7 @@ class ConstructedSerializer extends AbstractSerializer implements
         return new static(
             $props->serializers ?? null,
             $props->separator ?? null,
+            $props->encoding ?? null,
             $props->lengthRange ?? null,
             $props->flags ?? null
         );
@@ -60,6 +64,7 @@ class ConstructedSerializer extends AbstractSerializer implements
     public function __construct(
         iterable $serializers,
         ?string $separator = null,
+        ?string $encoding = null,
         $lengthRange = null,
         ?int $flags = null
     ) {
@@ -94,11 +99,9 @@ class ConstructedSerializer extends AbstractSerializer implements
 
         parent::__construct(
             self::XSD_NS . ' string',
-            array_key_first(static::ENCODINGS),
+            $encoding,
             $lengthRange,
             $flags,
-            isset($separator) ? ' ' : 'F',
-            STR_PAD_RIGHT,
             $serializer->deWorkbench_
         );
 
@@ -307,7 +310,7 @@ class ConstructedSerializer extends AbstractSerializer implements
 
                 $length = $serializer->getLengthRange()->getMin();
 
-                if ($serializer->getBitsPerCharacter() == 8) {
+                if ($serializer->encodingParams_->getBitsPerCharacter() == 8) {
                     $length <<= 1;
                 }
 

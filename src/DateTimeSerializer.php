@@ -27,9 +27,9 @@ class DateTimeSerializer extends AbstractSerializer
     ];
 
     public const ENCODINGS = [
-        'ASCII'  => [ 8, ' ' ],
-        'BCD'    => [ 4, 'F' ],
-        'EBCDIC' => [ 8, "\x40" ]
+        'ASCII'  => [ 8, ' ',    STR_PAD_RIGHT ],
+        'BCD'    => [ 4, 'F',    STR_PAD_RIGHT ],
+        'EBCDIC' => [ 8, "\x40", STR_PAD_RIGHT ]
     ];
 
     public const DEFAULT_POSIX_FORMATS = [
@@ -140,7 +140,7 @@ class DateTimeSerializer extends AbstractSerializer
         } else {
             $this->posixFormat_ = new PosixFormat(
                 static::DEFAULT_POSIX_FORMATS[$supportedDatatypeXName][
-                    $this->encoding_
+                    $this->encodingParams_->getEncoding()
                 ]
                 ?? static::DEFAULT_POSIX_FORMATS[$supportedDatatypeXName]['*']
             );
@@ -174,7 +174,7 @@ class DateTimeSerializer extends AbstractSerializer
 
     public function serialize(LiteralInterface $literal): string
     {
-        switch ($this->encoding_) {
+        switch ($this->encodingParams_->getEncoding()) {
             case 'ASCII':
                 $this->validateLiteralClass($literal);
 
@@ -198,7 +198,7 @@ class DateTimeSerializer extends AbstractSerializer
 
     public function serializeToHex(LiteralInterface $literal): string
     {
-        switch ($this->encoding_) {
+        switch ($this->encodingParams_->getEncoding()) {
             case 'BCD':
                 $this->validateLiteralClass($literal);
 
@@ -218,7 +218,7 @@ class DateTimeSerializer extends AbstractSerializer
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
-        switch ($this->encoding_) {
+        switch ($this->encodingParams_->getEncoding()) {
             case 'ASCII':
                 $this->validateInputLength($input);
 
@@ -257,7 +257,7 @@ class DateTimeSerializer extends AbstractSerializer
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
-        switch ($this->encoding_) {
+        switch ($this->encodingParams_->getEncoding()) {
             case 'BCD':
                 $this->validateFourBitInputLength($input);
 

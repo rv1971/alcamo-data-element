@@ -27,15 +27,9 @@ class DumpSerializerTest extends TestCase
             (string)$serializer->getDatatype()->getXName()
         );
 
-        $this->assertSame('DUMP', $serializer->getEncoding());
-
         $this->assertNull($serializer->getLengthRange());
 
         $this->assertSame(42, $serializer->getFlags());
-
-        $this->assertSame('', $serializer->getPadString());
-
-        $this->assertSame(0, $serializer->getPadType());
     }
 
     /**

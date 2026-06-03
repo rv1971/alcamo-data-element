@@ -18,13 +18,13 @@ class BinarySerializer extends AbstractSerializer
         self::XSD_NS . ' base64Binary'
     ];
 
-    public const ENCODINGS = [ 'BINARY' => [ 8, "\x00" ] ];
+    public const ENCODINGS = [ 'BINARY' => [ 8, "\x00", STR_PAD_RIGHT ] ];
 
     public function serialize(LiteralInterface $literal): string
     {
         $this->validateLiteralClass($literal);
 
-        /* getValue() must return ImmutableBinaryString. */
+        /* getValue() returns ImmutableBinaryString. */
         return $this->adjustOutputLength($literal->getValue()->getData());
     }
 

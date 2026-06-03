@@ -17,28 +17,26 @@ class FourBitCharStringSerializer extends StringSerializer
         [ FourBitCharStringLiteral::DEFAULT_DATATYPE_XNAME ];
 
     public const ENCODINGS = [
-        'ASCII'    => [ 8, ' ' ],
-        'FOUR-BIT' => [ 4, 'F' ]
+        'ASCII'    => [ 8, ' ', STR_PAD_RIGHT ],
+        'FOUR-BIT' => [ 4, 'F', STR_PAD_RIGHT ]
     ];
 
     public function serialize(LiteralInterface $literal): string
     {
-        switch ($this->encoding_) {
+        switch ($this->encodingParams_->getEncoding()) {
             case 'ASCII':
                 $this->validateLiteralClass($literal);
 
                 return $this->adjustOutputLength($literal);
 
             case 'FOUR-BIT':
-                return $this->hexToBin(
-                    $this->serializeToHex($literal)
-                );
+                return $this->hexToBin($this->serializeToHex($literal));
         }
     }
 
     public function serializeToHex(LiteralInterface $literal): string
     {
-        switch ($this->encoding_) {
+        switch ($this->encodingParams_->getEncoding()) {
             case 'ASCII':
                 return strtoupper(bin2hex($this->serialize($literal)));
 
@@ -55,14 +53,15 @@ class FourBitCharStringSerializer extends StringSerializer
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
-        switch ($this->encoding_) {
+        switch ($this->encodingParams_->getEncoding()) {
             case 'FOUR-BIT':
                 return $this->deserializeFromHex(bin2hex($input), $datatype);
 
             default:
                 $this->validateInputLength($input);
 
-                /** Remove trailing spaces from input. */
+                /** Remove trailing spaces from input unless
+                 *  four-bit-encoding. */
                 return $this->deWorkbench_->createLiteral(
                     rtrim($input),
                     $datatype ?? $this->datatype_
@@ -74,7 +73,7 @@ class FourBitCharStringSerializer extends StringSerializer
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
-        switch ($this->encoding_) {
+        switch ($this->encodingParams_->getEncoding()) {
             case 'FOUR-BIT':
                 $this->validateFourBitInputLength($input);
 

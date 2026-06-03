@@ -17,20 +17,22 @@ class BitStringSerializer extends DigitStringSerializer
         [ BitStringLiteral::DEFAULT_DATATYPE_XNAME ];
 
     public const ENCODINGS = [
-        'ASCII'  => [ 8, ' ' ],
-        'BINARY' => [ 1, '0' ],
-        'EBCDIC' => [ 8, "\x40" ],
-        'X.690'  => [ 8, '' ]
+        'ASCII'  => [ 8, ' ', STR_PAD_RIGHT ],
+        'BINARY' => [ 1, '0', STR_PAD_RIGHT ],
+        'EBCDIC' => [ 8, "\x40", STR_PAD_RIGHT ],
+        'X.690'  => [ 8 ]
     ];
 
     public function serialize(LiteralInterface $literal): string
     {
-        switch ($this->encoding_) {
+        switch ($this->encodingParams_->getEncoding()) {
             case 'BINARY':
                 $this->validateLiteralClass($literal);
 
                 return BinaryString::newFromBitString(
-                    $this->adjustOutputLength($literal)
+                    $this->getEncodingParams()->align(
+                        $this->adjustOutputLength($literal)
+                    )
                 )->getData();
 
             case 'X.690':
@@ -49,11 +51,16 @@ class BitStringSerializer extends DigitStringSerializer
         }
     }
 
+    public function serializeToHex(LiteralInterface $literal): string
+    {
+        return strtoupper(bin2hex($this->serialize($literal)));
+    }
+
     public function deserialize(
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
-        switch ($this->encoding_) {
+        switch ($this->encodingParams_->getEncoding()) {
             case 'BINARY':
                 $value = (new BinaryString($input))->toBitString();
 
@@ -80,5 +87,12 @@ class BitStringSerializer extends DigitStringSerializer
                 return
                     parent::deserialize($input, $datatype ?? $this->datatype_);
         }
+    }
+
+    public function deserializeFromHex(
+        string $input,
+        ?SimpleTypeInterface $datatype = null
+    ): LiteralInterface {
+        return $this->deserialize(hex2bin($input), $datatype);
     }
 }

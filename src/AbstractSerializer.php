@@ -6,9 +6,7 @@ use alcamo\dom\schema\component\{AbstractSimpleType, SimpleTypeInterface};
 use alcamo\exception\{
     InvalidEnumerator,
     InvalidType,
-    LengthOutOfRange,
-    SyntaxError,
-    Unsupported
+    LengthOutOfRange
 };
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\LiteralInterface;
@@ -30,19 +28,14 @@ abstract class AbstractSerializer implements SerializerInterface
     /**
      * @brief Supported encodings
      *
-     * Assigns to each supported encoding a pair, consisting of
+     * Assigns to each supported encoding a triple, consisting of
      * - the number of bits per encoded character
-     * - the padding string.
+     * - the padding string
+     * - the padding type
      *
      * The encoding `*` represents all encodings not explicitely listed.
-     *
-     * If an encoding has an empty padding string, this means that the length
-     * of a serialization result MUST NOT be changed, neither padded nor
-     * truncated.
      */
     public const ENCODINGS = [];
-
-    public const PAD_TYPE = STR_PAD_RIGHT;
 
     public static function newFromProps($props): SerializerInterface
     {
@@ -53,8 +46,6 @@ abstract class AbstractSerializer implements SerializerInterface
             $props->encoding ?? null,
             $props->lengthRange ?? null,
             $props->flags ?? null,
-            $props->padString ?? null,
-            $props->padType ?? null,
             $props->deWorkbench ?? null
         );
     }
@@ -62,9 +53,9 @@ abstract class AbstractSerializer implements SerializerInterface
     /**
      * @brief Create from named properties an instance of a given class
      *
-     * The class to construct an insatnce of is given as the `class`
-     * property. Useful to create from configuration parameters an instance of
-     * a class which is not yet known at compile time.
+     * The class to use is given as the `class` property. Useful to create
+     * from configuration parameters an instance of a class which is not yet
+     * known at compile time.
      *
      * @param $props object or array of named properties corresponding to the
      * constructor parameters, plus a `class` item.
@@ -86,34 +77,25 @@ abstract class AbstractSerializer implements SerializerInterface
      */
     protected $supportedDatatype_;
 
-    protected $encoding_;         ///< string
-    protected $lengthRange_;      ///< ?NonNegativeRange
-    protected $flags_;            ///< int
-    protected $padString_;        ///< string
-    protected $padType_;          ///< one of STR_PAD_RIGHT or STR_PAD_LEFT
-    protected $deWorkbench_; ///< DeWorkbench
+    protected $encodingParams_; ///< EncodingParams
+    protected $lengthRange_;    ///< ?NonNegativeRange
+    protected $flags_;          ///< int
+    protected $deWorkbench_;    ///< DeWorkbench
 
     /**
      * @param $datatypeXName Datatype to use for deserialized literals
      * [default first item in SUPPORTED_DATATYPE_XNAMES]
      *
-     * @parm $encoding [default first key of
-     * alcamo::data_element::AbstractSerializer::ENCODINGS]
+     * @parm $encoding A key from
+     * alcamo::data_element::AbstractSerializer::ENCODINGS [default first key]
      *
      * @param $lengthRange NonNegativeRange|array Allowed length of serialized
-     * data, in encoding-dependent units (bytes or nibbles). If given a an
-     * array, it must have 1 to 2 items representing the minimum and optionlly
-     * the maximim length.
+     * data, in encoding-dependent units (bytes or nibbles or bits). If given
+     * as an array, it must have 1 to 2 items representing the minimum and
+     * optionlly the maximim length.
      *
      * @param $flags Bitwise-OR-combination of the constants in
      * alcamo::data_element::SerializerInterface.
-     *
-     * @param $padString Padding string. [default taken from from
-     * alcamo::data_element::AbstractSerializer::ENCODINGS]
-     *
-     * @param $padType STR_PAD_RIGHT or STR_PAD_LEFT. Truncation, if
-     * necessary, takes place on the same side as padding. [default
-     * alcamo::data_element::AbstractSerializer::PAD_TYPE]
      *
      * @param $deWorkbench Workbench used in deserialize() and in
      * validateLiteralClass(). [default
@@ -124,8 +106,6 @@ abstract class AbstractSerializer implements SerializerInterface
         ?string $encoding = null,
         $lengthRange = null,
         ?int $flags = null,
-        ?string $padString = null,
-        ?int $padType = null,
         ?DeWorkbench $deWorkbench = null
     ) {
         $this->deWorkbench_ =
@@ -168,10 +148,10 @@ abstract class AbstractSerializer implements SerializerInterface
         }
 
         if (isset($encoding)) {
-            if (
-                !isset(static::ENCODINGS[$encoding])
-                    && !isset(static::ENCODINGS['*'])
-            ) {
+            $encodingParams =
+                static::ENCODINGS[$encoding] ?? static::ENCODINGS['*'] ?? null;
+
+            if (!isset($encodingParams)) {
                 /** @throw alcamo::exception::InvalidEnumerator if $encoding
                  *  is not supported. */
                 throw (new InvalidEnumerator())->setMessageContext(
@@ -181,11 +161,17 @@ abstract class AbstractSerializer implements SerializerInterface
                     ]
                 );
             }
-
-            $this->encoding_ = $encoding;
         } else {
-            $this->encoding_ = array_key_first(static::ENCODINGS);
+            $encoding = array_key_first(static::ENCODINGS);
+            $encodingParams = static::ENCODINGS[$encoding];
         }
+
+        $this->encodingParams_ = new EncodingParams(
+            $encoding,
+            $encodingParams[0],
+            $encodingParams[1] ?? null,
+            $encodingParams[2] ?? null
+        );
 
         if (isset($lengthRange)) {
             $this->lengthRange_ = $lengthRange instanceof NonNegativeRange
@@ -194,20 +180,6 @@ abstract class AbstractSerializer implements SerializerInterface
         }
 
         $this->flags_ = (int)$flags;
-
-        $this->padString_ = $padString
-            ?? (static::ENCODINGS[$this->encoding_]
-                ?? static::ENCODINGS['*'])[1];
-
-        if ($this->padString_ == '' && $flags & self::TRUNCATE_SILENTLY) {
-            /** @throw alcamo::exception::Unsupported if the output length
-             *  MUST NOT be changed but TRUNCATE_SILENTLY is activated. */
-            throw (new Unsupported())->setMessageContext(
-                [ 'feature' => "truncation of {$this->encoding_}" ]
-            );
-        }
-
-        $this->padType_ = $padType ?? static::PAD_TYPE;
     }
 
     public function getDatatype(): SimpleTypeInterface
@@ -215,9 +187,9 @@ abstract class AbstractSerializer implements SerializerInterface
         return $this->datatype_;
     }
 
-    public function getEncoding(): string
+    public function getEncodingParams(): EncodingParams
     {
-        return $this->encoding_;
+        return $this->encodingParams_;
     }
 
     public function getLengthRange(): ?NonNegativeRange
@@ -230,25 +202,9 @@ abstract class AbstractSerializer implements SerializerInterface
         return $this->flags_;
     }
 
-    public function getPadString(): string
-    {
-        return $this->padString_;
-    }
-
-    public function getPadType(): int
-    {
-        return $this->padType_;
-    }
-
     public function getDeWorkbench(): DeWorkbench
     {
         return $this->deWorkbench_;
-    }
-
-    public function getBitsPerCharacter(): int
-    {
-        return
-            (static::ENCODINGS[$this->encoding_] ?? static::ENCODINGS['*'])[0];
     }
 
     public function serializeToHex(LiteralInterface $literal): string
@@ -297,11 +253,9 @@ abstract class AbstractSerializer implements SerializerInterface
             if (isset($maxLength) && strlen($value) > $maxLength) {
                 if ($this->flags_ & self::TRUNCATE_SILENTLY) {
                     /** If $value is too long and TRUNCATE_SILENTLY is set in
-                     * the flags, truncate to the left or to the right,
-                     * depending on $this->padType_. */
-                    $value = $this->padType_ == STR_PAD_LEFT
-                        ? substr($value, -$maxLength)
-                        : substr($value, 0, $maxLength);
+                     * the flags, truncate. */
+                    $value =
+                        $this->encodingParams_->truncate($value, $maxLength);
                 } else {
                     /** @throw alcamo::exception::LengthOutOfRange if $value
                      *  is too long and TRUNCATE_SILENTLY is not set. */
@@ -314,37 +268,9 @@ abstract class AbstractSerializer implements SerializerInterface
                     );
                 }
             } elseif (isset($minLength)) {
-                if ($this->padString_ == '' && strlen($value) < $minLength) {
-                    /** @throw alcamo::exception::LengthOutOfRange if $value
-                     *  is too short and no padding is possible. */
-                    throw (new LengthOutOfRange())->setMessageContext(
-                        [
-                            'value' => $value,
-                            'length' => strlen($value),
-                            'lowerBound' => $minLength,
-                            'upperBound' => $maxLength
-                        ]
-                    );
-                }
-
                 /** Pad to the minimum length if necessary. */
-                $value = str_pad(
-                    $value,
-                    $minLength,
-                    $this->padString_,
-                    $this->padType_
-                );
+                $value = $this->encodingParams_->pad($value, $minLength);
             }
-        }
-
-        /** Add padding as needed to get complete bytes in the output. */
-        if (strlen($value) & 7 && $this->getBitsPerCharacter() == 1) {
-            $value = str_pad(
-                $value,
-                (strlen($value) + 7) >> 3 << 3,
-                $this->padString_,
-                $this->padType_
-            );
         }
 
         return $value;
@@ -352,16 +278,7 @@ abstract class AbstractSerializer implements SerializerInterface
 
     protected function hexToBin(string $hexData): string
     {
-        if (strlen($hexData) & 1) {
-            $hexData = str_pad(
-                $hexData,
-                strlen($hexData) + 1,
-                $this->padString_,
-                $this->padType_
-            );
-        }
-
-        return hex2bin($hexData);
+        return hex2bin($this->encodingParams_->align($hexData));
     }
 
     /// Check the input length
@@ -373,13 +290,16 @@ abstract class AbstractSerializer implements SerializerInterface
         ) {
             [ $minLength, $maxLength ] = $this->lengthRange_->getMinMax();
 
-            if ($maxLength & 7 && $this->getBitsPerCharacter() == 1) {
+            if (
+                $maxLength & 7
+                    && $this->encodingParams_->getBitsPerCharacter() == 1
+            ) {
                 /** Add padding bits to maxLength if length is measured in
                  *  bits and maximum length is not a multiple of 8. */
                 $maxLength = ($maxLength + 7) >> 3 << 3;
             }
 
-            /** @throw alcamo::exception::LengthOutOfRange is
+            /** @throw alcamo::exception::LengthOutOfRange if
              *  SKIP_LENGTH_CHECK is not set in the flags and the value is too
              *  short or too long. */
             LengthOutOfRange::throwIfOutside($input, $minLength, $maxLength);
@@ -390,57 +310,30 @@ abstract class AbstractSerializer implements SerializerInterface
     /// Check the input length for four-bit encodings
     protected function validateFourBitInputLength(string &$input): void
     {
-        /* Remove padding character if necessary. */
+        /* Remove padding characters if necessary. */
         if (isset($this->lengthRange_)) {
-            $maxLength = $this->lengthRange_->getMax();
-
-            if (isset($maxLength) && strlen($input) == $maxLength + 1) {
-                /** @throw alcamo::exception::SyntaxError if the padding
-                 *  character is wrong. */
-                if ($this->padType_ == STR_PAD_LEFT) {
-                    if ($input[0] != $this->padString_) {
-                        throw (new SyntaxError())->setMessageContext(
-                            [
-                                'inData' => $input,
-                                'extraMessage' => 'invalid padding character "'
-                                    . $input[0] . '"'
-                            ]
-                        );
-                    }
-
-                    $input = substr($input, 1);
-                } else {
-                    if (strtoupper(substr($input, -1)) != $this->padString_) {
-                        throw (new SyntaxError())->setMessageContext(
-                            [
-                                'inData' => $input,
-                                'extraMessage' => 'invalid padding character "'
-                                    . substr($input, -1) . '"'
-                            ]
-                        );
-                    }
-
-                    $input = substr($input, 0, -1);
-                }
-            }
-        }
-
-        if (
-            isset($this->lengthRange_)
-                && !($this->flags_ & self::SKIP_LENGTH_CHECK)
-        ) {
             [ $minLength, $maxLength ] = $this->lengthRange_->getMinMax();
 
-            if ($maxLength & 7 && $this->getBitsPerCharacter() == 1) {
-                /** Add padding bits to maxLength if length is measured in
-                 *  bits and maximum length is not a multiple of 8. */
-                $maxLength = ($maxLength + 7) >> 3 << 3;
-            }
+            if ($this->flags_ & self::SKIP_LENGTH_CHECK) {
+                /** Even if SKIP_LENGTH_CHECK is set in the flags, remove a
+                 *  padding nibble if necessary. */
+                if (strlen($input) == $maxLength + 1) {
+                    $input = $this->encodingParams_->unpad($input, $maxLength);
+                }
+            } else {
+                $input = $this->encodingParams_->unpad($input, $maxLength);
 
-            /** @throw alcamo::exception::LengthOutOfRange is
-             *  SKIP_LENGTH_CHECK is not set in the flags and the value is too
-             *  short or too long. */
-            LengthOutOfRange::throwIfOutside($input, $minLength, $maxLength);
+                if (!($this->flags_ & self::SKIP_LENGTH_CHECK)) {
+                    /** @throw alcamo::exception::LengthOutOfRange is
+                     *  SKIP_LENGTH_CHECK is not set in the flags and the value is
+                     *  too short or too long. */
+                    LengthOutOfRange::throwIfOutside(
+                        $input,
+                        $minLength,
+                        $maxLength
+                    );
+                }
+            }
         }
     }
 }

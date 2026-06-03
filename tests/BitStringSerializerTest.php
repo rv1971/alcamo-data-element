@@ -2,7 +2,7 @@
 
 namespace alcamo\data_element;
 
-use alcamo\exception\{LengthOutOfRange, Unsupported};
+use alcamo\exception\LengthOutOfRange;
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\BitStringLiteral;
 use PHPUnit\Framework\TestCase;
@@ -48,7 +48,7 @@ class BitStringSerializerTest extends TestCase
 
         $this->assertEquals($datatype->getUri(), $literal2->getDatatypeUri());
 
-        $literal3 = $serializer->deserializeFromHex(bin2hex($output));
+        $literal3 = $serializer->deserializeFromHex($hexOutput);
 
         $this->assertInstanceOf(BitStringLiteral::class, $literal3);
 
@@ -111,26 +111,12 @@ class BitStringSerializerTest extends TestCase
         ];
     }
 
-    public function testConstructException(): void
-    {
-        $this->expectException(Unsupported::class);
-
-        $this->expectExceptionMessage('truncation of X.690');
-
-        BitStringSerializer::newFromProps(
-            (object)[
-                'flags' => BitStringSerializer::TRUNCATE_SILENTLY,
-                'encoding' => 'X.690'
-            ]
-        );
-    }
-
     public function testAdjustOutputLengthException(): void
     {
         $this->expectException(LengthOutOfRange::class);
 
         $this->expectExceptionMessage(
-            'Length 2 of "\000\210" out of range [3, 3]'
+            'Length 2 of "\000\210" out of range [3, "∞"]'
         );
 
         BitStringSerializer::newFromProps(

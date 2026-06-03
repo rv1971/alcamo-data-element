@@ -2,7 +2,7 @@
 
 namespace alcamo\data_element;
 
-use alcamo\exception\{InvalidEnumerator, LengthOutOfRange};
+use alcamo\exception\{InvalidEnumerator, SyntaxError};
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\DigitStringLiteral;
 use PHPUnit\Framework\TestCase;
@@ -149,10 +149,10 @@ class DigitStringSerializerTest extends TestCase
 
     public function testInputLengthWrong(): void
     {
-        $this->expectException(LengthOutOfRange::class);
+        $this->expectException(SyntaxError::class);
 
         $this->expectExceptionMessage(
-            'Length 6 of "12345f" out of range [0, 4]'
+            'Syntax error in "12345f"; invalid right padding data "5f"'
         );
 
         DigitStringSerializer::newFromProps(

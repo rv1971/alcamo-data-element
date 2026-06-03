@@ -253,7 +253,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
         $this->expectException(SyntaxError::class);
 
         $this->expectExceptionMessage(
-            'Syntax error in "912345"; invalid padding character "9"'
+            'Syntax error in "912345"; invalid left padding data "9"'
         );
 
         $serializer->deserializeFromHex('912345');

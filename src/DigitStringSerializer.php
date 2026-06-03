@@ -16,14 +16,14 @@ class DigitStringSerializer extends FourBitCharStringSerializer
         [ DigitStringLiteral::DEFAULT_DATATYPE_XNAME ];
 
     public const ENCODINGS = [
-        'ASCII'          => [ 8, ' ' ],
-        'COMPRESSED-BCD' => [ 4, 'F' ],
-        'EBCDIC'         => [ 8, "\x40" ]
+        'ASCII'          => [ 8, ' ',    STR_PAD_RIGHT ],
+        'COMPRESSED-BCD' => [ 4, 'F',    STR_PAD_RIGHT ],
+        'EBCDIC'         => [ 8, "\x40", STR_PAD_RIGHT ]
     ];
 
     public function serialize(LiteralInterface $literal): string
     {
-        switch ($this->encoding_) {
+        switch ($this->encodingParams_->getEncoding()) {
             case 'ASCII':
                 $this->validateLiteralClass($literal);
 
@@ -47,7 +47,7 @@ class DigitStringSerializer extends FourBitCharStringSerializer
 
     public function serializeToHex(LiteralInterface $literal): string
     {
-        switch ($this->encoding_) {
+        switch ($this->encodingParams_->getEncoding()) {
             case 'COMPRESSED-BCD':
                 $this->validateLiteralClass($literal);
 
@@ -64,7 +64,7 @@ class DigitStringSerializer extends FourBitCharStringSerializer
     ): LiteralInterface {
         /** Remove trailing padding characters from input. */
 
-        switch ($this->encoding_) {
+        switch ($this->encodingParams_->getEncoding()) {
             case 'ASCII':
                 $this->validateInputLength($input);
 
@@ -75,6 +75,8 @@ class DigitStringSerializer extends FourBitCharStringSerializer
                 return $this->deserializeFromHex(bin2hex($input), $datatype);
 
             case 'EBCDIC':
+                $this->validateInputLength($input);
+
                 $value = rtrim(
                     strtr(
                         $input,
@@ -93,7 +95,7 @@ class DigitStringSerializer extends FourBitCharStringSerializer
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
-        switch ($this->encoding_) {
+        switch ($this->encodingParams_->getEncoding()) {
             case 'COMPRESSED-BCD':
                 $this->validateFourBitInputLength($input);
 

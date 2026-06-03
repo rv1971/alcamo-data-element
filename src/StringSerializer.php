@@ -21,8 +21,8 @@ class StringSerializer extends AbstractSerializer
     ];
 
     public const ENCODINGS = [
-        'UTF-8' => [ 8, ' ' ], // default encoding
-        '*'     => [ 8, ' ' ]
+        'UTF-8' => [ 8, ' ', STR_PAD_RIGHT ], // default encoding
+        '*'     => [ 8, ' ', STR_PAD_RIGHT ]
     ];
 
     /// String encoding used internally
@@ -32,26 +32,28 @@ class StringSerializer extends AbstractSerializer
     {
         $this->validateLiteralClass($literal);
 
-        if (static::INTERNAL_ENCODING == $this->encoding_) {
-            return $this->adjustOutputLength($literal->getValue());
-        }
-
         $value = $literal->getValue();
+
+        if (
+            $this->encodingParams_->getEncoding() == static::INTERNAL_ENCODING
+        ) {
+            return $this->adjustOutputLength($value);
+        }
 
         /* Pad to minimum length in internal encoding before character set
          * conversion takes place, because output encoding might have a
          * different representation of the padding character. */
         if (isset($this->lengthRange_)) {
-            $value = str_pad(
-                $value,
-                $this->lengthRange_->getMin(),
-                $this->padString_,
-                $this->padType_
-            );
+            $value = $this->encodingParams_
+                ->pad($value, $this->lengthRange_->getMin());
         }
 
         return $this->adjustOutputLength(
-            iconv(static::INTERNAL_ENCODING, $this->encoding_, $value)
+            iconv(
+                static::INTERNAL_ENCODING,
+                $this->encodingParams_->getEncoding(),
+                $value
+            )
         );
     }
 
@@ -61,12 +63,15 @@ class StringSerializer extends AbstractSerializer
     ): LiteralInterface {
         $this->validateInputLength($input);
 
-        /** Remove trailing spaces from input. */
+        $encoding = $this->encodingParams_->getEncoding();
+
+        /** Remove trailing spaces from input after conversion to internal
+         *  encoding. */
         return $this->deWorkbench_->createLiteral(
             rtrim(
-                static::INTERNAL_ENCODING == $this->encoding_
+                $encoding == static::INTERNAL_ENCODING
                     ? $input
-                    : iconv($this->encoding_, static::INTERNAL_ENCODING, $input)
+                    : iconv($encoding, static::INTERNAL_ENCODING, $input)
             ),
             $datatype ?? $this->datatype_
         );

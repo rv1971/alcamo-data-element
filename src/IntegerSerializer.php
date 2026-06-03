@@ -23,12 +23,10 @@ class IntegerSerializer extends AbstractSerializer
     ];
 
     public const ENCODINGS = [
-        'ASCII'      => [ 8, ' ' ],
-        'BIG-ENDIAN' => [ 8, "\x00" ],
-        'EBCDIC'     => [ 8, "\x40" ]
+        'ASCII'      => [ 8, '0',    STR_PAD_LEFT ],
+        'BIG-ENDIAN' => [ 8, "\x00", STR_PAD_LEFT ],
+        'EBCDIC'     => [ 8, "\x40", STR_PAD_LEFT ]
     ];
-
-    public const PAD_TYPE = STR_PAD_LEFT;
 
     public function serialize(LiteralInterface $literal): string
     {
@@ -42,8 +40,9 @@ class IntegerSerializer extends AbstractSerializer
 
         /* sprintf() is needed to put the padding 0s after a sign, if the
          * value is negative. adjustOutputLength() then only checks the
-         * maximum length since the minimum length is already guaranteed. */
-        switch ($this->encoding_) {
+         * maximum length since the minimum length is already guaranteed in
+         * all cases. */
+        switch ($this->encodingParams_->getEncoding()) {
             case 'ASCII':
                 return $this->adjustOutputLength(
                     sprintf("%0{$minLength}d", $value)
@@ -71,7 +70,7 @@ class IntegerSerializer extends AbstractSerializer
     ): LiteralInterface {
         $this->validateInputLength($input);
 
-        switch ($this->encoding_) {
+        switch ($this->encodingParams_->getEncoding()) {
             case 'ASCII':
                 $value = (int)$input;
                 break;

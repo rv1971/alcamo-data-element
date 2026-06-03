@@ -138,7 +138,7 @@ class FourBitCharStringSerializerTest extends TestCase
         $this->expectException(SyntaxError::class);
 
         $this->expectExceptionMessage(
-            'Syntax error in "ABC0"; invalid padding character "0"'
+            'Syntax error in "ABC0"; invalid right padding data "0"'
         );
 
         $serializer->deserializeFromHex('ABC0');
