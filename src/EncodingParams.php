@@ -186,7 +186,7 @@ class EncodingParams
                         throw (new DataValidationFailed())->setMessageContext(
                             [
                                 'value' => $value,
-                                'extraMessage' => 'length not a multiple of 8'
+                                'extraMessage' => "length of \"$value\" not a multiple of 8"
                             ]
                         );
                     }
@@ -197,7 +197,7 @@ class EncodingParams
                         throw (new DataValidationFailed())->setMessageContext(
                             [
                                 'value' => $value,
-                                'extraMessage' => 'odd length'
+                                'extraMessage' => "length of \"$value\" odd"
                             ]
                         );
                     }
@@ -209,8 +209,14 @@ class EncodingParams
     }
 
     /// Pad a string to a minimum length
-    public function pad(string $value, int $minLength): string
+    public function pad(string $value, ?int $minLength): string
     {
+        /** Do nothing if $minLength is `null` or $value is longer or equal to
+         *  $minLength. */
+        if (!isset($minLength) || strlen($value) >= $minLength) {
+            return $value;
+        }
+
         if (isset($this->padType_)) {
             return
                 str_pad($value, $minLength, $this->padString_, $this->padType_);
@@ -226,8 +232,8 @@ class EncodingParams
     /// Remove padding characters to satisfy a maximum length
     public function unpad(string $value, ?int $maxLength): string
     {
-        /** Do nothing if $maxLength is `null` or $value is shorter than
-         *  $maxLength. */
+        /** Do nothing if $maxLength is `null` or $value is shorter or equal
+         *  to $maxLength. */
         if (!isset($maxLength) || strlen($value) <= $maxLength) {
             return $value;
         }
@@ -282,8 +288,14 @@ class EncodingParams
     }
 
     /// Truncate to a maximum length
-    public function truncate(string $value, int $maxLength): string
+    public function truncate(string $value, ?int $maxLength): string
     {
+        /** Do nothing if $maxLength is `null` or $value is shorter or equal
+         *  to $maxLength. */
+        if (!isset($maxLength) || strlen($value) <= $maxLength) {
+            return $value;
+        }
+
         if (!isset($this->padType_)) {
             /** @throw alcamo::exception::LengthOutOfRange if longer than
              *  $maxLength and no padding is specified. */
