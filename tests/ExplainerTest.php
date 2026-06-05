@@ -2,7 +2,7 @@
 
 namespace alcamo\data_element;
 
-use alcamo\rdf_literal\{ConstructedLiteral, StringLiteral};
+use alcamo\rdf_literal\{ConstructedStringLiteral, StringLiteral};
 use alcamo\uri\FileUriFactory;
 use PHPUnit\Framework\TestCase;
 
@@ -132,7 +132,7 @@ class ExplainerTest extends TestCase
             [
                 new ConstructedDeInstance(
                     $constructedDataElement,
-                    new ConstructedLiteral(
+                    new ConstructedStringLiteral(
                         [
                             new StringLiteral('barbar', $myTokenUri),
                             new StringLiteral('FOO', $fooBarUri),

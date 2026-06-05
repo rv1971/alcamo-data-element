@@ -6,7 +6,7 @@ use alcamo\dom\schema\SchemaFactory;
 use alcamo\exception\DataValidationFailed;
 use alcamo\rdf_literal\{
     BooleanLiteral,
-    ConstructedLiteral,
+    ConstructedStringLiteral,
     IntegerLiteral,
     StringLiteral
 };
@@ -35,7 +35,7 @@ class ConstructedDeInstanceTest extends TestCase
         $literal1 = new IntegerLiteral(42);
         $literal2 = new StringLiteral('foo');
 
-        $literal = new ConstructedLiteral([ $literal1, $literal2 ]);
+        $literal = new ConstructedStringLiteral([ $literal1, $literal2 ]);
 
         $deInstance = new ConstructedDeInstance($dataElement, $literal);
 
@@ -68,7 +68,7 @@ class ConstructedDeInstanceTest extends TestCase
                     )
                 ]
             ),
-            new ConstructedLiteral(
+            new ConstructedStringLiteral(
                 [
                     new BooleanLiteral(true),
                     new IntegerLiteral(7)

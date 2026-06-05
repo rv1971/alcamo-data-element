@@ -4,7 +4,7 @@ namespace alcamo\data_element;
 
 use alcamo\collection\ReadonlyCollectionTrait;
 use alcamo\exception\DataValidationFailed;
-use alcamo\rdf_literal\ConstructedLiteral;
+use alcamo\rdf_literal\AbstractConstructedLiteral;
 
 /**
  * @brief Constructed data element instance containing data element instances
@@ -24,7 +24,7 @@ class ConstructedDeInstance extends DeInstance implements
 
     public function __construct(
         ConstructedDataElement $dataElement,
-        ConstructedLiteral $literal
+        AbstractConstructedLiteral $literal
     ) {
         if (count($literal) != count($dataElement)) {
             /** @todo throw alcamo::exception::DataValidationFailed if the

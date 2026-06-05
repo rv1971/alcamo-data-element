@@ -5,7 +5,7 @@ namespace alcamo\data_element;
 use alcamo\exception\{DataValidationFailed, Eof, InvalidType, SyntaxError};
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\{
-    ConstructedLiteral,
+    ConstructedStringLiteral,
     HexBinaryLiteral,
     IntegerLiteral,
     NonNegativeIntegerLiteral,
@@ -23,6 +23,7 @@ class ConstructedSerializerTest extends TestCase
     public function testSerialize(
         $serializers,
         $separator,
+        $encoding,
         $lengthRange,
         $literalData,
         $expectedOutput,
@@ -33,12 +34,13 @@ class ConstructedSerializerTest extends TestCase
             [
                 'serializers' => $serializers,
                 'separator' => $separator,
+                'encoding' => $encoding,
                 'lengthRange' => $lengthRange,
                 'flags' => ConstructedSerializer::TRUNCATE_SILENTLY
             ]
         );
 
-        $literal = new ConstructedLiteral($literalData);
+        $literal = new ConstructedStringLiteral($literalData);
 
         $output = $serializer->serialize($literal);
 
@@ -51,7 +53,7 @@ class ConstructedSerializerTest extends TestCase
         $this->assertSame($expectedDeserializionDigest, $literal2->getDigest());
 
         $this->assertEquals(
-            ConstructedLiteral::DEFAULT_DATATYPE_URI,
+            ConstructedStringLiteral::DEFAULT_DATATYPE_URI,
             $literal2->getDatatypeUri()
         );
 
@@ -88,7 +90,10 @@ class ConstructedSerializerTest extends TestCase
         $stringS = new StringSerializer();
         $stringS4 = StringSerializer::newFromProps([ 'lengthRange' => [ 4 ] ]);
         $bcdS = NonNegativeIntegerSerializer::newFromProps(
-            [ 'encoding' =>  'BCD']
+            [ 'encoding' =>  'BCD' ]
+        );
+        $bcdS3 = NonNegativeIntegerSerializer::newFromProps(
+            [ 'encoding' =>  'BCD', 'lengthRange' => [ 3 ] ]
         );
         $binS = new BinarySerializer();
 
@@ -96,6 +101,7 @@ class ConstructedSerializerTest extends TestCase
             [
                 [ $intS, $stringS4, $intS ],
                 ',',
+                null,
                 null,
                 [
                     new NonNegativeIntegerLiteral(7),
@@ -109,6 +115,7 @@ class ConstructedSerializerTest extends TestCase
             [
                 [ $stringS, $intS, $stringS4, $intS ],
                 '/',
+                'TEXT',
                 null,
                 [
                     new StringLiteral('bar'),
@@ -118,11 +125,12 @@ class ConstructedSerializerTest extends TestCase
                 'bar/0/foo ',
                 'bar|0|foo',
                 '["bar"/0/"foo"]'
-            ],
+                ],
             [
                 [ $stringS4, $stringS4 ],
                 null,
-                [ 10 ],
+                'BINARY',
+                [ 20 ],
                 [
                     new StringLiteral('bar'),
                     new StringLiteral('foo'),
@@ -135,15 +143,44 @@ class ConstructedSerializerTest extends TestCase
             ],
             [
                 [ $bcdS, $binS, $binS ],
-                "\xFF",
-                [ 5 ],
+                'FF',
+                'BINARY',
+                [ 10 ],
                 [
-                    new NonNegativeIntegerLiteral(3),
+                    new NonNegativeIntegerLiteral(12),
                     new HexBinaryLiteral('abcd'),
                 ],
-                "\x03\xFF\xAB\xCD ",
-                '3|ABCD20',
-                "[3\xFF'ABCD']"
+                "\x12\xFF\xAB\xCD\x00",
+                '12|ABCD00',
+                "[12FF'ABCD']"
+            ],
+            [
+                [ $bcdS, $bcdS3, $binS, $binS ],
+                null,
+                'BINARY',
+                null,
+                [
+                    new NonNegativeIntegerLiteral(7),
+                    new NonNegativeIntegerLiteral(42),
+                    new HexBinaryLiteral('ab')
+                ],
+                "\x70\x42\xAB",
+                '7|42|AB',
+                "[ 7 42 'AB' ]"
+            ],
+            [
+                [ $bcdS, $bcdS, $binS, $binS ],
+                'e',
+                'BINARY',
+                [ 8 ],
+                [
+                    new NonNegativeIntegerLiteral(3),
+                    new NonNegativeIntegerLiteral(4),
+                    new HexBinaryLiteral('ab'),
+                ],
+                "\x3E\x4E\xAB\x00",
+                '3|4|AB00',
+                "[3e4e'AB']"
             ]
         ];
     }
@@ -183,7 +220,7 @@ class ConstructedSerializerTest extends TestCase
         );
 
         (new ConstructedSerializer([ new StringSerializer() ]))->serialize(
-            new ConstructedLiteral(
+            new ConstructedStringLiteral(
                 [ new StringLiteral(), new StringLiteral() ]
             )
         );
@@ -257,7 +294,7 @@ class ConstructedSerializerTest extends TestCase
         );
 
         $this->assertTrue(
-            (new ConstructedLiteral([ new IntegerLiteral(42) ]))
+            (new ConstructedStringLiteral([ new IntegerLiteral(42) ]))
                 ->equals($serializer->dedump('[ 42 43 ]'))
         );
 
@@ -285,7 +322,7 @@ class ConstructedSerializerTest extends TestCase
         );
 
         $this->assertTrue(
-            (new ConstructedLiteral([ new StringLiteral('foo') ]))
+            (new ConstructedStringLiteral([ new StringLiteral('foo') ]))
                 ->equals($serializer->dedump('[ "foo" ]'))
         );
 

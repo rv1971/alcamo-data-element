@@ -92,7 +92,7 @@ abstract class AbstractSerializer implements SerializerInterface
      * @param $lengthRange NonNegativeRange|array Allowed length of serialized
      * data, in encoding-dependent units (bytes or nibbles or bits). If given
      * as an array, it must have 1 to 2 items representing the minimum and
-     * optionlly the maximim length.
+     * optionally the maximim length.
      *
      * @param $flags Bitwise-OR-combination of the constants in
      * alcamo::data_element::SerializerInterface.
@@ -281,7 +281,7 @@ abstract class AbstractSerializer implements SerializerInterface
         return hex2bin($this->encodingParams_->align($hexData));
     }
 
-    /// Check the input length
+    /// Check input length and remove padding if necessary
     protected function preprocessInput(string $input): string
     {
         /* Remove padding characters if necessary. */
@@ -302,16 +302,14 @@ abstract class AbstractSerializer implements SerializerInterface
             } else {
                 $input = $this->encodingParams_->unpad($input, $maxLength);
 
-                if (!($this->flags_ & self::SKIP_LENGTH_CHECK)) {
-                    /** @throw alcamo::exception::LengthOutOfRange is
-                     *  SKIP_LENGTH_CHECK is not set in the flags and the
-                     *  value is too short or too long. */
-                    LengthOutOfRange::throwIfOutside(
-                        $input,
-                        $minLength,
-                        $maxLength
-                    );
-                }
+                /** @throw alcamo::exception::LengthOutOfRange is
+                 *  SKIP_LENGTH_CHECK is not set in the flags and the value is
+                 *  too short or too long. */
+                LengthOutOfRange::throwIfOutside(
+                    $input,
+                    $minLength,
+                    $maxLength
+                );
 
                 return $input;
             }

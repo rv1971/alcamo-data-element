@@ -71,7 +71,7 @@ class LiteralFactory
     ): LiteralInterface {
         $class = $this->typeToLiteralClass_->lookup($datatype);
 
-        /** If $value is an integer and $datatype is (derivde from)
+        /** If $value is an integer and $datatype is (derived from)
          *  `xsd:boolean`, accept any nonzero value as `true`. This differs
          *  from the bahaviour of alcamo::rdf_literal::BooleanLiteral which
          *  only accepts the lexical space of the boolean type (0,1, false and
