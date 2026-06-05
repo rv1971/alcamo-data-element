@@ -8,7 +8,6 @@ use alcamo\exception\{
     LengthOutOfRange,
     SyntaxError
 };
-
 use PHPUnit\Framework\TestCase;
 
 class EncodingParamsTest extends TestCase

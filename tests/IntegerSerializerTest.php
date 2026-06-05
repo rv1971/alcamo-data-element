@@ -112,7 +112,7 @@ class IntegerSerializerTest extends TestCase
                 new BooleanLiteral(false),
                 '0',
                 false,
-                '0'
+                '"0"'
             ],
             [
                 self::XSD_NS . ' gDay',
@@ -122,7 +122,7 @@ class IntegerSerializerTest extends TestCase
                 new GDayLiteral(24),
                 "\x18",
                 (new GDayLiteral(24))->getValue(),
-                '24'
+                "'18'"
             ],
             [
                 self::XSD_NS . ' gMonth',
@@ -132,7 +132,7 @@ class IntegerSerializerTest extends TestCase
                 new GMonthLiteral(12),
                 "\xF0\xF0\xF1\xF2",
                 (new GMonthLiteral(12))->getValue(),
-                '12'
+                "'F1F2'"
             ],
             [
                 self::XSD_NS . ' gYear',
@@ -142,7 +142,7 @@ class IntegerSerializerTest extends TestCase
                 new GYearLiteral(-753),
                 "-0000753",
                 (new GYearLiteral(-753))->getValue(),
-                '-753'
+                '"-753"'
             ],
             [
                 self::XSD_NS . ' long',
@@ -152,7 +152,7 @@ class IntegerSerializerTest extends TestCase
                 new IntegerLiteral(-3, self::XSD_NS . '#short'),
                 "\xFF\xFF\xFF\xFD",
                 -3,
-                '-3'
+                "'FD'"
             ],
             [
                 self::XSD_NS . ' short',
@@ -162,7 +162,7 @@ class IntegerSerializerTest extends TestCase
                 new IntegerLiteral(-7, self::XSD_NS . '#byte'),
                 "\x60\xF0\xF7",
                 -7,
-                '-7'
+                "'60F7'"
             ]
         ];
     }
@@ -175,6 +175,6 @@ class IntegerSerializerTest extends TestCase
             'Syntax error in "42x"'
         );
 
-        (new IntegerSerializer())->dedump('42x');
+        (new IntegerSerializer())->dedump('"42x"');
     }
 }

@@ -2,9 +2,8 @@
 
 namespace alcamo\data_element;
 
-use alcamo\binary_data\BinaryString;
+use alcamo\binary_data\ImmutableBinaryString;
 use alcamo\dom\schema\component\SimpleTypeInterface;
-use alcamo\exception\SyntaxError;
 use alcamo\rdf_literal\LiteralInterface;
 
 /**
@@ -50,7 +49,8 @@ class IntegerSerializer extends AbstractSerializer
 
             case 'BIG-ENDIAN':
                 return $this->adjustOutputLength(
-                    BinaryString::newFromInt($value, $minLength)->getData()
+                    ImmutableBinaryString::newFromInt($value, $minLength)
+                        ->getData()
                 );
 
             case 'EBCDIC':
@@ -76,7 +76,7 @@ class IntegerSerializer extends AbstractSerializer
                 break;
 
             case 'BIG-ENDIAN':
-                $value = (new BinaryString($input))
+                $value = (new ImmutableBinaryString($input))
                     ->toInt($this->datatype_->isSigned());
                 break;
 
@@ -95,22 +95,18 @@ class IntegerSerializer extends AbstractSerializer
 
     public function dump(LiteralInterface $literal): string
     {
-        return $literal->toInt();
+        return (new Dumper())
+            ->dumpInt($literal->toInt(), $this->encodingParams_->getEncoding());
     }
 
     public function dedump(
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
-        if (!is_numeric($input) || (int)$input != $input) {
-            /** @throw alcamo::exception::SyntaxError on attempt to dedump an
-             *  input which is not an integer. */
-            throw (new SyntaxError())->setMessageContext(
-                [ 'inData' => $input ]
-            );
-        }
-
-        return $this->deWorkbench_
-            ->createLiteral($input, $datatype ?? $this->datatype_);
+        return $this->deWorkbench_->createLiteral(
+            (new Dumper())
+                ->dedumpInt($input, $this->encodingParams_->getEncoding()),
+            $datatype ?? $this->datatype_
+        );
     }
 }
