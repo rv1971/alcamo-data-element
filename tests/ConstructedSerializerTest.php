@@ -247,7 +247,7 @@ class ConstructedSerializerTest extends TestCase
     {
         $this->expectException(Eof::class);
         $this->expectExceptionMessage(
-            'Failed to read 6 unit(s) from object "616263" at offset 6 '
+            'Failed to read 3 unit(s) from object "abc" at offset 3 '
                 . 'for key 2'
         );
 

@@ -237,11 +237,11 @@ class ConstructedSerializer extends AbstractSerializer implements
 
                 switch ($serializer->encodingParams_->getBitsPerCharacter()) {
                     case 1:
-                        $length = ($length + 7) >> 3 << 3;
+                        $length = ($length + 7) >> 3;
                         break;
 
                     case 4:
-                        $length = ($length + 1) >> 1 << 1;
+                        $length = ($length + 1) >> 1;
                         break;
                 }
 
@@ -352,7 +352,7 @@ class ConstructedSerializer extends AbstractSerializer implements
 
                 switch ($serializer->encodingParams_->getBitsPerCharacter()) {
                     case 1:
-                        $length = ($length + 3) >> 2 << 2;
+                        $length = ($length + 3) >> 2;
                         break;
 
                     case 8:

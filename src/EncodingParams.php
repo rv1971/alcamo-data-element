@@ -257,9 +257,8 @@ class EncodingParams
          *  character is wrong. */
         if ($this->padType_ == STR_PAD_LEFT) {
             if (
-                strspn(substr($value, 0, $lengthDiff), $padChars)
-                    != $lengthDiff)
-            {
+                strspn(substr($value, 0, $lengthDiff), $padChars) != $lengthDiff
+            ) {
                 throw (new SyntaxError())->setMessageContext(
                     [
                         'inData' => $value,
@@ -272,8 +271,8 @@ class EncodingParams
             return substr($value, $lengthDiff);
         } else {
             if (
-                strspn(substr($value, -$lengthDiff), $padChars) != $lengthDiff)
-            {
+                strspn(substr($value, -$lengthDiff), $padChars) != $lengthDiff
+            ) {
                 throw (new SyntaxError())->setMessageContext(
                     [
                         'inData' => $value,
