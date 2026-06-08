@@ -29,7 +29,8 @@ class NonNegativeIntegerSerializerTest extends TestCase
         $literal,
         $expectedOutput,
         $expectedHexOutput,
-        $expectedDeserialization
+        $expectedDeserialization,
+        $expectedDump
     ): void {
         $serializer = NonNegativeIntegerSerializer::newFromProps(
             (object)[
@@ -91,6 +92,12 @@ class NonNegativeIntegerSerializerTest extends TestCase
         }
 
         $this->assertEquals($datatype->getUri(), $literal3->getDatatypeUri());
+
+        $dump = $serializer->dump($literal);
+
+        $this->assertEquals($expectedDump, $dump);
+
+        $this->assertTrue($literal->equals($serializer->dedump($dump)));
     }
 
     public function serializeProvider(): array
@@ -104,7 +111,8 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 new BooleanLiteral(false),
                 '0',
                 '30',
-                false
+                false,
+                '"0"'
             ],
             [
                 self::XSD_NS . ' boolean',
@@ -114,7 +122,8 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 new BooleanLiteral(true),
                 "\x01",
                 '1',
-                true
+                true,
+                '1'
             ],
             [
                 self::XSD_NS . ' gDay',
@@ -124,7 +133,8 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 new GDayLiteral(24),
                 "\x18",
                 '18',
-                (new GDayLiteral(24))->getValue()
+                (new GDayLiteral(24))->getValue(),
+                "'18'"
             ],
             [
                 self::XSD_NS . ' gMonth',
@@ -134,7 +144,8 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 new GMonthLiteral(12),
                 "\xF1\xF2",
                 'F1F2',
-                (new GMonthLiteral(12))->getValue()
+                (new GMonthLiteral(12))->getValue(),
+                "'F1F2'"
             ],
             [
                 PositiveGYearLiteral::DEFAULT_DATATYPE_XNAME,
@@ -144,7 +155,8 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 new PositiveGYearLiteral(1975),
                 "00001975",
                 "3030303031393735",
-                (new PositiveGYearLiteral(1975))->getValue()
+                (new PositiveGYearLiteral(1975))->getValue(),
+                '"1975"'
             ],
             [
                 self::XSD_NS . ' unsignedLong',
@@ -157,7 +169,8 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 ),
                 "\x00\x00\x42",
                 '00042',
-                42
+                42,
+                "42"
             ],
             [
                 self::XSD_NS . ' nonNegativeInteger',
@@ -167,7 +180,8 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 new NonNegativeIntegerLiteral(1027),
                 "\x00\x00\x00\x04\x03",
                 '0000000403',
-                1027
+                1027,
+                "'0403'"
             ],
             [
                 self::XSD_NS . ' unsignedShort',
@@ -180,7 +194,8 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 ),
                 "\xF0\xF7",
                 'F0F7',
-                7
+                7,
+                "'F7'"
             ],
             [
                 self::XSD_NS . ' nonNegativeInteger',
@@ -190,8 +205,9 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 new NonNegativeIntegerLiteral(123),
                 "23",
                 '3233',
-                23
-                ],
+                23,
+                '"123"'
+            ],
             [
                 self::XSD_NS . ' unsignedByte',
                 null,
@@ -203,7 +219,8 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 ),
                 "\x55",
                 '55',
-                55
+                55,
+                '255'
             ],
             [
                 self::XSD_NS . ' unsignedLong',
@@ -216,7 +233,8 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 ),
                 "\x02\x34",
                 '234',
-                234
+                234,
+                '1234'
             ],
             [
                 null,
@@ -226,7 +244,8 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 new NonNegativeIntegerLiteral(0x12345),
                 "\x23\x45",
                 '2345',
-                0x2345
+                0x2345,
+                "'012345'"
             ],
             [
                 null,
@@ -236,7 +255,8 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 new NonNegativeIntegerLiteral(9876),
                 "\xF8\xF7\xF6",
                 'F8F7F6',
-                876
+                876,
+                "'F9F8F7F6'"
             ]
         ];
     }

@@ -57,8 +57,8 @@ class IntegerSerializer extends AbstractSerializer
                 return $this->adjustOutputLength(
                     strtr(
                         sprintf("%0{$minLength}d", $value),
-                        '-0123456789',
-                        "\x60\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9"
+                        EncodingParams::ASCII_CHARS,
+                        EncodingParams::EBCDIC_CHARS
                     )
                 );
         }
@@ -83,8 +83,8 @@ class IntegerSerializer extends AbstractSerializer
             case 'EBCDIC':
                 $value = (int)strtr(
                     $input,
-                    "\x60\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9",
-                    '-0123456789'
+                    EncodingParams::EBCDIC_CHARS,
+                    EncodingParams::ASCII_CHARS
                 );
                 break;
         }
@@ -104,8 +104,11 @@ class IntegerSerializer extends AbstractSerializer
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
         return $this->deWorkbench_->createLiteral(
-            (new Dumper())
-                ->dedumpInt($input, $this->encodingParams_->getEncoding()),
+            (new Dumper())->dedumpInt(
+                $input,
+                $this->encodingParams_->getEncoding(),
+                ($datatype ?? $this->datatype_)->isSigned()
+            ),
             $datatype ?? $this->datatype_
         );
     }

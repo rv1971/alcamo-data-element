@@ -76,10 +76,10 @@ class StringSerializer extends AbstractSerializer
         );
     }
 
-    /** @copydoc alcamo::data_element::SerializerInterface::dump() */
     public function dump(LiteralInterface $literal): string
     {
-        return (new Dumper())->dumpString($literal);
+        return (new Dumper())
+            ->dumpString($literal, $this->encodingParams_->getEncoding());
     }
 
     public function dedump(
@@ -87,7 +87,8 @@ class StringSerializer extends AbstractSerializer
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
         return $this->deWorkbench_->createLiteral(
-            (new Dumper())->dedumpString($input),
+            (new Dumper())
+                ->dedumpString($input, $this->encodingParams_->getEncoding()),
             $datatype ?? $this->datatype_
         );
     }

@@ -399,13 +399,11 @@ class ConstructedSerializer extends AbstractSerializer implements
 
     public function dump(LiteralInterface $literal): string
     {
-        $separator = $this->separator_ ?? ' ';
-
         $this->rewind();
 
         foreach ($literal as $item) {
             if (isset($result)) {
-                $result .= $separator
+                $result .= ' '
                     . (isset($item) ? $this->current()->dump($item) : '');
             } else {
                 $result = isset($item) ? $this->current()->dump($item) : '';
@@ -418,18 +416,13 @@ class ConstructedSerializer extends AbstractSerializer implements
             }
         }
 
-        /** Surround the result by brackets. If the separator is a space,
-         *  insert spaces between brackets and content. */
-        return $separator == ' ' ? "[ $result ]" : "[$result]";
+        return "[ $result ]";
     }
 
     public function dedump(
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
-        $separatorLen = strlen($this->separator_);
-        $surroundLen = strlen($separatorLen) + 1;
-
         if ($input[0] != '[' || $input[-1] != ']') {
             /** @throw alcamo::exception::SyntaxError on attempt to
              *  dedump an input which is not surrounded by brackets. */
@@ -444,11 +437,8 @@ class ConstructedSerializer extends AbstractSerializer implements
         /* Data without brackets. */
         $stream = new StringInputStream(substr($input, 1, strlen($input) - 2));
 
-        /* If separator is whitespace, skip optional whitespace after opening
-         * bracket. */
-        if (!isset($this->separator_)) {
-            $stream->extractWs();
-        }
+        /* Skip optional whitespace after opening bracket. */
+        $stream->extractWs();
 
         $result = [];
 
@@ -457,7 +447,7 @@ class ConstructedSerializer extends AbstractSerializer implements
              * the item's serializers. The dedump($item) call will check
              * whether the item syntax matches the expectation of the
              * serializer. */
-            $item = $stream->extractToken($this->separator_, true);
+            $item = $stream->extractToken(null, true);
 
             if (!isset($item)) {
                 break;

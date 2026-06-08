@@ -99,7 +99,7 @@ class DateTimeSerializerTest extends TestCase
                 '2020-02-25',
                 '323032302D30322D3235',
                 new DateLiteral('2020-02-25'),
-                '2020-02-25'
+                '"2020-02-25"'
             ],
             [
                 self::XSD_NS . ' dateTime',
@@ -110,7 +110,7 @@ class DateTimeSerializerTest extends TestCase
                 "\x20\x26\x02\x26\x17\x22\x00",
                 '20260226172200',
                 new DateTimeLiteral('2026-02-26T17:22'),
-                '2026-02-26T17:22:00'
+                '20260226172200'
             ],
             [
                 self::XSD_NS . ' gDay',
@@ -121,7 +121,7 @@ class DateTimeSerializerTest extends TestCase
                 "\xF2\xF8",
                 'F2F8',
                 new GDayLiteral(28),
-                '28'
+                "'F2F8'"
             ],
             [
                 self::XSD_NS . ' gMonth',
@@ -132,7 +132,7 @@ class DateTimeSerializerTest extends TestCase
                 '07',
                 '3037',
                 new GMonthLiteral(7),
-                '07'
+                '"07"'
             ],
             [
                 self::XSD_NS . ' gMonthDay',
@@ -143,7 +143,7 @@ class DateTimeSerializerTest extends TestCase
                 "\x00\x31\x00\x05",
                 '00310005',
                 new GMonthDayLiteral('05-31'),
-                '05-31'
+                '00310005'
             ],
             [
                 self::XSD_NS . ' gYearMonth',
@@ -154,7 +154,7 @@ class DateTimeSerializerTest extends TestCase
                 "\xF0\xF6\x60\xF0\xF8",
                 'F0F660F0F8',
                 new GYearMonthLiteral('2006-08'),
-                '2006-08'
+                "'F0F660F0F8'"
             ],
             [
                 PositiveGYearLiteral::DEFAULT_DATATYPE_XNAME,
@@ -165,7 +165,7 @@ class DateTimeSerializerTest extends TestCase
                 "\x08",
                 '08',
                 new PositiveGYearLiteral('2008'),
-                '2008'
+                '08'
             ],
             [
                 self::XSD_NS . ' time',
@@ -176,7 +176,7 @@ class DateTimeSerializerTest extends TestCase
                 "\x23\x09",
                 '2309',
                 new TimeLiteral('09:23'),
-                '09:23:00'
+                '2309'
             ]
         ];
     }

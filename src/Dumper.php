@@ -7,7 +7,7 @@ use alcamo\exception\{SyntaxError, Unsupported};
 
 class Dumper
 {
-    public function dumpString(string $value): string
+    public function dumpString(string $value, ?string $encoding = null): string
     {
         if (strpos($value, '"') !== false) {
             /** @throw alcamo::exception::Unsupported on attempt to dump a
@@ -18,6 +18,34 @@ class Dumper
                             => "dumping a literal containing a double quote",
                         'inData' => (string)$value
                     ]
+                );
+        }
+
+        switch ($encoding) {
+            case 'BCD':
+                return $value;
+
+            case 'COMPRESSED-BCD':
+            case 'FOUR-BIT':
+                if (strlen($value) & 1) {
+                    $value .= '?';
+                }
+
+                return $this->dumpBinary(
+                    ImmutableBinaryString::newFromHex(
+                        strtr($value, ':;<=>?', 'ABCDEF')
+                    )
+                );
+
+            case 'EBCDIC':
+                return $this->dumpBinary(
+                    new ImmutableBinaryString(
+                        strtr(
+                            $value,
+                            EncodingParams::ASCII_CHARS,
+                            EncodingParams::EBCDIC_CHARS
+                        )
+                    )
                 );
         }
 
@@ -43,8 +71,31 @@ class Dumper
         }
     }
 
-    public function dedumpString(string $input): string
-    {
+    public function dedumpString(
+        string $input,
+        ?string $encoding = null
+    ): string {
+        switch ($encoding) {
+            case 'BCD':
+                return $input;
+
+            case 'COMPRESSED-BCD':
+                return rtrim(
+                    strtr($this->dedumpBinary($input), 'ABCDEF', ':;<=>?'),
+                    '?'
+                );
+
+            case 'EBCDIC':
+                return strtr(
+                    $this->dedumpBinary($input)->getData(),
+                    EncodingParams::EBCDIC_CHARS,
+                    EncodingParams::ASCII_CHARS
+                );
+
+            case 'FOUR-BIT':
+                return strtr($this->dedumpBinary($input), 'ABCDEF', ':;<=>?');
+        }
+
         if (preg_match('/^(\d+)\s*\*\s*"([^"]+)"$/', $input, $matches)) {
             return str_repeat($matches[2], $matches[1]);
         }
@@ -60,7 +111,6 @@ class Dumper
 
         return trim($input, '"');
     }
-
 
     public function dumpBinary(AbstractBinaryString $value): string
     {
@@ -122,37 +172,28 @@ class Dumper
                     ->dumpBinary(ImmutableBinaryString::newFromInt($value));
 
             case 'EBCDIC':
-                return $this->dumpBinary(
-                    new ImmutableBinaryString(
-                        strtr(
-                            $value,
-                            '-0123456789',
-                            "\x60\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9"
-                        )
-                    )
-                );
+                return $this->dumpString($value, $encoding);
 
             default:
                 return $value;
         }
     }
 
-    public function dedumpInt(string $input, string $encoding): int
-    {
+    public function dedumpInt(
+        string $input,
+        string $encoding,
+        ?bool $isSigned = null
+    ): int {
         switch ($encoding) {
             case 'ASCII':
                 $value = $this->dedumpString($input);
                 break;
 
             case 'BIG-ENDIAN':
-                return $this->dedumpBinary($input)->toInt();
+                return $this->dedumpBinary($input)->toInt($isSigned);
 
             case 'EBCDIC':
-                $value = strtr(
-                    $this->dedumpBinary($input),
-                    "\x60\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9",
-                    '-0123456789'
-                );
+                $value = $this->dedumpString($input, $encoding);
                 break;
 
             default:

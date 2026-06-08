@@ -110,7 +110,7 @@ class ConstructedSerializerTest extends TestCase
                 ],
                 '7,foo ,42',
                 '7|foo|42',
-                '[7,"foo",42]'
+                '[ "7" "foo" "42" ]'
             ],
             [
                 [ $stringS, $intS, $stringS4, $intS ],
@@ -124,7 +124,7 @@ class ConstructedSerializerTest extends TestCase
                 ],
                 'bar/0/foo ',
                 'bar|0|foo',
-                '["bar"/0/"foo"]'
+                '[ "bar" "0" "foo" ]'
                 ],
             [
                 [ $stringS4, $stringS4 ],
@@ -152,7 +152,7 @@ class ConstructedSerializerTest extends TestCase
                 ],
                 "\x12\xFF\xAB\xCD\x00",
                 '12|ABCD00',
-                "[12FF'ABCD']"
+                "[ 12 'ABCD' ]"
             ],
             [
                 [ $bcdS, $bcdS3, $binS, $binS ],
@@ -180,7 +180,7 @@ class ConstructedSerializerTest extends TestCase
                 ],
                 "\x3E\x4E\xAB\x00",
                 '3|4|AB00',
-                "[3e4e'AB']"
+                "[ 3 4 'AB' ]"
             ]
         ];
     }
@@ -295,17 +295,17 @@ class ConstructedSerializerTest extends TestCase
 
         $this->assertTrue(
             (new ConstructedStringLiteral([ new IntegerLiteral(42) ]))
-                ->equals($serializer->dedump('[ 42 43 ]'))
+                ->equals($serializer->dedump('[ "42" "43" ]'))
         );
 
         $this->expectException(SyntaxError::class);
         $this->expectExceptionMessage(
-            'Syntax error in "[ 42 43 ]" at offset 5 ("43 ]"); '
+            'Syntax error in "[ "42" "43" ]" at offset 7 (""43" ]"); '
                 . 'spurious trailing data'
         );
 
         (new ConstructedSerializer([ new IntegerSerializer() ]))
-            ->dedump('[ 42 43 ]');
+            ->dedump('[ "42" "43" ]');
     }
 
     public function testDedumpException3(): void

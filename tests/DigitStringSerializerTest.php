@@ -20,7 +20,8 @@ class DigitStringSerializerTest extends TestCase
         $expectedOutput,
         $expectedHexOutput,
         $expectedDeserialization,
-        $expectedHexDeserialization
+        $expectedHexDeserialization,
+        $expectedDump
     ): void {
         $serializer = DigitStringSerializer::newFromProps(
             (object)[
@@ -55,6 +56,12 @@ class DigitStringSerializerTest extends TestCase
         $this->assertEquals($expectedHexDeserialization, $literal3->getValue());
 
         $this->assertEquals($datatype->getUri(), $literal3->getDatatypeUri());
+
+        $dump = $serializer->dump($literal);
+
+        $this->assertEquals($expectedDump, $dump);
+
+        $this->assertTrue($literal->equals($serializer->dedump($dump)));
     }
 
     public function serializeProvider(): array
@@ -68,7 +75,8 @@ class DigitStringSerializerTest extends TestCase
                 '000123456789',
                 '303030313233343536373839',
                 '000123456789',
-                '000123456789'
+                '000123456789',
+                '"000123456789"'
             ],
             [
                 5,
@@ -78,7 +86,8 @@ class DigitStringSerializerTest extends TestCase
                 '42   ',
                 '3432202020',
                 '42',
-                '42'
+                '42',
+                '"42"'
             ],
             [
                 null,
@@ -88,7 +97,8 @@ class DigitStringSerializerTest extends TestCase
                 "\x42\x1F",
                 '421',
                 '421',
-                '421'
+                '421',
+                "'421F'"
             ],
             [
                 7,
@@ -98,7 +108,8 @@ class DigitStringSerializerTest extends TestCase
                 "\x00\x20\x26\xFF",
                 '002026F',
                 '002026',
-                '002026'
+                '002026',
+                "'002026'"
             ],
             [
                 8,
@@ -108,7 +119,8 @@ class DigitStringSerializerTest extends TestCase
                 "\x00\x20\x26\xFF",
                 '002026FF',
                 '002026',
-                '002026'
+                '002026',
+                "'002026'"
             ],
             [
                 2,
@@ -118,7 +130,8 @@ class DigitStringSerializerTest extends TestCase
                 "\x12\x3F",
                 '123',
                 '123',
-                '123'
+                '123',
+                "'1234'"
             ],
             [
                 3,
@@ -128,7 +141,8 @@ class DigitStringSerializerTest extends TestCase
                 "\xF1\xF7\x40",
                 'F1F740',
                 '17',
-                '17'
+                '17',
+                "'F1F7'"
             ]
         ];
     }

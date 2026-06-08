@@ -28,7 +28,7 @@ class DateTimeSerializer extends AbstractSerializer
 
     public const ENCODINGS = [
         'ASCII'  => [ 8, ' ',    STR_PAD_RIGHT ],
-        'BCD'    => [ 4, 'F',    STR_PAD_RIGHT ],
+        'BCD'    => [ 4, '0',    STR_PAD_LEFT ],
         'EBCDIC' => [ 8, "\x40", STR_PAD_RIGHT ]
     ];
 
@@ -81,7 +81,6 @@ class DateTimeSerializer extends AbstractSerializer
     }
 
     private $posixFormat_;     ///< PosixFormat
-    private $dumpPosixFormat_; ///< PosixFormat
     private $asUtc_;           ///< boolean
 
     /**
@@ -146,10 +145,6 @@ class DateTimeSerializer extends AbstractSerializer
             );
         }
 
-        $this->dumpPosixFormat_ = new PosixFormat(
-            static::DEFAULT_POSIX_FORMATS[$supportedDatatypeXName]['*']
-        );
-
         $this->asUtc_ = (bool)$asUtc;
 
         /* The length of input is validated if the chosen format has a fixed
@@ -190,8 +185,8 @@ class DateTimeSerializer extends AbstractSerializer
                 return strtr(
                     $this->posixFormat_
                         ->applyTo($this->getDateTime($literal)),
-                    '-0123456789:T',
-                    "\x60\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9\x7A\xE3"
+                    EncodingParams::ASCII_CHARS,
+                    EncodingParams::EBCDIC_CHARS
                 );
         }
     }
@@ -229,8 +224,8 @@ class DateTimeSerializer extends AbstractSerializer
             case 'EBCDIC':
                 $value = strtr(
                     $this->preprocessInput($input),
-                    "\x60\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9\x7A\xE3",
-                    '-0123456789:T'
+                    EncodingParams::EBCDIC_CHARS,
+                    EncodingParams::ASCII_CHARS
                 );
                 break;
         }
@@ -277,22 +272,29 @@ class DateTimeSerializer extends AbstractSerializer
 
     public function dump(LiteralInterface $literal): string
     {
-        return $this->dumpPosixFormat_->applyTo($this->getDateTime($literal));
+        return (new Dumper())
+            ->dumpString(
+                $this->posixFormat_->applyTo($this->getDateTime($literal)),
+                $this->encodingParams_->getEncoding()
+            );
     }
 
     public function dedump(
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
+        $value = (new Dumper())
+            ->dedumpString($input, $this->encodingParams_->getEncoding());
+
         return $this->deWorkbench_->createLiteral(
             $this->asUtc_
                 ? \DateTimeImmutable::createFromFormat(
-                    $this->dumpPosixFormat_->getPhpFormat() . 'O',
-                    "$input+0000"
+                    $this->posixFormat_->getPhpFormat() . 'O',
+                    "$value+0000"
                 )
                 : \DateTimeImmutable::createFromFormat(
-                    $this->dumpPosixFormat_->getPhpFormat(),
-                    $input
+                    $this->posixFormat_->getPhpFormat(),
+                    $value
                 ),
             $datatype ?? $this->datatype_
         );

@@ -38,8 +38,8 @@ class DigitStringSerializer extends FourBitCharStringSerializer
                 return $this->adjustOutputLength(
                     strtr(
                         $literal,
-                        '0123456789',
-                        "\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9"
+                        EncodingParams::ASCII_CHARS,
+                        EncodingParams::EBCDIC_CHARS
                     )
                 );
         }
@@ -76,8 +76,8 @@ class DigitStringSerializer extends FourBitCharStringSerializer
                 $value = rtrim(
                     strtr(
                         $this->preprocessInput($input),
-                        "\x40\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9",
-                        ' 0123456789'
+                        EncodingParams::EBCDIC_CHARS,
+                        EncodingParams::ASCII_CHARS
                     )
                 );
                 break;

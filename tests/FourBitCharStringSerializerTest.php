@@ -21,7 +21,8 @@ class FourBitCharStringSerializerTest extends TestCase
         $expectedOutput,
         $expectedHexOutput,
         $expectedDeserialization,
-        $expectedHexDeserialization
+        $expectedHexDeserialization,
+        $expectedDump
     ): void {
         $serializer = FourBitCharStringSerializer::newFromProps(
             (object)[
@@ -56,6 +57,14 @@ class FourBitCharStringSerializerTest extends TestCase
         $this->assertEquals($expectedHexDeserialization, $literal3->getValue());
 
         $this->assertEquals($datatype->getUri(), $literal3->getDatatypeUri());
+
+        $dump = $serializer->dump($literal);
+
+        $this->assertEquals($expectedDump, $dump);
+
+        if ($dump != "'1D2F'") {
+            $this->assertTrue($literal->equals($serializer->dedump($dump)));
+        }
     }
 
     public function serializeProvider(): array
@@ -69,7 +78,8 @@ class FourBitCharStringSerializerTest extends TestCase
                 ';1234=456<7:8>9?',
                 '3B313233343D3435363C373A383E393F',
                 ';1234=456<7:8>9?',
-                ';1234=456<7:8>9?'
+                ';1234=456<7:8>9?',
+                '";1234=456<7:8>9?"'
             ],
             [
                 5,
@@ -79,7 +89,8 @@ class FourBitCharStringSerializerTest extends TestCase
                 '42<< ',
                 '34323C3C20',
                 '42<<',
-                '42<<'
+                '42<<',
+                '"42<<"'
             ],
             [
                 null,
@@ -89,7 +100,8 @@ class FourBitCharStringSerializerTest extends TestCase
                 "\x1D\x2F",
                 '1D2',
                 '1=2?',
-                '1=2'
+                '1=2',
+                "'1D2F'"
             ],
             [
                 5,
@@ -99,7 +111,8 @@ class FourBitCharStringSerializerTest extends TestCase
                 "\x7D\xD2\xFF",
                 '7DD2F',
                 '7==2??',
-                '7==2?'
+                '7==2?',
+                "'7DD2'"
             ],
             [
                 6,
@@ -109,7 +122,8 @@ class FourBitCharStringSerializerTest extends TestCase
                 "\x7D\xD2\xFF",
                 '7DD2FF',
                 '7==2??',
-                '7==2??'
+                '7==2??',
+                "'7DD2'"
             ],
             /* The following changes the last character to a filler because
              * first is truncates to 3 digits and then add a filler nibble. */
@@ -121,7 +135,8 @@ class FourBitCharStringSerializerTest extends TestCase
                 "\xA2\xCF",
                 'A2C',
                 ':2<',
-                ':2<'
+                ':2<',
+                "'A2CE'"
             ]
         ];
     }
