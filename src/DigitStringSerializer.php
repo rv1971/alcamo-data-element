@@ -23,7 +23,7 @@ class DigitStringSerializer extends FourBitCharStringSerializer
 
     public function serialize(
         LiteralInterface $literal,
-        int $length = null
+        ?int $length = null
     ): string {
         switch ($this->encodingParams_->getEncoding()) {
             case 'ASCII':
@@ -51,7 +51,7 @@ class DigitStringSerializer extends FourBitCharStringSerializer
 
     public function serializeToHex(
         LiteralInterface $literal,
-        int $length = null
+        ?int $length = null
     ): string {
         switch ($this->encodingParams_->getEncoding()) {
             case 'COMPRESSED-BCD':

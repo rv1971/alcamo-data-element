@@ -110,7 +110,7 @@ class ConstructedSerializer extends AbstractSerializer implements
 
     public function serialize(
         LiteralInterface $literal,
-        int $length = null
+        ?int $length = null
     ): string {
         if ($this->encodingParams_->getEncoding() == 'BINARY') {
             return $this->hexToBin($this->serializeToHex($literal, $length));
@@ -143,7 +143,7 @@ class ConstructedSerializer extends AbstractSerializer implements
 
     public function serializeToHex(
         LiteralInterface $literal,
-        int $length = null
+        ?int $length = null
     ): string {
         if ($this->encodingParams_->getEncoding() != 'BINARY') {
             return strtoupper(bin2hex($this->serialize($literal, $length)));

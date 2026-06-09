@@ -25,7 +25,7 @@ class BitStringSerializer extends DigitStringSerializer
 
     public function serialize(
         LiteralInterface $literal,
-        int $length = null
+        ?int $length = null
     ): string {
         switch ($this->encodingParams_->getEncoding()) {
             case 'BINARY':
@@ -56,7 +56,7 @@ class BitStringSerializer extends DigitStringSerializer
 
     public function serializeToHex(
         LiteralInterface $literal,
-        int $length = null
+        ?int $length = null
     ): string {
         return strtoupper(bin2hex($this->serialize($literal, $length)));
     }

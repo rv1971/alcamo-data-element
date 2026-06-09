@@ -169,7 +169,7 @@ class DateTimeSerializer extends AbstractSerializer
 
     public function serialize(
         LiteralInterface $literal,
-        int $length = null
+        ?int $length = null
     ): string {
         switch ($this->encodingParams_->getEncoding()) {
             case 'ASCII':
@@ -202,7 +202,7 @@ class DateTimeSerializer extends AbstractSerializer
 
     public function serializeToHex(
         LiteralInterface $literal,
-        int $length = null
+        ?int $length = null
     ): string {
         switch ($this->encodingParams_->getEncoding()) {
             case 'BCD':

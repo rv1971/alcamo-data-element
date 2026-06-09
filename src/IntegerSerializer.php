@@ -29,7 +29,7 @@ class IntegerSerializer extends AbstractSerializer
 
     public function serialize(
         LiteralInterface $literal,
-        int $length = null
+        ?int $length = null
     ): string {
         $this->validateLiteralClass($literal);
 

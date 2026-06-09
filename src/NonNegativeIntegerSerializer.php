@@ -30,7 +30,7 @@ class NonNegativeIntegerSerializer extends IntegerSerializer
 
     public function serialize(
         LiteralInterface $literal,
-        int $length = null
+        ?int $length = null
     ): string {
         switch ($this->encodingParams_->getEncoding()) {
             case 'BCD':
@@ -44,7 +44,7 @@ class NonNegativeIntegerSerializer extends IntegerSerializer
 
     public function serializeToHex(
         LiteralInterface $literal,
-        int $length = null
+        ?int $length = null
     ): string {
         switch ($this->encodingParams_->getEncoding()) {
             case 'BCD':

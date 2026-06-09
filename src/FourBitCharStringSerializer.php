@@ -23,7 +23,7 @@ class FourBitCharStringSerializer extends StringSerializer
 
     public function serialize(
         LiteralInterface $literal,
-        int $length = null
+        ?int $length = null
     ): string {
         switch ($this->encodingParams_->getEncoding()) {
             case 'ASCII':
@@ -39,7 +39,7 @@ class FourBitCharStringSerializer extends StringSerializer
 
     public function serializeToHex(
         LiteralInterface $literal,
-        int $length = null
+        ?int $length = null
     ): string {
         switch ($this->encodingParams_->getEncoding()) {
             case 'ASCII':
