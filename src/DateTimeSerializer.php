@@ -167,32 +167,43 @@ class DateTimeSerializer extends AbstractSerializer
         return $this->asUtc_;
     }
 
-    public function serialize(LiteralInterface $literal): string
-    {
+    public function serialize(
+        LiteralInterface $literal,
+        int $length = null
+    ): string {
         switch ($this->encodingParams_->getEncoding()) {
             case 'ASCII':
                 $this->validateLiteralClass($literal);
 
-                return $this->posixFormat_
-                    ->applyTo($this->getDateTime($literal));
+                return $this->adjustOutputLength(
+                    $this->posixFormat_
+                        ->applyTo($this->getDateTime($literal)),
+                    $length
+                );
 
             case 'BCD':
-                return $this->hexToBin($this->serializeToHex($literal));
+                return $this
+                    ->hexToBin($this->serializeToHex($literal, $length));
 
             case 'EBCDIC':
                 $this->validateLiteralClass($literal);
 
-                return strtr(
-                    $this->posixFormat_
-                        ->applyTo($this->getDateTime($literal)),
-                    EncodingParams::ASCII_CHARS,
-                    EncodingParams::EBCDIC_CHARS
+                return $this->adjustOutputLength(
+                    strtr(
+                        $this->posixFormat_
+                            ->applyTo($this->getDateTime($literal)),
+                        EncodingParams::ASCII_CHARS,
+                        EncodingParams::EBCDIC_CHARS
+                    ),
+                    $length
                 );
         }
     }
 
-    public function serializeToHex(LiteralInterface $literal): string
-    {
+    public function serializeToHex(
+        LiteralInterface $literal,
+        int $length = null
+    ): string {
         switch ($this->encodingParams_->getEncoding()) {
             case 'BCD':
                 $this->validateLiteralClass($literal);
@@ -201,11 +212,14 @@ class DateTimeSerializer extends AbstractSerializer
                  *  and the date is negative. */
                 OutOfRange::throwIfNegative($literal->format('Y'));
 
-                return $this->posixFormat_
-                    ->applyTo($this->getDateTime($literal));
+                return $this->adjustOutputLength(
+                    $this->posixFormat_
+                        ->applyTo($this->getDateTime($literal)),
+                    $length
+                );
 
             default:
-                return strtoupper(bin2hex($this->serialize($literal)));
+                return strtoupper(bin2hex($this->serialize($literal, $length)));
         }
     }
 
@@ -213,6 +227,13 @@ class DateTimeSerializer extends AbstractSerializer
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
+        /* Even if SKIP_LENGTH_CHECK is active, unpad() may be necessary
+         * because otherwise the input may not comply with the format. **/
+        if ($this->flags_ & self::SKIP_LENGTH_CHECK) {
+            $input = $this->encodingParams_
+                ->unpad($input, $this->lengthRange_->getMax());
+        }
+
         switch ($this->encodingParams_->getEncoding()) {
             case 'ASCII':
                 $value = $this->preprocessInput($input);
@@ -250,6 +271,14 @@ class DateTimeSerializer extends AbstractSerializer
     ): LiteralInterface {
         switch ($this->encodingParams_->getEncoding()) {
             case 'BCD':
+                /* Even if SKIP_LENGTH_CHECK is active, unpad() may be
+                 * necessary because otherwise the input may not comply with
+                 * the format. **/
+                if ($this->flags_ & self::SKIP_LENGTH_CHECK) {
+                    $input = $this->encodingParams_
+                        ->unpad($input, $this->lengthRange_->getMax());
+                }
+
                 $input = $this->preprocessInput($input);
 
                 return $this->deWorkbench_->createLiteral(

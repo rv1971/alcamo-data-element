@@ -20,12 +20,15 @@ class BinarySerializer extends AbstractSerializer
 
     public const ENCODINGS = [ 'BINARY' => [ 8, "\x00", STR_PAD_RIGHT ] ];
 
-    public function serialize(LiteralInterface $literal): string
-    {
+    public function serialize(
+        LiteralInterface $literal,
+        ?int $length = null
+    ): string {
         $this->validateLiteralClass($literal);
 
         /* getValue() returns ImmutableBinaryString. */
-        return $this->adjustOutputLength($literal->getValue()->getData());
+        return $this
+            ->adjustOutputLength($literal->getValue()->getData(), $length);
     }
 
     public function deserialize(

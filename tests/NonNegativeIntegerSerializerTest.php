@@ -25,6 +25,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
         $datatypeXName,
         $minLength,
         $maxLength,
+        $length,
         $encoding,
         $literal,
         $expectedOutput,
@@ -47,11 +48,11 @@ class NonNegativeIntegerSerializerTest extends TestCase
             $this->assertSame($datatypeXName, (string)$datatype->getXName());
         }
 
-        $output = $serializer->serialize($literal);
+        $output = $serializer->serialize($literal, $length);
 
         $this->assertSame($expectedOutput, $output);
 
-        $hexOutput = $serializer->serializeToHex($literal);
+        $hexOutput = $serializer->serializeToHex($literal, $length);
 
         $this->assertSame($expectedHexOutput, $hexOutput);
 
@@ -108,6 +109,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 null,
                 null,
                 null,
+                null,
                 new BooleanLiteral(false),
                 '0',
                 '30',
@@ -116,6 +118,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
             ],
             [
                 self::XSD_NS . ' boolean',
+                null,
                 null,
                 null,
                 'BCD',
@@ -129,6 +132,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 self::XSD_NS . ' gDay',
                 null,
                 null,
+                null,
                 'BIG-ENDIAN',
                 new GDayLiteral(24),
                 "\x18",
@@ -138,6 +142,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
             ],
             [
                 self::XSD_NS . ' gMonth',
+                null,
                 null,
                 null,
                 'EBCDIC',
@@ -152,6 +157,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 8,
                 null,
                 null,
+                null,
                 new PositiveGYearLiteral(1975),
                 "00001975",
                 "3030303031393735",
@@ -161,6 +167,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
             [
                 self::XSD_NS . ' unsignedLong',
                 5,
+                null,
                 null,
                 'BCD',
                 new NonNegativeIntegerLiteral(
@@ -176,6 +183,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 self::XSD_NS . ' nonNegativeInteger',
                 5,
                 null,
+                null,
                 'BIG-ENDIAN',
                 new NonNegativeIntegerLiteral(1027),
                 "\x00\x00\x00\x04\x03",
@@ -186,6 +194,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
             [
                 self::XSD_NS . ' unsignedShort',
                 2,
+                null,
                 null,
                 'EBCDIC',
                 new NonNegativeIntegerLiteral(
@@ -201,6 +210,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 self::XSD_NS . ' nonNegativeInteger',
                 null,
                 2,
+                null,
                 'ASCII',
                 new NonNegativeIntegerLiteral(123),
                 "23",
@@ -212,6 +222,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 self::XSD_NS . ' unsignedByte',
                 null,
                 2,
+                null,
                 'BCD',
                 new NonNegativeIntegerLiteral(
                     255,
@@ -226,6 +237,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 self::XSD_NS . ' unsignedLong',
                 null,
                 3,
+                null,
                 'BCD',
                 new NonNegativeIntegerLiteral(
                     1234,
@@ -239,6 +251,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
             [
                 null,
                 null,
+                null,
                 2,
                 'BIG-ENDIAN',
                 new NonNegativeIntegerLiteral(0x12345),
@@ -248,6 +261,7 @@ class NonNegativeIntegerSerializerTest extends TestCase
                 "'012345'"
             ],
             [
+                null,
                 null,
                 null,
                 3,

@@ -108,10 +108,12 @@ class ConstructedSerializer extends AbstractSerializer implements
         return $this->separator_;
     }
 
-    public function serialize(LiteralInterface $literal): string
-    {
+    public function serialize(
+        LiteralInterface $literal,
+        int $length = null
+    ): string {
         if ($this->encodingParams_->getEncoding() == 'BINARY') {
-            return $this->hexToBin($this->serializeToHex($literal));
+            return $this->hexToBin($this->serializeToHex($literal, $length));
         }
 
         $this->validateLiteralClass($literal);
@@ -136,13 +138,15 @@ class ConstructedSerializer extends AbstractSerializer implements
             }
         }
 
-        return $this->adjustOutputLength($result);
+        return $this->adjustOutputLength($result, $length);
     }
 
-    public function serializeToHex(LiteralInterface $literal): string
-    {
+    public function serializeToHex(
+        LiteralInterface $literal,
+        int $length = null
+    ): string {
         if ($this->encodingParams_->getEncoding() != 'BINARY') {
-            return strtoupper(bin2hex($this->serialize($literal)));
+            return strtoupper(bin2hex($this->serialize($literal, $length)));
         }
 
         $this->validateLiteralClass($literal);
@@ -167,7 +171,7 @@ class ConstructedSerializer extends AbstractSerializer implements
             }
         }
 
-        return $this->adjustOutputLength($result);
+        return $this->adjustOutputLength($result, $length);
     }
 
     public function deserialize(

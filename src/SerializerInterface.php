@@ -50,10 +50,25 @@ interface SerializerInterface extends NamespaceConstantsInterface
 
     public function getFlags(): int;
 
-    public function serialize(LiteralInterface $literal): string;
+    /**
+     * @param $length Desired output length in encoding-dependent units (bytes
+     * or nibbles or bits).
+     */
+    public function serialize(
+        LiteralInterface $literal,
+        ?int $length = null
+    ): string;
 
-    /// Serialize to hexadecimal string
-    public function serializeToHex(LiteralInterface $literal): string;
+    /**
+     * @brief Serialize to hexadecimal string
+     *
+     * @param $length Desired output length *in encoding-dependent units*
+     * (bytes or nibbles or bits), not in hexadecimal characters.
+     */
+    public function serializeToHex(
+        LiteralInterface $literal,
+        ?int $length = null
+    ): string;
 
     public function deserialize(
         string $input,

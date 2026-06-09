@@ -23,6 +23,7 @@ class ConstructedSerializerTest extends TestCase
     public function testSerialize(
         $serializers,
         $separator,
+        $length,
         $encoding,
         $lengthRange,
         $literalData,
@@ -42,7 +43,7 @@ class ConstructedSerializerTest extends TestCase
 
         $literal = new ConstructedStringLiteral($literalData);
 
-        $output = $serializer->serialize($literal);
+        $output = $serializer->serialize($literal, $length);
 
         $this->assertSame($expectedOutput, $output);
 
@@ -103,6 +104,7 @@ class ConstructedSerializerTest extends TestCase
                 ',',
                 null,
                 null,
+                null,
                 [
                     new NonNegativeIntegerLiteral(7),
                     new StringLiteral('foo'),
@@ -115,6 +117,7 @@ class ConstructedSerializerTest extends TestCase
             [
                 [ $stringS, $intS, $stringS4, $intS ],
                 '/',
+                null,
                 'TEXT',
                 null,
                 [
@@ -128,6 +131,7 @@ class ConstructedSerializerTest extends TestCase
                 ],
             [
                 [ $stringS4, $stringS4 ],
+                null,
                 null,
                 'BINARY',
                 [ 20 ],
@@ -144,6 +148,7 @@ class ConstructedSerializerTest extends TestCase
             [
                 [ $bcdS, $binS, $binS ],
                 'FF',
+                null,
                 'BINARY',
                 [ 10 ],
                 [
@@ -156,6 +161,7 @@ class ConstructedSerializerTest extends TestCase
             ],
             [
                 [ $bcdS, $bcdS3, $binS, $binS ],
+                null,
                 null,
                 'BINARY',
                 null,
@@ -171,6 +177,7 @@ class ConstructedSerializerTest extends TestCase
             [
                 [ $bcdS, $bcdS, $binS, $binS ],
                 'e',
+                null,
                 'BINARY',
                 [ 8 ],
                 [
@@ -180,6 +187,21 @@ class ConstructedSerializerTest extends TestCase
                 ],
                 "\x3E\x4E\xAB\x00",
                 '3|4|AB00',
+                "[ 3 4 'AB' ]"
+            ],
+            [
+                [ $bcdS, $bcdS, $binS, $binS ],
+                'C',
+                10,
+                'BINARY',
+                [ 1, 12 ],
+                [
+                    new NonNegativeIntegerLiteral(3),
+                    new NonNegativeIntegerLiteral(4),
+                    new HexBinaryLiteral('ab'),
+                ],
+                "\x3C\x4C\xAB\x00\x00",
+                '3|4|AB0000',
                 "[ 3 4 'AB' ]"
             ]
         ];

@@ -25,6 +25,7 @@ class IntegerSerializerTest extends TestCase
         $datatypeXName,
         $minLength,
         $maxLength,
+        $length,
         $encoding,
         $literal,
         $expectedOutput,
@@ -48,11 +49,11 @@ class IntegerSerializerTest extends TestCase
             $this->assertSame($datatypeXName, (string)$datatype->getXName());
         }
 
-        $output = $serializer->serialize($literal);
+        $output = $serializer->serialize($literal, $length);
 
         $this->assertSame($expectedOutput, $output);
 
-        $hexOutput = $serializer->serializeToHex($literal);
+        $hexOutput = $serializer->serializeToHex($literal, $length);
 
         $this->assertSame($expectedOutput, hex2bin($hexOutput));
 
@@ -109,6 +110,7 @@ class IntegerSerializerTest extends TestCase
                 null,
                 null,
                 null,
+                null,
                 new BooleanLiteral(false),
                 '0',
                 false,
@@ -116,6 +118,7 @@ class IntegerSerializerTest extends TestCase
             ],
             [
                 self::XSD_NS . ' gDay',
+                null,
                 null,
                 null,
                 'BIG-ENDIAN',
@@ -128,6 +131,7 @@ class IntegerSerializerTest extends TestCase
                 self::XSD_NS . ' gMonth',
                 4,
                 null,
+                null,
                 'EBCDIC',
                 new GMonthLiteral(12),
                 "\xF0\xF0\xF1\xF2",
@@ -139,6 +143,7 @@ class IntegerSerializerTest extends TestCase
                 8,
                 null,
                 null,
+                null,
                 new GYearLiteral(-753),
                 "-0000753",
                 (new GYearLiteral(-753))->getValue(),
@@ -147,6 +152,7 @@ class IntegerSerializerTest extends TestCase
             [
                 self::XSD_NS . ' long',
                 4,
+                null,
                 null,
                 'BIG-ENDIAN',
                 new IntegerLiteral(-3, self::XSD_NS . '#short'),
@@ -158,11 +164,23 @@ class IntegerSerializerTest extends TestCase
                 self::XSD_NS . ' short',
                 3,
                 null,
+                null,
                 'EBCDIC',
                 new IntegerLiteral(-7, self::XSD_NS . '#byte'),
                 "\x60\xF0\xF7",
                 -7,
                 "'60F7'"
+            ],
+            [
+                self::XSD_NS . ' nonNegativeInteger',
+                3,
+                7,
+                4,
+                'BIG-ENDIAN',
+                new IntegerLiteral(7, self::XSD_NS . '#unsignedShort'),
+                "\x00\x00\x00\x07",
+                7,
+                "'07'"
             ]
         ];
     }

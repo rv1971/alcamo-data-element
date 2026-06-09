@@ -16,6 +16,7 @@ class FourBitCharStringSerializerTest extends TestCase
     public function testSerialize(
         $minLength,
         $maxLength,
+        $length,
         $encoding,
         $literal,
         $expectedOutput,
@@ -34,11 +35,11 @@ class FourBitCharStringSerializerTest extends TestCase
 
         $datatype = $serializer->getDatatype();
 
-        $output = $serializer->serialize($literal);
+        $output = $serializer->serialize($literal, $length);
 
         $this->assertSame($expectedOutput, $output);
 
-        $hexOutput = $serializer->serializeToHex($literal);
+        $hexOutput = $serializer->serializeToHex($literal, $length);
 
         $this->assertSame($expectedHexOutput, $hexOutput);
 
@@ -74,6 +75,7 @@ class FourBitCharStringSerializerTest extends TestCase
                 null,
                 null,
                 null,
+                null,
                 new FourBitCharStringLiteral(';1234=456<7:8>9?'),
                 ';1234=456<7:8>9?',
                 '3B313233343D3435363C373A383E393F',
@@ -84,6 +86,7 @@ class FourBitCharStringSerializerTest extends TestCase
             [
                 5,
                 null,
+                null,
                 'ASCII',
                 new FourBitCharStringLiteral('42<<'),
                 '42<< ',
@@ -93,6 +96,19 @@ class FourBitCharStringSerializerTest extends TestCase
                 '"42<<"'
             ],
             [
+                5,
+                null,
+                7,
+                'ASCII',
+                new FourBitCharStringLiteral('42<<'),
+                '42<<   ',
+                '34323C3C202020',
+                '42<<',
+                '42<<',
+                '"42<<"'
+            ],
+            [
+                null,
                 null,
                 null,
                 'FOUR-BIT',
@@ -106,6 +122,7 @@ class FourBitCharStringSerializerTest extends TestCase
             [
                 5,
                 null,
+                null,
                 'FOUR-BIT',
                 new FourBitCharStringLiteral('7==2'),
                 "\x7D\xD2\xFF",
@@ -115,8 +132,9 @@ class FourBitCharStringSerializerTest extends TestCase
                 "'7DD2'"
             ],
             [
-                6,
                 null,
+                10,
+                6,
                 'FOUR-BIT',
                 new FourBitCharStringLiteral('7==2'),
                 "\x7D\xD2\xFF",
@@ -130,6 +148,7 @@ class FourBitCharStringSerializerTest extends TestCase
             [
                 2,
                 3,
+                null,
                 'FOUR-BIT',
                 new FourBitCharStringLiteral(':2<>'),
                 "\xA2\xCF",

@@ -18,6 +18,7 @@ class StringSerializerTest extends TestCase
         $datatypeXName,
         $minLength,
         $maxLength,
+        $length,
         $encoding,
         $literal,
         $expectedOutput,
@@ -36,11 +37,11 @@ class StringSerializerTest extends TestCase
 
         $this->assertSame($datatypeXName, (string)$datatype->getXName());
 
-        $output = $serializer->serialize($literal);
+        $output = $serializer->serialize($literal, $length);
 
         $this->assertSame($expectedOutput, $output);
 
-        $hexOutput = $serializer->serializeToHex($literal);
+        $hexOutput = $serializer->serializeToHex($literal, $length);
 
         $this->assertSame($expectedOutput, hex2bin($hexOutput));
 
@@ -83,12 +84,14 @@ class StringSerializerTest extends TestCase
                 null,
                 null,
                 null,
+                null,
                 new StringLiteral('AAA'),
                 'AAA',
                 '"AAA"'
             ],
             [
                 self::XSD_NS . ' string',
+                null,
                 null,
                 null,
                 null,
@@ -101,6 +104,7 @@ class StringSerializerTest extends TestCase
                 null,
                 null,
                 null,
+                null,
                 new StringLiteral('CDCDCDCDCD'),
                 'CDCDCDCDCD',
                 '5 * "CD"'
@@ -109,6 +113,7 @@ class StringSerializerTest extends TestCase
                 self::XSD_NS . ' normalizedString',
                 11,
                 15,
+                null,
                 'ISO-8859-1',
                 new StringLiteral('dolör sit', self::XSD_NS . '#token'),
                 "dol\xF6r sit  ",
@@ -118,10 +123,21 @@ class StringSerializerTest extends TestCase
                 self::XSD_NS . ' NMTOKEN',
                 null,
                 7,
+                null,
                 'ISO-8859-1',
                 new StringLiteral('consätetur', self::XSD_NS . '#NMTOKEN'),
                 "cons\xE4te",
                 '"consätetur"'
+            ],
+            [
+                self::XSD_NS . ' NMTOKEN',
+                0,
+                10,
+                4,
+                'EBCDIC',
+                new StringLiteral('12', self::XSD_NS . '#NMTOKEN'),
+                "\xF1\xF2\x40\x40",
+                "'F1F2'"
             ]
         ];
     }
@@ -173,6 +189,28 @@ class StringSerializerTest extends TestCase
 
         (new StringSerializer(null, null, new NonNegativeRange(5, null)))
             ->deserialize('sed');
+    }
+
+    public function testSerializeConversionException(): void
+    {
+        $this->expectException(Unsupported::class);
+
+        $serializer = StringSerializer::newFromProps([ 'encoding' => 'FOO' ]);
+
+        $this->expectExceptionMessage('"conversion to FOO" not supported');
+
+        $serializer->serialize(new StringLiteral('bar'));
+    }
+
+    public function testDeserializeConversionException(): void
+    {
+        $this->expectException(Unsupported::class);
+
+        $serializer = StringSerializer::newFromProps([ 'encoding' => 'FOO' ]);
+
+        $this->expectExceptionMessage('"conversion from FOO" not supported');
+
+        $serializer->deserialize('bar');
     }
 
     public function testDumpException(): void

@@ -21,16 +21,19 @@ class DigitStringSerializer extends FourBitCharStringSerializer
         'EBCDIC'         => [ 8, "\x40", STR_PAD_RIGHT ]
     ];
 
-    public function serialize(LiteralInterface $literal): string
-    {
+    public function serialize(
+        LiteralInterface $literal,
+        int $length = null
+    ): string {
         switch ($this->encodingParams_->getEncoding()) {
             case 'ASCII':
                 $this->validateLiteralClass($literal);
 
-                return $this->adjustOutputLength($literal);
+                return $this->adjustOutputLength($literal, $length);
 
             case 'COMPRESSED-BCD':
-                return $this->hexToBin($this->serializeToHex($literal));
+                return $this
+                    ->hexToBin($this->serializeToHex($literal, $length));
 
             case 'EBCDIC':
                 $this->validateLiteralClass($literal);
@@ -40,21 +43,24 @@ class DigitStringSerializer extends FourBitCharStringSerializer
                         $literal,
                         EncodingParams::ASCII_CHARS,
                         EncodingParams::EBCDIC_CHARS
-                    )
+                    ),
+                    $length
                 );
         }
     }
 
-    public function serializeToHex(LiteralInterface $literal): string
-    {
+    public function serializeToHex(
+        LiteralInterface $literal,
+        int $length = null
+    ): string {
         switch ($this->encodingParams_->getEncoding()) {
             case 'COMPRESSED-BCD':
                 $this->validateLiteralClass($literal);
 
-                return $this->adjustOutputLength($literal);
+                return $this->adjustOutputLength($literal, $length);
 
             default:
-                return strtoupper(bin2hex($this->serialize($literal)));
+                return strtoupper(bin2hex($this->serialize($literal, $length)));
         }
     }
 

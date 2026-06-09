@@ -28,29 +28,35 @@ class NonNegativeIntegerSerializer extends IntegerSerializer
         'EBCDIC'     => [ 8, "\x40", STR_PAD_LEFT ]
     ];
 
-    public function serialize(LiteralInterface $literal): string
-    {
+    public function serialize(
+        LiteralInterface $literal,
+        int $length = null
+    ): string {
         switch ($this->encodingParams_->getEncoding()) {
             case 'BCD':
-                return $this->hexToBin($this->serializeToHex($literal));
+                return
+                    $this->hexToBin($this->serializeToHex($literal, $length));
 
             default:
-                return parent::serialize($literal);
+                return parent::serialize($literal, $length);
         }
     }
 
-    public function serializeToHex(LiteralInterface $literal): string
-    {
+    public function serializeToHex(
+        LiteralInterface $literal,
+        int $length = null
+    ): string {
         switch ($this->encodingParams_->getEncoding()) {
             case 'BCD':
                 $this->validateLiteralClass($literal);
 
                 return $this->adjustOutputLength(
-                    Bcd::newFromInt($literal->toInt(), null, true)
+                    Bcd::newFromInt($literal->toInt(), null, true),
+                    $length
                 );
 
             default:
-                return strtoupper(bin2hex($this->serialize($literal)));
+                return strtoupper(bin2hex($this->serialize($literal, $length)));
         }
     }
 

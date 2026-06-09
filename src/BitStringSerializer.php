@@ -23,15 +23,17 @@ class BitStringSerializer extends DigitStringSerializer
         'X.690'  => [ 8 ]
     ];
 
-    public function serialize(LiteralInterface $literal): string
-    {
+    public function serialize(
+        LiteralInterface $literal,
+        int $length = null
+    ): string {
         switch ($this->encodingParams_->getEncoding()) {
             case 'BINARY':
                 $this->validateLiteralClass($literal);
 
                 return BinaryString::newFromBitString(
                     $this->getEncodingParams()->align(
-                        $this->adjustOutputLength($literal)
+                        $this->adjustOutputLength($literal, $length)
                     )
                 )->getData();
 
@@ -43,17 +45,20 @@ class BitStringSerializer extends DigitStringSerializer
                 return $this->adjustOutputLength(
                     pack('C', $unusedBits) . BinaryString::newFromBitString(
                         $literal . substr('0000000', 0, $unusedBits)
-                    )->getData()
+                    )->getData(),
+                    $length
                 );
 
             default:
-                return parent::serialize($literal);
+                return parent::serialize($literal, $length);
         }
     }
 
-    public function serializeToHex(LiteralInterface $literal): string
-    {
-        return strtoupper(bin2hex($this->serialize($literal)));
+    public function serializeToHex(
+        LiteralInterface $literal,
+        int $length = null
+    ): string {
+        return strtoupper(bin2hex($this->serialize($literal, $length)));
     }
 
     public function deserialize(

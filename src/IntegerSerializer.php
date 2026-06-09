@@ -27,15 +27,17 @@ class IntegerSerializer extends AbstractSerializer
         'EBCDIC'     => [ 8, "\x40", STR_PAD_LEFT ]
     ];
 
-    public function serialize(LiteralInterface $literal): string
-    {
+    public function serialize(
+        LiteralInterface $literal,
+        int $length = null
+    ): string {
         $this->validateLiteralClass($literal);
 
         $value = $literal->toInt();
 
-        $minLength = isset($this->lengthRange_)
-            ? $this->lengthRange_->getMin()
-            : 0;
+        $minLength = $length ?? (isset($this->lengthRange_)
+                                 ? $this->lengthRange_->getMin()
+                                 : 0);
 
         /* sprintf() is needed to put the padding 0s after a sign, if the
          * value is negative. adjustOutputLength() then only checks the
@@ -44,13 +46,15 @@ class IntegerSerializer extends AbstractSerializer
         switch ($this->encodingParams_->getEncoding()) {
             case 'ASCII':
                 return $this->adjustOutputLength(
-                    sprintf("%0{$minLength}d", $value)
+                    sprintf("%0{$minLength}d", $value),
+                    $length
                 );
 
             case 'BIG-ENDIAN':
                 return $this->adjustOutputLength(
                     ImmutableBinaryString::newFromInt($value, $minLength)
-                        ->getData()
+                        ->getData(),
+                    $length
                 );
 
             case 'EBCDIC':
@@ -59,7 +63,8 @@ class IntegerSerializer extends AbstractSerializer
                         sprintf("%0{$minLength}d", $value),
                         EncodingParams::ASCII_CHARS,
                         EncodingParams::EBCDIC_CHARS
-                    )
+                    ),
+                    $length
                 );
         }
     }

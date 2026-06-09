@@ -3,7 +3,7 @@
 namespace alcamo\data_element;
 
 use alcamo\binary_data\ImmutableBinaryString;
-use alcamo\exception\SyntaxError;
+use alcamo\exception\{LengthOutOfRange, SyntaxError};
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\{Base64BinaryLiteral, HexBinaryLiteral};
 use PHPUnit\Framework\TestCase;
@@ -20,6 +20,7 @@ class BinarySerializerTest extends TestCase
         $encoding,
         $minLength,
         $maxLength,
+        $length,
         $literal,
         $expectedOutput,
         $expectedDeserialization,
@@ -38,11 +39,11 @@ class BinarySerializerTest extends TestCase
 
         $this->assertSame($datatypeXName, (string)$datatype->getXName());
 
-        $output = $serializer->serialize($literal);
+        $output = $serializer->serialize($literal, $length);
 
         $this->assertSame($expectedOutput, $output);
 
-        $hexOutput = $serializer->serializeToHex($literal);
+        $hexOutput = $serializer->serializeToHex($literal, $length);
 
         $this->assertSame($expectedOutput, hex2bin($hexOutput));
 
@@ -95,6 +96,7 @@ class BinarySerializerTest extends TestCase
                 'BINARY',
                 5,
                 10,
+                null,
                 new Base64BinaryLiteral('Zm9v'),
                 "foo\x00\x00",
                 "foo\x00\x00",
@@ -105,6 +107,7 @@ class BinarySerializerTest extends TestCase
                 'BINARY',
                 null,
                 3,
+                null,
                 new Base64BinaryLiteral(new ImmutableBinaryString('dolor')),
                 "dol",
                 "dol",
@@ -113,6 +116,7 @@ class BinarySerializerTest extends TestCase
             [
                 self::XSD_NS . ' hexBinary',
                 'BINARY',
+                null,
                 null,
                 null,
                 new HexBinaryLiteral('DEDEDE'),
@@ -125,6 +129,7 @@ class BinarySerializerTest extends TestCase
                 'BINARY',
                 null,
                 null,
+                null,
                 new HexBinaryLiteral('123412341234'),
                 "\x12\x34\x12\x34\x12\x34",
                 "\x12\x34\x12\x34\x12\x34",
@@ -134,6 +139,7 @@ class BinarySerializerTest extends TestCase
                 self::XSD_NS . ' hexBinary',
                 'BINARY',
                 4,
+                null,
                 null,
                 new HexBinaryLiteral('A1'),
                 "\xA1\x00\x00\x00",
@@ -145,12 +151,51 @@ class BinarySerializerTest extends TestCase
                 'BINARY',
                 2,
                 3,
+                null,
                 new HexBinaryLiteral('A1A2A3A4'),
                 "\xA1\xA2\xA3",
                 "\xA1\xA2\xA3",
                 "'A1A2A3A4'"
+            ],
+            [
+                self::XSD_NS . ' hexBinary',
+                'BINARY',
+                1,
+                5,
+                3,
+                new HexBinaryLiteral('3031'),
+                "01\x00",
+                "01\x00",
+                "'3031'"
             ]
         ];
+    }
+
+    public function testSerializeException(): void
+    {
+        $serializer = BinarySerializer::newFromProps(
+            [
+                'lengthRange' => [ 1, 2 ],
+                'flags' => BinarySerializer::SKIP_LENGTH_CHECK
+            ]
+        );
+
+        $this->assertSame(
+            "\x00\x00\x00",
+            $serializer->serialize(new HexBinaryLiteral(''), 3)
+        );
+
+        $serializer = BinarySerializer::newFromProps(
+            [ 'lengthRange' => [ 1, 2 ] ]
+        );
+
+        $this->expectException(LengthOutOfRange::class);
+
+        $this->expectExceptionMessage(
+            'Length 3 of "<data-to-create>" out of range [1, 2]'
+        );
+
+        $serializer->serialize(new HexBinaryLiteral(''), 3);
     }
 
     public function testDedumpException(): void

@@ -15,6 +15,7 @@ class DigitStringSerializerTest extends TestCase
     public function testSerialize(
         $minLength,
         $maxLength,
+        $length,
         $encoding,
         $literal,
         $expectedOutput,
@@ -33,11 +34,11 @@ class DigitStringSerializerTest extends TestCase
 
         $datatype = $serializer->getDatatype();
 
-        $output = $serializer->serialize($literal);
+        $output = $serializer->serialize($literal, $length);
 
         $this->assertSame($expectedOutput, $output);
 
-        $hexOutput = $serializer->serializeToHex($literal);
+        $hexOutput = $serializer->serializeToHex($literal, $length);
 
         $this->assertSame($expectedHexOutput, $hexOutput);
 
@@ -71,6 +72,7 @@ class DigitStringSerializerTest extends TestCase
                 null,
                 null,
                 null,
+                null,
                 new DigitStringLiteral('000123456789'),
                 '000123456789',
                 '303030313233343536373839',
@@ -81,6 +83,7 @@ class DigitStringSerializerTest extends TestCase
             [
                 5,
                 null,
+                null,
                 'ASCII',
                 new DigitStringLiteral('42'),
                 '42   ',
@@ -90,6 +93,7 @@ class DigitStringSerializerTest extends TestCase
                 '"42"'
             ],
             [
+                null,
                 null,
                 null,
                 'COMPRESSED-BCD',
@@ -103,6 +107,7 @@ class DigitStringSerializerTest extends TestCase
             [
                 7,
                 null,
+                null,
                 'COMPRESSED-BCD',
                 new DigitStringLiteral('002026'),
                 "\x00\x20\x26\xFF",
@@ -113,6 +118,7 @@ class DigitStringSerializerTest extends TestCase
             ],
             [
                 8,
+                null,
                 null,
                 'COMPRESSED-BCD',
                 new DigitStringLiteral('002026'),
@@ -125,6 +131,7 @@ class DigitStringSerializerTest extends TestCase
             [
                 2,
                 3,
+                3,
                 'COMPRESSED-BCD',
                 new DigitStringLiteral('1234'),
                 "\x12\x3F",
@@ -134,7 +141,8 @@ class DigitStringSerializerTest extends TestCase
                 "'1234'"
             ],
             [
-                3,
+                1,
+                7,
                 3,
                 'EBCDIC',
                 new DigitStringLiteral('17'),

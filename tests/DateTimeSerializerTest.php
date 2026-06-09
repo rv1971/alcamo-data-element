@@ -28,6 +28,7 @@ class DateTimeSerializerTest extends TestCase
         $datatypeXName,
         $format,
         $asUtc,
+        $length,
         $encoding,
         $literal,
         $expectedOutput,
@@ -40,7 +41,8 @@ class DateTimeSerializerTest extends TestCase
                 'datatypeXName' => $datatypeXName,
                 'asUtc' => $asUtc,
                 'posixFormat' => $format,
-                'encoding' => $encoding
+                'encoding' => $encoding,
+                'flags' => DateTimeSerializer::SKIP_LENGTH_CHECK
             ]
         );
 
@@ -56,17 +58,21 @@ class DateTimeSerializerTest extends TestCase
             $this->assertSame($datatypeXName, (string)$datatype->getXName());
         }
 
-        $output = $serializer->serialize($literal);
+        $output = $serializer->serialize($literal, $length);
 
         $this->assertSame($expectedOutput, $output);
 
-        $hexOutput = $serializer->serializeToHex($literal);
+        $hexOutput = $serializer->serializeToHex($literal, $length);
 
         $this->assertSame($expectedHexOutput, $hexOutput);
 
         $literal2 = $serializer->deserialize($output);
 
         $this->assertInstanceOf(get_class($literal), $literal2);
+
+        if (!$expectedDeserialization->equals($literal2)) {
+            var_dump($expectedDeserialization, $literal2);
+        }
 
         $this->assertTrue($expectedDeserialization->equals($literal2));
 
@@ -95,6 +101,7 @@ class DateTimeSerializerTest extends TestCase
                 null,
                 null,
                 null,
+                null,
                 new DateLiteral('2020-02-25'),
                 '2020-02-25',
                 '323032302D30322D3235',
@@ -105,6 +112,7 @@ class DateTimeSerializerTest extends TestCase
                 self::XSD_NS . ' dateTime',
                 null,
                 false,
+                null,
                 'BCD',
                 new DateTimeLiteral('2026-02-26T17:22'),
                 "\x20\x26\x02\x26\x17\x22\x00",
@@ -116,6 +124,7 @@ class DateTimeSerializerTest extends TestCase
                 self::XSD_NS . ' gDay',
                 null,
                 false,
+                null,
                 'EBCDIC',
                 new GDayLiteral(28),
                 "\xF2\xF8",
@@ -128,6 +137,7 @@ class DateTimeSerializerTest extends TestCase
                 null,
                 false,
                 null,
+                null,
                 new GMonthLiteral(7),
                 '07',
                 '3037',
@@ -138,6 +148,7 @@ class DateTimeSerializerTest extends TestCase
                 self::XSD_NS . ' gMonthDay',
                 '00%d00%m',
                 false,
+                null,
                 'BCD',
                 new GMonthDayLiteral('05-31'),
                 "\x00\x31\x00\x05",
@@ -149,10 +160,11 @@ class DateTimeSerializerTest extends TestCase
                 self::XSD_NS . ' gYearMonth',
                 '%y-%m',
                 false,
+                6,
                 'EBCDIC',
                 new GYearMonthLiteral('2006-08'),
-                "\xF0\xF6\x60\xF0\xF8",
-                'F0F660F0F8',
+                "\xF0\xF6\x60\xF0\xF8\x40",
+                'F0F660F0F840',
                 new GYearMonthLiteral('2006-08'),
                 "'F0F660F0F8'"
             ],
@@ -160,6 +172,7 @@ class DateTimeSerializerTest extends TestCase
                 PositiveGYearLiteral::DEFAULT_DATATYPE_XNAME,
                 '%y',
                 false,
+                null,
                 'BCD',
                 new PositiveGYearLiteral('2008'),
                 "\x08",
@@ -171,10 +184,11 @@ class DateTimeSerializerTest extends TestCase
                 self::XSD_NS . ' time',
                 '%M%I',
                 true,
+                6,
                 'BCD',
                 new TimeLiteral('06:23-03:00'),
-                "\x23\x09",
-                '2309',
+                "\x00\x23\x09",
+                '002309',
                 new TimeLiteral('09:23'),
                 '2309'
             ]

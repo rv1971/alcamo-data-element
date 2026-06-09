@@ -21,30 +21,36 @@ class FourBitCharStringSerializer extends StringSerializer
         'FOUR-BIT' => [ 4, 'F', STR_PAD_RIGHT ]
     ];
 
-    public function serialize(LiteralInterface $literal): string
-    {
+    public function serialize(
+        LiteralInterface $literal,
+        int $length = null
+    ): string {
         switch ($this->encodingParams_->getEncoding()) {
             case 'ASCII':
                 $this->validateLiteralClass($literal);
 
-                return $this->adjustOutputLength($literal);
+                return $this->adjustOutputLength($literal, $length);
 
             case 'FOUR-BIT':
-                return $this->hexToBin($this->serializeToHex($literal));
+                return
+                    $this->hexToBin($this->serializeToHex($literal, $length));
         }
     }
 
-    public function serializeToHex(LiteralInterface $literal): string
-    {
+    public function serializeToHex(
+        LiteralInterface $literal,
+        int $length = null
+    ): string {
         switch ($this->encodingParams_->getEncoding()) {
             case 'ASCII':
-                return strtoupper(bin2hex($this->serialize($literal)));
+                return strtoupper(bin2hex($this->serialize($literal, $length)));
 
             case 'FOUR-BIT':
                 $this->validateLiteralClass($literal);
 
                 return $this->adjustOutputLength(
-                    strtr($literal, ':;<=>?', 'ABCDEF')
+                    strtr($literal, ':;<=>?', 'ABCDEF'),
+                    $length
                 );
         }
     }

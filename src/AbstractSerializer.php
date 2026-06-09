@@ -207,9 +207,11 @@ abstract class AbstractSerializer implements SerializerInterface
         return $this->deWorkbench_;
     }
 
-    public function serializeToHex(LiteralInterface $literal): string
-    {
-        return strtoupper(bin2hex($this->serialize($literal)));
+    public function serializeToHex(
+        LiteralInterface $literal,
+        ?int $length = null
+    ): string {
+        return strtoupper(bin2hex($this->serialize($literal, $length)));
     }
 
     public function deserializeFromHex(
@@ -245,11 +247,31 @@ abstract class AbstractSerializer implements SerializerInterface
      *
      * @param $value Data possibly subject to length constraints
      */
-    protected function adjustOutputLength(string $value): string
+    protected function adjustOutputLength(string $value, ?int $length): string
     {
-        if (isset($this->lengthRange_)) {
-            [ $minLength, $maxLength ] = $this->lengthRange_->getMinMax();
+        if (isset($length)) {
+            if (isset($this->lengthRange_)) {
+                [ $minLength, $maxLength ] = $this->lengthRange_->getMinMax();
 
+                if (!($this->flags_ & self::SKIP_LENGTH_CHECK)) {
+                    /** @throw alcamo::exception::LengthOutOfRange if
+                     *  SKIP_LENGTH_CHECK is not set in the flags $length is
+                     *  outside the length range of the serializer. */
+                    LengthOutOfRange::throwIfOutside(
+                        '<data-to-create>',
+                        $minLength,
+                        $maxLength,
+                        $length
+                    );
+                }
+            }
+
+            $minLength = $maxLength = $length;
+        } elseif (isset($this->lengthRange_)) {
+            [ $minLength, $maxLength ] = $this->lengthRange_->getMinMax();
+        }
+
+        if (isset($minLength)) {
             if (isset($maxLength) && strlen($value) > $maxLength) {
                 if ($this->flags_ & self::TRUNCATE_SILENTLY) {
                     /** If $value is too long and TRUNCATE_SILENTLY is set in
@@ -302,7 +324,7 @@ abstract class AbstractSerializer implements SerializerInterface
             } else {
                 $input = $this->encodingParams_->unpad($input, $maxLength);
 
-                /** @throw alcamo::exception::LengthOutOfRange is
+                /** @throw alcamo::exception::LengthOutOfRange if
                  *  SKIP_LENGTH_CHECK is not set in the flags and the value is
                  *  too short or too long. */
                 LengthOutOfRange::throwIfOutside(

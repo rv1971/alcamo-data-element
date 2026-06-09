@@ -15,6 +15,7 @@ class BitStringSerializerTest extends TestCase
     public function testSerialize(
         $minLength,
         $maxLength,
+        $length,
         $encoding,
         $literal,
         $expectedOutput,
@@ -32,11 +33,11 @@ class BitStringSerializerTest extends TestCase
 
         $datatype = $serializer->getDatatype();
 
-        $output = $serializer->serialize($literal);
+        $output = $serializer->serialize($literal, $length);
 
         $this->assertSame($expectedOutput, $output);
 
-        $hexOutput = $serializer->serializeToHex($literal);
+        $hexOutput = $serializer->serializeToHex($literal, $length);
 
         $this->assertSame($expectedOutput, hex2bin($hexOutput));
 
@@ -64,11 +65,13 @@ class BitStringSerializerTest extends TestCase
                 null,
                 null,
                 null,
+                null,
                 new BitStringLiteral('001011'),
                 '001011',
                 '001011'
             ],
             [
+                null,
                 null,
                 null,
                 'BINARY',
@@ -79,6 +82,7 @@ class BitStringSerializerTest extends TestCase
             [
                 9,
                 null,
+                null,
                 'BINARY',
                 new BitStringLiteral('10101111'),
                 "\xAF\x00",
@@ -86,13 +90,15 @@ class BitStringSerializerTest extends TestCase
             ],
             [
                 null,
+                12,
                 5,
                 'BINARY',
                 new BitStringLiteral('11111111'),
                 "\xF8",
-                '11111'
+                '11111000'
             ],
             [
+                null,
                 null,
                 null,
                 'X.690',
@@ -101,6 +107,7 @@ class BitStringSerializerTest extends TestCase
                 '1'
             ],
             [
+                null,
                 null,
                 null,
                 'X.690',

@@ -3,6 +3,7 @@
 namespace alcamo\data_element;
 
 use alcamo\dom\schema\component\SimpleTypeInterface;
+use alcamo\exception\{ErrorHandler, Unsupported};
 use alcamo\rdf_literal\LiteralInterface;
 
 /**
@@ -27,33 +28,64 @@ class StringSerializer extends AbstractSerializer
     /// String encoding used internally
     public const INTERNAL_ENCODING = 'UTF-8';
 
-    public function serialize(LiteralInterface $literal): string
-    {
+    public function serialize(
+        LiteralInterface $literal,
+        ?int $length = null
+    ): string {
         $this->validateLiteralClass($literal);
 
         $value = $literal->getValue();
 
-        if (
-            $this->encodingParams_->getEncoding() == static::INTERNAL_ENCODING
-        ) {
-            return $this->adjustOutputLength($value);
+        $encoding = $this->encodingParams_->getEncoding();
+
+        if ($encoding == static::INTERNAL_ENCODING) {
+            return $this->adjustOutputLength($value, $length);
         }
 
         /* Pad to minimum length in internal encoding before character set
          * conversion takes place, because output encoding might have a
          * different representation of the padding character. */
-        if (isset($this->lengthRange_)) {
+        if (isset($length) || isset($this->lengthRange_)) {
             $value = $this->encodingParams_
-                ->pad($value, $this->lengthRange_->getMin());
+                ->pad($value, $length ?? $this->lengthRange_->getMin());
         }
 
-        return $this->adjustOutputLength(
-            iconv(
-                static::INTERNAL_ENCODING,
-                $this->encodingParams_->getEncoding(),
-                $value
-            )
-        );
+        $errorHandler = new ErrorHandler();
+
+        try {
+            $convertedValue =
+                iconv(static::INTERNAL_ENCODING, $encoding, $value);
+        } catch (\ErrorException $e) {
+            $convertedValue = false;
+        }
+
+        /* If the iconv() installation does not support EBCDIC, convert via
+         * ASCII. */
+        if ($convertedValue === false && $encoding == 'EBCDIC') {
+            try {
+                $convertedValue =
+                    iconv(static::INTERNAL_ENCODING, 'ASCII//TRANSLIT', $value);
+            } catch (\ErrorException $e) {
+                $convertedValue = false;
+            }
+
+            if ($convertedValue !== false) {
+                $convertedValue = strtr(
+                    $convertedValue,
+                    EncodingParams::ASCII_CHARS,
+                    EncodingParams::EBCDIC_CHARS
+                );
+            }
+        }
+
+        if ($convertedValue === false) {
+            /** @throw alcamo::exception::Unsupported if conversion fails. */
+            throw (new Unsupported())->setMessageContext(
+                [ 'feature' => "conversion to $encoding" ]
+            );
+        }
+
+        return $this->adjustOutputLength($convertedValue, $length);
     }
 
     public function deserialize(
@@ -66,12 +98,50 @@ class StringSerializer extends AbstractSerializer
 
         /** Remove trailing spaces from input after conversion to internal
          *  encoding. */
+
+        if ($encoding == static::INTERNAL_ENCODING) {
+            return $this->deWorkbench_->createLiteral(
+                rtrim($input),
+                $datatype ?? $this->datatype_
+            );
+        }
+
+        $errorHandler = new ErrorHandler();
+
+        try {
+            $convertedValue =
+                iconv($encoding, static::INTERNAL_ENCODING, $input);
+        } catch (\ErrorException $e) {
+            $convertedValue = false;
+        }
+
+        /* If the iconv() installation does not support EBCDIC, convert via
+         * ASCII. */
+        if ($convertedValue === false && $encoding == 'EBCDIC') {
+            try {
+                $convertedValue = iconv(
+                    'ASCII',
+                    static::INTERNAL_ENCODING,
+                    strtr(
+                        $input,
+                        EncodingParams::EBCDIC_CHARS,
+                        EncodingParams::ASCII_CHARS,
+                    )
+                );
+            } catch (\ErrorException $e) {
+                $convertedValue = false;
+            }
+        }
+
+        if ($convertedValue === false) {
+            /** @throw alcamo::exception::Unsupported if conversion fails. */
+            throw (new Unsupported())->setMessageContext(
+                [ 'feature' => "conversion from $encoding" ]
+            );
+        }
+
         return $this->deWorkbench_->createLiteral(
-            rtrim(
-                $encoding == static::INTERNAL_ENCODING
-                    ? $input
-                    : iconv($encoding, static::INTERNAL_ENCODING, $input)
-            ),
+            rtrim($convertedValue),
             $datatype ?? $this->datatype_
         );
     }
