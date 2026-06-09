@@ -3,6 +3,7 @@
 namespace alcamo\data_element;
 
 use alcamo\exception\SyntaxError;
+use alcamo\input_stream\StringInputStream;
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\FourBitCharStringLiteral;
 use alcamo\uri\Uri;
@@ -65,6 +66,12 @@ class FourBitCharStringSerializerTest extends TestCase
 
         if ($dump != "'1D2F'") {
             $this->assertTrue($literal->equals($serializer->dedump($dump)));
+
+            $this->assertTrue(
+                $literal->equals(
+                    $serializer->dedumpFromStream(new StringInputStream($dump))
+                )
+            );
         }
     }
 

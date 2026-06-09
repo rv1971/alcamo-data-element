@@ -3,6 +3,7 @@
 namespace alcamo\data_element;
 
 use alcamo\exception\{InvalidType, LengthOutOfRange, SyntaxError, Unsupported};
+use alcamo\input_stream\StringInputStream;
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\{QNameLiteral, StringLiteral};
 use PHPUnit\Framework\TestCase;
@@ -74,6 +75,12 @@ class StringSerializerTest extends TestCase
         $this->assertEquals($expectedDump, $dump);
 
         $this->assertTrue($literal->equals($serializer->dedump($dump)));
+
+        $this->assertTrue(
+            $literal->equals(
+                $serializer->dedumpFromStream(new StringInputStream($dump))
+            )
+        );
     }
 
     public function serializeProvider(): array
@@ -230,7 +237,7 @@ class StringSerializerTest extends TestCase
         $this->expectException(SyntaxError::class);
 
         $this->expectExceptionMessage(
-            'Syntax error in ""foo"'
+            'Syntax error, expected one of """ in ""foo" at offset 4 ("")'
         );
 
         (new StringSerializer())->dedump('"foo');

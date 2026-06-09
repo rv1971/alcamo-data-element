@@ -3,6 +3,7 @@
 namespace alcamo\data_element;
 
 use alcamo\exception\{InvalidEnumerator, SyntaxError};
+use alcamo\input_stream\StringInputStream;
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\DigitStringLiteral;
 use PHPUnit\Framework\TestCase;
@@ -63,6 +64,12 @@ class DigitStringSerializerTest extends TestCase
         $this->assertEquals($expectedDump, $dump);
 
         $this->assertTrue($literal->equals($serializer->dedump($dump)));
+
+        $this->assertTrue(
+            $literal->equals(
+                $serializer->dedumpFromStream(new StringInputStream($dump))
+            )
+        );
     }
 
     public function serializeProvider(): array

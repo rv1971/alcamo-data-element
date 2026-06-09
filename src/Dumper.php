@@ -4,6 +4,7 @@ namespace alcamo\data_element;
 
 use alcamo\binary_data\{AbstractBinaryString, ImmutableBinaryString};
 use alcamo\exception\{SyntaxError, Unsupported};
+use alcamo\input_stream\StringInputStream;
 
 class Dumper
 {
@@ -75,41 +76,81 @@ class Dumper
         string $input,
         ?string $encoding = null
     ): string {
+        return $this->dedumpStringFromStream(
+            new StringInputStream($input),
+            $encoding
+        );
+    }
+
+    public function dedumpStringFromStream(
+        StringInputStream $istream,
+        ?string $encoding = null
+    ): string {
+        $istream->extractWs();
+
         switch ($encoding) {
             case 'BCD':
-                return $input;
+                $text = $istream->extractDecimalDigits(true);
+
+                $istream->extractWs();
+
+                return $text;
 
             case 'COMPRESSED-BCD':
                 return rtrim(
-                    strtr($this->dedumpBinary($input), 'ABCDEF', ':;<=>?'),
+                    strtr(
+                        $this->dedumpBinaryFromStream($istream),
+                        'ABCDEF',
+                        ':;<=>?'
+                    ),
                     '?'
                 );
 
             case 'EBCDIC':
                 return strtr(
-                    $this->dedumpBinary($input)->getData(),
+                    $this->dedumpBinaryFromStream($istream)->getData(),
                     EncodingParams::EBCDIC_CHARS,
                     EncodingParams::ASCII_CHARS
                 );
 
             case 'FOUR-BIT':
-                return strtr($this->dedumpBinary($input), 'ABCDEF', ':;<=>?');
+                return strtr(
+                    $this->dedumpBinaryFromStream($istream),
+                    'ABCDEF',
+                    ':;<=>?'
+                );
         }
 
-        if (preg_match('/^(\d+)\s*\*\s*"([^"]+)"$/', $input, $matches)) {
-            return str_repeat($matches[2], $matches[1]);
+
+        if ($istream->peek() == '"') {
+            $istream->extract();
+
+            $text = $istream->extractUntil('"');
+
+            $istream->extractFixedString('"', true);
+
+            $istream->extractWs();
+
+            return $text;
         }
 
-        if (!preg_match('/^"[^"]*"$/', $input)) {
-            /** @throw alcamo::exception::SyntaxError on attempt to dedump an
-             *  input which is neither a repetition as explained above nor a
-             *  string without double quotes enclosed in double quotes. */
-            throw (new SyntaxError())->setMessageContext(
-                [ 'inData' => $input ]
-            );
-        }
+        $count = $istream->extractDecimalDigits(true);
 
-        return trim($input, '"');
+        $istream->extractWs();
+
+        $istream->extractFixedString('*', true);
+
+        $istream->extractWs();
+
+        $istream->extractFixedString('"', true);
+
+        $text = $istream->extractUntil('"');
+
+        $istream->extractFixedString('"', true);
+
+        $istream->extractWs();
+
+        return str_repeat($text, $count);
     }
 
     public function dumpBinary(AbstractBinaryString $value): string
@@ -143,22 +184,43 @@ class Dumper
 
     public function dedumpBinary(string $input): ImmutableBinaryString
     {
-        if (preg_match('/^(\d+)\s*\*\s*\'([^\']+)\'$/', $input, $matches)) {
-            return ImmutableBinaryString::newFromHex(
-                str_repeat($matches[2], $matches[1])
-            );
+        return $this->dedumpBinaryFromStream(new StringInputStream($input));
+    }
+
+    public function dedumpBinaryFromStream(
+        StringInputStream $istream
+    ): ImmutableBinaryString {
+        $istream->extractWs();
+
+        if ($istream->peek() == "'") {
+            $istream->extract();
+
+            $hexData = $istream->extractUntil("'");
+
+            $istream->extractFixedString("'", true);
+
+            $istream->extractWs();
+
+            return ImmutableBinaryString::newFromHex($hexData);
         }
 
-        if (!preg_match("/^'[0-9A-Fa-f]*'$/", $input)) {
-            /** @throw alcamo::exception::SyntaxError on attempt to dedump an
-             *  input which is neither a repetition as explained above nor a
-             *  hex string enclosed in single quotes. */
-            throw (new SyntaxError())->setMessageContext(
-                [ 'inData' => $input ]
-            );
-        }
+        $count = $istream->extractDecimalDigits(true);
 
-        return ImmutableBinaryString::newFromHex(trim($input, "'"));
+        $istream->extractWs();
+
+        $istream->extractFixedString('*', true);
+
+        $istream->extractWs();
+
+        $istream->extractFixedString("'", true);
+
+        $hexData = $istream->extractUntil("'");
+
+        $istream->extractFixedString("'", true);
+
+        $istream->extractWs();
+
+        return ImmutableBinaryString::newFromHex(str_repeat($hexData, $count));
     }
 
     public function dumpInt(int $value, string $encoding): string

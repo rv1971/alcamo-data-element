@@ -4,6 +4,7 @@ namespace alcamo\data_element;
 
 use alcamo\dom\schema\component\SimpleTypeInterface;
 use alcamo\exception\{ErrorHandler, Unsupported};
+use alcamo\input_stream\StringInputStream;
 use alcamo\rdf_literal\LiteralInterface;
 
 /**
@@ -156,9 +157,19 @@ class StringSerializer extends AbstractSerializer
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
+        return
+            $this->dedumpFromStream(new StringInputStream($input), $datatype);
+    }
+
+    public function dedumpFromStream(
+        StringInputStream $istream,
+        ?SimpleTypeInterface $datatype = null
+    ): LiteralInterface {
         return $this->deWorkbench_->createLiteral(
-            (new Dumper())
-                ->dedumpString($input, $this->encodingParams_->getEncoding()),
+            (new Dumper())->dedumpStringFromStream(
+                $istream,
+                $this->encodingParams_->getEncoding()
+            ),
             $datatype ?? $this->datatype_
         );
     }

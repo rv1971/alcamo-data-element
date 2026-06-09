@@ -3,6 +3,7 @@
 namespace alcamo\data_element;
 
 use alcamo\exception\{DataValidationFailed, Eof, InvalidType, SyntaxError};
+use alcamo\input_stream\StringInputStream;
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\{
     ConstructedStringLiteral,
@@ -83,6 +84,13 @@ class ConstructedSerializerTest extends TestCase
                     $literal3->getDigest()
                 );
         }
+
+        $this->assertTrue(
+            $literal3->equals(
+                $serializer
+                    ->dedumpFromStream(new StringInputStream($expectedDump))
+            )
+        );
     }
 
     public function serializeProvider(): array
@@ -299,31 +307,18 @@ class ConstructedSerializerTest extends TestCase
     {
         $this->expectException(SyntaxError::class);
         $this->expectExceptionMessage(
-            'Syntax error in "[42"; not surrounded by "[" and "]"'
+            'Syntax error; no closing bracket found'
         );
 
-        (new ConstructedSerializer([ new StringSerializer() ]))->dedump('[42');
+        (new ConstructedSerializer([ new StringSerializer() ]))
+            ->dedump('["42"');
     }
 
     public function testDedumpException2(): void
     {
-
-        $serializer = ConstructedSerializer::newFromProps(
-            [
-                'serializers' => [ new IntegerSerializer() ],
-                'flags' => ConstructedSerializer::TRUNCATE_SILENTLY
-            ]
-        );
-
-        $this->assertTrue(
-            (new ConstructedStringLiteral([ new IntegerLiteral(42) ]))
-                ->equals($serializer->dedump('[ "42" "43" ]'))
-        );
-
         $this->expectException(SyntaxError::class);
         $this->expectExceptionMessage(
-            'Syntax error in "[ "42" "43" ]" at offset 7 (""43" ]"); '
-                . 'spurious trailing data'
+            'Syntax error in "43" ]"; no closing bracket found'
         );
 
         (new ConstructedSerializer([ new IntegerSerializer() ]))

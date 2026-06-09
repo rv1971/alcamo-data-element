@@ -4,6 +4,7 @@ namespace alcamo\data_element;
 
 use alcamo\binary_data\ImmutableBinaryString;
 use alcamo\exception\{LengthOutOfRange, SyntaxError};
+use alcamo\input_stream\StringInputStream;
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\{Base64BinaryLiteral, HexBinaryLiteral};
 use PHPUnit\Framework\TestCase;
@@ -86,6 +87,12 @@ class BinarySerializerTest extends TestCase
         $this->assertEquals($expectedDump, $dump);
 
         $this->assertTrue($literal->equals($serializer->dedump($dump)));
+
+        $this->assertTrue(
+            $literal->equals(
+                $serializer->dedumpFromStream(new StringInputStream($dump))
+            )
+        );
     }
 
     public function serializeProvider(): array

@@ -3,6 +3,7 @@
 namespace alcamo\data_element;
 
 use alcamo\dom\schema\component\SimpleTypeInterface;
+use alcamo\input_stream\StringInputStream;
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\LiteralInterface;
 use alcamo\xml\NamespaceConstantsInterface;
@@ -87,6 +88,11 @@ interface SerializerInterface extends NamespaceConstantsInterface
     /// The opposite of dump()
     public function dedump(
         string $input,
+        ?SimpleTypeInterface $datatype = null
+    ): LiteralInterface;
+
+    public function dedumpFromStream(
+        StringInputStream $istream,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface;
 }

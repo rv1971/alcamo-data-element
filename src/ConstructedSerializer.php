@@ -427,67 +427,67 @@ class ConstructedSerializer extends AbstractSerializer implements
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
-        if ($input[0] != '[' || $input[-1] != ']') {
-            /** @throw alcamo::exception::SyntaxError on attempt to
-             *  dedump an input which is not surrounded by brackets. */
+        return
+            $this->dedumpFromStream(new StringInputStream($input), $datatype);
+    }
+
+    public function dedumpFromStream(
+        StringInputStream $istream,
+        ?SimpleTypeInterface $datatype = null
+    ): LiteralInterface {
+        $istream->extractWs();
+
+        if ($istream->extract() != '[') {
+            /** @throw alcamo::exception::SyntaxError if not starting with an
+             *  opening bracket. */
             throw (new SyntaxError())->setMessageContext(
                 [
-                    'inData' => $input,
-                    'extraMessage' => "not surrounded by \"[\" and \"]\""
+                    'inData' => $istream->getRemainder(),
+                    'extraMessage' => 'no opening bracket found'
                 ]
             );
         }
 
-        /* Data without brackets. */
-        $stream = new StringInputStream(substr($input, 1, strlen($input) - 2));
-
-        /* Skip optional whitespace after opening bracket. */
-        $stream->extractWs();
-
         $result = [];
 
         foreach ($this as $key => $serializer) {
-             /* This splits the stream syntactically into items regardless of
-             * the item's serializers. The dedump($item) call will check
-             * whether the item syntax matches the expectation of the
-             * serializer. */
-            $item = $stream->extractToken(null, true);
+            $istream->extractWs();
 
-            if (!isset($item)) {
+            if ($istream->peek() == ']') {
                 break;
             }
 
-            $result[] = $serializer->dedump($item);
+            $result[] = $serializer->dedumpFromStream($istream);
         }
 
         if (!($this->flags_ & self::TRUNCATE_SILENTLY)) {
-            if ($stream->isGood()) {
-                /** @throw alcamo::exception::SyntaxError if there is input
-                 * left after all deserializers have been applied and $flags
-                 * do not contain TRUNCATE_SILENTLY. */
-                throw (new SyntaxError())->setMessageContext(
-                    [
-                        'inData' => $input,
-                        'atOffset' => 1 + $stream->getOffset(),
-                        'extraMessage' => 'spurious trailing data'
-                        ]
-                );
-            }
-
             if (count($result) < count($this)) {
                 /** @throw alcamo::exception::Eof if input ends before all
                  * deserializers have been applied and $flags do not contain
                  * TRUNCATE_SILENTLY. */
-                throw (new Eof('Failed to read from {object}'))
+                throw
+                    (new Eof("Failed to read from \"$istream\""))
                     ->setMessageContext(
                         [
-                            'object' => $input,
-                            'atOffset' => 1 + $stream->getOffset(),
+                            'atOffset' => $istream->getOffset(),
                             'forKey' => $key
                         ]
                     );
             }
         }
+
+        if ($istream->extract() != ']') {
+            /** @throw alcamo::exception::SyntaxError if not ending with a
+             *  closing bracket. */
+            throw (new SyntaxError())->setMessageContext(
+                [
+                    'inData' => $istream->getRemainder(),
+                    'extraMessage' => 'no closing bracket found'
+                ]
+            );
+        }
+
+        $istream->extractWs();
 
         return $this->createLiteral($result, $datatype ?? $this->datatype_);
     }

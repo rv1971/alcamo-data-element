@@ -4,6 +4,7 @@ namespace alcamo\data_element;
 
 use alcamo\binary_data\ImmutableBinaryString;
 use alcamo\dom\schema\component\SimpleTypeInterface;
+use alcamo\input_stream\StringInputStream;
 use alcamo\rdf_literal\LiteralInterface;
 
 /**
@@ -52,8 +53,15 @@ class BinarySerializer extends AbstractSerializer
         string $input,
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
+        return $this->dedumpFromStream(new StringInputStream($input));
+    }
+
+    public function dedumpFromStream(
+        StringInputStream $istream,
+        ?SimpleTypeInterface $datatype = null
+    ): LiteralInterface {
         return $this->deWorkbench_->createLiteral(
-            (new Dumper())->dedumpBinary($input),
+            (new Dumper())->dedumpBinaryFromStream($istream),
             $datatype ?? $this->datatype_
         );
     }

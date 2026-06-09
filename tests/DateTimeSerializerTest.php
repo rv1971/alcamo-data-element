@@ -3,6 +3,7 @@
 namespace alcamo\data_element;
 
 use alcamo\exception\{InvalidType, OutOfRange};
+use alcamo\input_stream\StringInputStream;
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\{
     DateLiteral,
@@ -91,6 +92,12 @@ class DateTimeSerializerTest extends TestCase
         $this->assertEquals($expectedDump, $dump);
 
         $this->assertTrue($literal2->equals($serializer->dedump($dump)));
+
+        $this->assertTrue(
+            $literal2->equals(
+                $serializer->dedumpFromStream(new StringInputStream($dump))
+            )
+        );
     }
 
     public function serializeProvider(): array

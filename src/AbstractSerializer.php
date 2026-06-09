@@ -8,6 +8,7 @@ use alcamo\exception\{
     InvalidType,
     LengthOutOfRange
 };
+use alcamo\input_stream\StringInputStream;
 use alcamo\range\NonNegativeRange;
 use alcamo\rdf_literal\LiteralInterface;
 
@@ -219,6 +220,15 @@ abstract class AbstractSerializer implements SerializerInterface
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface {
         return $this->deserialize(hex2bin($input), $datatype);
+    }
+
+    public function dedumpFromStream(
+        StringInputStream $istream,
+        ?SimpleTypeInterface $datatype = null
+    ): LiteralInterface {
+        $istream->extractWs();
+
+        return $this->dedump($istream->extractToken(null, true));
     }
 
     /// Check whether $literal is supported for this serializer class
