@@ -210,7 +210,8 @@ class BinarySerializerTest extends TestCase
         $this->expectException(SyntaxError::class);
 
         $this->expectExceptionMessage(
-            'Syntax error in "\'123X\'"'
+            'Syntax error, expected one of "<decimal-digits>" in "\'123X\'" '
+                . 'at offset 0 ("\'123X\'")'
         );
 
         (new IntegerSerializer())->dedump("'123X'");

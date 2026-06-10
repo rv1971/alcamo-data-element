@@ -91,6 +91,8 @@ interface SerializerInterface extends NamespaceConstantsInterface
         ?SimpleTypeInterface $datatype = null
     ): LiteralInterface;
 
+    /** Implementations MUST also extract any whitespace following the
+     *  data. */
     public function dedumpFromStream(
         StringInputStream $istream,
         ?SimpleTypeInterface $datatype = null

@@ -14,4 +14,12 @@ interface DeInstanceInterface
     public function getDataElement(): DataElementInterface;
 
     public function getLiteral(): LiteralInterface;
+
+    /**
+     * @brief Whether $this and $deInstance are considered equal
+     *
+     * This is the case iff both belong to the same data element and the
+     * literals are considered equal.
+     */
+    public function equals(self $deInstance): bool;
 }
