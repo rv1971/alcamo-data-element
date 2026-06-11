@@ -75,13 +75,13 @@ class DeInstanceTest extends TestCase
         $literals = [];
 
         $literals[1] =
-            new StringLiteral('foo', StringLiteral::XSD_NS . '#token');
+            new StringLiteral('foo', self::XSD_NS . '#token');
 
         $literals[2] =
-            new StringLiteral('foo', StringLiteral::XSD_NS . '#Name');
+            new StringLiteral('foo', self::XSD_NS . '#Name');
 
         $literals[3] =
-            new StringLiteral('bar', StringLiteral::XSD_NS . '#token');
+            new StringLiteral('bar', self::XSD_NS . '#token');
 
         $tests = [
             [ 1, 1, 1, 2, true ],

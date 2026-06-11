@@ -18,8 +18,11 @@ interface DeInstanceInterface
     /**
      * @brief Whether $this and $deInstance are considered equal
      *
-     * This is the case iff both belong to the same data element and the
-     * literals are considered equal.
+     * This is the case iff both implement this interface and belong to the
+     * same data element and the literals are considered equal.
+     *
+     * The parameter type is deliberately very open to allow comparison to
+     * almost anything.
      */
-    public function equals(self $deInstance): bool;
+    public function equals(object $deInstance): bool;
 }

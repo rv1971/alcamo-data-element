@@ -34,9 +34,10 @@ class DeInstance implements DeInstanceInterface
         return $this->literal_;
     }
 
-    public function equals(DeInstanceInterface $deInstance): bool
+    public function equals(object $deInstance): bool
     {
-        return $this->dataElement_ == $deInstance->dataElement_
+        return $deInstance instanceof DeInstanceInterface
+            && $this->dataElement_ == $deInstance->dataElement_
             && $this->literal_->equals($deInstance->literal_);
     }
 }
