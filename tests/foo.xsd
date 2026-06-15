@@ -8,6 +8,7 @@
     xmlns="http://foo.example.org/"
     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:alcamo-schema="tag:rv1971@web.de,2021:alcamo:ns:schema#"
     targetNamespace="http://foo.example.org/">
   <xsd:simpleType name="MyString" id="MyString" rdfs:label="My string">
     <xsd:restriction base="xsd:string"/>
@@ -47,5 +48,24 @@
         </xsd:restriction>
       </xsd:simpleType>
     </xsd:union>
+  </xsd:simpleType>
+
+  <xsd:simpleType
+      name="Quux"
+      id="Quux"
+      rdfs:label="Q.u.u.x."
+      alcamo-schema:enumerationType="QuuxEnumeration">
+    <xsd:restriction base="xsd:hexBinary">
+      <xsd:length value="2"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="QuuxEnumeration" id="QuuxEnumeration">
+    <xsd:restriction base="Quux">
+      <xsd:enumeration value="A000" rdfs:label="foo-baz"/>
+      <xsd:enumeration value="4000" rdfs:label="bar"/>
+      <xsd:enumeration value="2000" rdfs:label="baz"/>
+      <xsd:enumeration value="0400" rdfs:label="qux"/>
+    </xsd:restriction>
   </xsd:simpleType>
 </xsd:schema>

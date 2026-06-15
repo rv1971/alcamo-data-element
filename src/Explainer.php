@@ -2,6 +2,7 @@
 
 namespace alcamo\data_element;
 
+use alcamo\binary_data\ImmutableBinaryString;
 use alcamo\dom\schema\component\EnumerationTypeInterface;
 use alcamo\rdf_literal\{Lang, LiteralInterface};
 use alcamo\rdfa\HavingLabelInterface;
@@ -53,7 +54,11 @@ class Explainer implements ExplainerInterface
 
     /** The label for the literal value taken based on the literal data type
      *  may be richer than that from the datatype type since it is possible
-     *  that the latter is an enumeration while the former is not. */
+     *  that the latter is an enumeration while the former is not.
+     *
+     * If the type is an enumeration or has a link to an enumeration type,
+     * look for a label in the relevant enumerator.
+     */
     public function getLiteralLabel(
         LiteralInterface $literal
     ): ?string {
@@ -62,6 +67,18 @@ class Explainer implements ExplainerInterface
         if ($datatype instanceof EnumerationTypeInterface) {
             return $datatype->getEnumerators()[(string)$literal]
             ->getRdfaData()->getLabel($this->lang_, $this->flags_);
+        }
+
+        $enumerationType = $datatype->getEnumerationType();
+
+        if (isset($enumerationType)) {
+            $enumerator =
+                $enumerationType->getEnumerators()[(string)$literal] ?? null;
+
+            if (isset($enumerator)) {
+                return $enumerator->getRdfaData()
+                    ->getLabel($this->lang_, $this->flags_);
+            }
         }
 
         return null;
@@ -87,14 +104,43 @@ class Explainer implements ExplainerInterface
                     $this->explainAsMarkdownText($item)->toOrderedListItem($i++)
                 );
             }
-        } else {
-            $literalLabel = $this->getLiteralLabel($deInstance->getLiteral());
 
-            $result->appendLine(
-                isset($literalLabel)
-                    ? "$dataElementLabel: $literalLabel"
-                    : $dataElementLabel
-            );
+            return $result;
+        }
+
+        $literalLabel = $this->getLiteralLabel($deInstance->getLiteral());
+
+        if (isset($literalLabel)) {
+            $result->appendLine("$dataElementLabel: $literalLabel");
+            return $result;
+        }
+
+        $result->appendLine($dataElementLabel);
+
+        $datatype = $deInstance->getDataElement()->getDatatype();
+
+        if (
+            $datatype->getPrimitiveType()->getXName()->getLocalName()
+                == 'hexBinary'
+        ) {
+            $enumerationType = $datatype->getEnumerationType();
+
+            if (isset($enumerationType)) {
+                $literalValue = $deInstance->getLiteral()->getValue();
+
+                foreach (
+                    $enumerationType->getEnumerators() as $value => $enumerator
+                ) {
+                    $value = ImmutableBinaryString::newFromHex($value);
+
+                    if ($literalValue->bitwiseAnd($value) == $value) {
+                        $result->appendLine(
+                            '* ' . $enumerator->getRdfaData()
+                                ->getLabel($this->lang_, $this->flags_)
+                        );
+                    }
+                }
+            }
         }
 
         return $result;

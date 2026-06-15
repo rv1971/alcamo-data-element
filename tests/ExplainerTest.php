@@ -2,7 +2,11 @@
 
 namespace alcamo\data_element;
 
-use alcamo\rdf_literal\{ConstructedStringLiteral, StringLiteral};
+use alcamo\rdf_literal\{
+    ConstructedStringLiteral,
+    HexBinaryLiteral,
+    StringLiteral
+};
 use alcamo\uri\FileUriFactory;
 use PHPUnit\Framework\TestCase;
 
@@ -56,11 +60,17 @@ class ExplainerTest extends TestCase
             [ [ 'rdfs:label', 'FBBQ' ] ]
         );
 
+        $quuxType = $schema->getGlobalType(self::FOO_NS . ' Quux');
+        $quuxUri = $quuxType->getUri();
+
+        $quuxDataElement = new DataElement($quuxType);
+
         $constructedDataElement = new ConstructedDataElement(
             [
                 $myTokenDataElement,
                 $fooBarDataElement,
-                $fooBarBazQuxDataElement
+                $fooBarBazQuxDataElement,
+                $quuxDataElement
             ]
         );
 
@@ -130,13 +140,44 @@ class ExplainerTest extends TestCase
                 'FBBQ'
             ],
             [
+                new DeInstance(
+                    $quuxDataElement,
+                    new HexBinaryLiteral('2000', $quuxUri)
+                ),
+                null,
+                'Q.u.u.x.: baz'
+            ],
+            [
+                new DeInstance(
+                    $quuxDataElement,
+                    new HexBinaryLiteral('6000', $quuxUri)
+                ),
+                null,
+                "Q.u.u.x.\n"
+                . "* bar\n"
+                . "* baz"
+            ],
+            [
+                new DeInstance(
+                    $quuxDataElement,
+                    new HexBinaryLiteral('E400', $quuxUri)
+                ),
+                null,
+                "Q.u.u.x.\n"
+                . "* foo-baz\n"
+                . "* bar\n"
+                . "* baz\n"
+                . "* qux"
+            ],
+            [
                 new ConstructedDeInstance(
                     $constructedDataElement,
                     new ConstructedStringLiteral(
                         [
                             new StringLiteral('barbar', $myTokenUri),
                             new StringLiteral('FOO', $fooBarUri),
-                            new StringLiteral('BAZ', $fooBarBazQuxUri)
+                            new StringLiteral('BAZ', $fooBarBazQuxUri),
+                            new HexBinaryLiteral('6400', $quuxUri)
                         ]
                     )
                 ),
@@ -144,7 +185,11 @@ class ExplainerTest extends TestCase
                 "string\n"
                 . " 1. My token\n"
                 . " 2. Foo/bar: Foo\n"
-                . " 3. FBBQ: Baz"
+                . " 3. FBBQ: Baz\n"
+                . " 4. Q.u.u.x.\n"
+                . "    * bar\n"
+                . "    * baz\n"
+                . "    * qux"
             ]
         ];
     }
