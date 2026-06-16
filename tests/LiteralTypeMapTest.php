@@ -2,7 +2,7 @@
 
 namespace alcamo\data_element;
 
-use alcamo\dom\schema\SchemaFactory;
+use alcamo\dom\schema\Schema;
 use alcamo\dom\schema\component\SimpleTypeInterface;
 use alcamo\rdf_literal\{
     AnyUriLiteral,
@@ -38,7 +38,7 @@ use PHPUnit\Framework\TestCase;
 
 class LiteralTypeMapTest extends TestCase
 {
-    public const XSD_NS = SchemaFactory::XSD_NS;
+    public const XSD_NS = Schema::XSD_NS;
 
     private static $literalTypeMap_;
 

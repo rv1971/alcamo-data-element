@@ -2,7 +2,7 @@
 
 namespace alcamo\data_element;
 
-use alcamo\dom\schema\SchemaFactory;
+use alcamo\dom\schema\Schema;
 use alcamo\rdf_literal\{
     Base64BinaryLiteral,
     BooleanLiteral,
@@ -16,7 +16,7 @@ use PHPUnit\Framework\TestCase;
 
 class LiteralFactoryTest extends TestCase
 {
-    public const XSD_NS = SchemaFactory::XSD_NS;
+    public const XSD_NS = Schema::XSD_NS;
 
     public const FOO_NS = 'http://foo.example.org/';
 
@@ -26,13 +26,12 @@ class LiteralFactoryTest extends TestCase
     {
         self::$literalFactory_ = new LiteralFactory();
 
-        self::$literalFactory_->getSchemaFactory()->getMainSchema()
-            ->addUris(
-                [
-                    (new FileUriFactory())
-                        ->create(__DIR__ . DIRECTORY_SEPARATOR . 'foo.xsd')
-                ]
-            );
+        self::$literalFactory_->getSchema()->addUris(
+            [
+                (new FileUriFactory())
+                    ->create(__DIR__ . DIRECTORY_SEPARATOR . 'foo.xsd')
+            ]
+        );
     }
 
     /**
@@ -43,7 +42,7 @@ class LiteralFactoryTest extends TestCase
         $value,
         $expectedLiteral
     ): void {
-        $schema = self::$literalFactory_->getSchemaFactory()->getMainSchema();
+        $schema = self::$literalFactory_->getSchema();
 
         $datatype = $schema->getGlobalType($datatypeXName);
 

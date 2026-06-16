@@ -2,9 +2,10 @@
 
 namespace alcamo\data_element;
 
-use alcamo\dom\schema\SchemaFactory;
+use alcamo\dom\schema\{Schema, SchemaFactory};
 use alcamo\exception\DataValidationFailed;
 use alcamo\rdf_literal\{IntegerLiteral, LanguageLiteral, StringLiteral};
+use alcamo\uri\FileUriFactory;
 use PHPUnit\Framework\TestCase;
 
 class DeWorkbenchTest extends TestCase
@@ -14,8 +15,8 @@ class DeWorkbenchTest extends TestCase
         $deWorkbench = DeWorkbench::getMainInstance();
 
         $this->assertInstanceOf(
-            SchemaFactory::class,
-            $deWorkbench->getSchemaFactory()
+            Schema::class,
+            $deWorkbench->getSchema()
         );
 
         $this->assertInstanceOf(
@@ -29,13 +30,13 @@ class DeWorkbenchTest extends TestCase
         );
 
         $this->assertSame(
-            $deWorkbench->getSchemaFactory(),
-            $deWorkbench->getLiteralFactory()->getSchemaFactory()
+            $deWorkbench->getSchema(),
+            $deWorkbench->getLiteralFactory()->getSchema()
         );
 
         $this->assertSame(
-            $deWorkbench->getSchemaFactory(),
-            $deWorkbench->getLiteralTypeMap()->getSchemaFactory()
+            $deWorkbench->getSchema(),
+            $deWorkbench->getLiteralTypeMap()->getSchema()
         );
 
         $deWorkbench2 = DeWorkbench::newFromFactories(
@@ -53,7 +54,7 @@ class DeWorkbenchTest extends TestCase
             $deWorkbench2->getLiteralTypeMap()
         );
 
-        $datatypeXName = SchemaFactory::XSD_NS . ' token';
+        $datatypeXName = Schema::XSD_NS . ' token';
 
         $rdfaData = [ [ 'rdfs:label', 'foo' ] ];
 
@@ -76,12 +77,19 @@ class DeWorkbenchTest extends TestCase
 
         $this->expectExceptionMessage(
             'Validation failed; Literal factory and literal type map have '
-                . 'different schema factories'
+                . 'different schemas'
         );
 
         DeWorkbench::newFromFactories(
-            new LiteralFactory(new SchemaFactory()),
-            new LiteralTypeMap(new SchemaFactory()),
+            new LiteralFactory(),
+            new LiteralTypeMap(
+                (new SchemaFactory())->createFromUris(
+                    [
+                        (new FileUriFactory())
+                            ->create(__DIR__ . DIRECTORY_SEPARATOR . 'bar.xsd')
+                    ]
+                )
+            )
         );
     }
 
@@ -90,7 +98,7 @@ class DeWorkbenchTest extends TestCase
         $deWorkbench = DeWorkbench::getMainInstance();
 
         $dataElement = new DataElement(
-            $deWorkbench->getSchemaFactory()->createTypeFromUri(
+            $deWorkbench->getSchema()->createTypeFromUri(
                 StringLiteral::getClassDefaultDatatypeUri()
             )
         );
@@ -103,7 +111,7 @@ class DeWorkbenchTest extends TestCase
         );
 
         $this->assertSame(
-            $deWorkbench->getSchemaFactory()->createTypeFromUri(
+            $deWorkbench->getSchema()->createTypeFromUri(
                 LanguageLiteral::getClassDefaultDatatypeUri()
             ),
             $type

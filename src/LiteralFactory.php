@@ -2,7 +2,7 @@
 
 namespace alcamo\data_element;
 
-use alcamo\dom\schema\{SchemaFactory, TypeMap};
+use alcamo\dom\schema\{Schema, SchemaFactory, TypeMap};
 use alcamo\dom\schema\component\SimpleTypeInterface;
 use alcamo\rdf_literal\{LiteralFactory as RdfLiteralFactory, LiteralInterface};
 
@@ -26,14 +26,14 @@ use alcamo\rdf_literal\{LiteralFactory as RdfLiteralFactory, LiteralInterface};
  */
 class LiteralFactory
 {
-    private $schemaFactory_;      ///< SchemaFactory
+    private $schema_;             ///< Schema
     private $typeToLiteralClass_; ///< TypeMap
 
     public function __construct(
-        ?SchemaFactory $schemaFactory = null,
+        ?Schema $schema = null,
         ?RdfLiteralFactory $rdfLiteralFactory = null
     ) {
-        $this->schemaFactory_ = $schemaFactory ?? new SchemaFactory();
+        $this->schema_ = $schema ?? (new SchemaFactory())->getMainSchema();
 
         if (!isset($rdfLiteralFactory)) {
             $rdfLiteralFactory = new RdfLiteralFactory();
@@ -44,18 +44,16 @@ class LiteralFactory
         foreach (
             $rdfLiteralFactory::getDatatypeUriToClass() as $uri => $class
         ) {
-            $map[
-                (string)$this->schemaFactory_->createTypeFromUri($uri)
-                    ->getXName()
-            ] = $class;
+            $map[(string)$this->schema_->createTypeFromUri($uri)->getXName()] =
+                $class;
         }
 
         $this->typeToLiteralClass_ = new TypeMap($map);
     }
 
-    public function getSchemaFactory(): SchemaFactory
+    public function getSchema(): Schema
     {
-        return $this->schemaFactory_;
+        return $this->schema_;
     }
 
     /**
@@ -79,7 +77,7 @@ class LiteralFactory
         if (
             is_int($value)
                 && $datatype
-                ->isEqualToOrDerivedFrom(SchemaFactory::XSD_NS . ' boolean')
+                ->isEqualToOrDerivedFrom(Schema::XSD_NS . ' boolean')
         ) {
             $value = (bool)$value;
         }

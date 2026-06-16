@@ -3,7 +3,7 @@
 namespace alcamo\data_element;
 
 use alcamo\dom\schema\component\SimpleTypeInterface;
-use alcamo\dom\schema\SchemaFactory;
+use alcamo\dom\schema\{Schema, SchemaFactory};
 use alcamo\exception\DataValidationFailed;
 use alcamo\rdf_literal\{LangStringLiteral, LiteralInterface, StringLiteral};
 
@@ -14,19 +14,19 @@ use alcamo\rdf_literal\{LangStringLiteral, LiteralInterface, StringLiteral};
  */
 class LiteralTypeMap
 {
-    private $schemaFactory_; ///< SchemaFactory
+    private $schema_; ///< Schema
 
     /// map of string to SimpleTypeInterface
     private $literalClassToDefaultDatatype_ = [];
 
-    public function __construct(?SchemaFactory $schemaFactory = null)
+    public function __construct(?Schema $schema = null)
     {
-        $this->schemaFactory_ = $schemaFactory ?? new SchemaFactory();
+        $this->schema_ = $schema ?? (new SchemaFactory())->getMainSchema();
     }
 
-    public function getSchemaFactory(): SchemaFactory
+    public function getSchema(): Schema
     {
-        return $this->schemaFactory_;
+        return $this->schema_;
     }
 
     public function getDefaultDatatype($literalClass): SimpleTypeInterface
@@ -73,7 +73,7 @@ class LiteralTypeMap
 
     protected function createTypeFromUri($datatypeUri): SimpleTypeInterface
     {
-        return $this->schemaFactory_->createTypeFromUri(
+        return $this->schema_->createTypeFromUri(
             $datatypeUri == LangStringLiteral::getClassDefaultDatatypeUri()
                 ? StringLiteral::getClassDefaultDatatypeUri()
                 : $datatypeUri

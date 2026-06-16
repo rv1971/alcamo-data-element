@@ -35,17 +35,13 @@ class DeWorkbench
         LiteralFactory $literalFactory,
         LiteralTypeMap $literalTypeMap
     ): self {
-        if (
-            $literalFactory->getSchemaFactory()
-                !== $literalTypeMap->getSchemaFactory()
-        ) {
+        if ($literalFactory->getSchema() !== $literalTypeMap->getSchema()) {
             /** @throw alcamo::exception::DataValidationFailed on attempt to
-             *  create a workbench from objects based on different schema
-             *  factories. */
+             *  create a workbench from objects based on different schemas. */
             throw (new DataValidationFailed())->setMessageContext(
                 [
                     'extraMessage' => 'Literal factory and literal type map '
-                        . 'have different schema factories'
+                        . 'have different schemas'
                 ]
             );
         }
@@ -53,24 +49,22 @@ class DeWorkbench
         return new static($literalFactory, $literalTypeMap);
     }
 
-    public static function newFromSchemaFactory(
-        SchemaFactory $schemaFactory
-    ): self {
+    public static function newFromSchema(Schema $schema): self
+    {
         return new static(
-            new LiteralFactory($schemaFactory),
-            new LiteralTypeMap($schemaFactory)
+            new LiteralFactory($schema),
+            new LiteralTypeMap($schema)
         );
     }
 
     public static function getMainInstance(): self
     {
         return self::$mainInstance_ ?? (
-            self::$mainInstance_
-                = static::newFromSchemaFactory(new SchemaFactory())
+            self::$mainInstance_ =
+                static::newFromSchema((new SchemaFactory())->getMainSchema())
         );
     }
 
-    protected $schemaFactory_;  ///< SchemaFactory
     protected $schema_;         ///< Schema
     protected $literalFactory_; ///< LiteralFactory
     protected $literalTypeMap_; ///< LiteralTypeMap
@@ -79,8 +73,7 @@ class DeWorkbench
         LiteralFactory $literalFactory,
         LiteralTypeMap $literalTypeMap
     ) {
-        $this->schemaFactory_ = $literalFactory->getSchemaFactory();
-        $this->schema_ = $this->schemaFactory_->getMainSchema();
+        $this->schema_ = $literalFactory->getSchema();
         $this->literalFactory_ = $literalFactory;
         $this->literalTypeMap_ = $literalTypeMap;
 
@@ -102,11 +95,6 @@ class DeWorkbench
         }
 
         $this->schema_->addUris($xsdUris);
-    }
-
-    public function getSchemaFactory(): SchemaFactory
-    {
-        return $this->schemaFactory_;
     }
 
     public function getSchema(): Schema
