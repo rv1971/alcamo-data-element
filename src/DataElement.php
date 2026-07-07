@@ -30,8 +30,7 @@ class DataElement implements DataElementInterface
         $this->datatype_ = $datatype;
 
         $this->rdfaData_ = isset($rdfaData)
-            ? ($datatype->getRdfaData()->toMutable()
-               ->replace(ImmutableRdfaData::newFromData($rdfaData))
+            ? ($datatype->getRdfaData()->toMutable()->replace($rdfaData)
                ->toImmutable())
             : $datatype->getRdfaData();
     }

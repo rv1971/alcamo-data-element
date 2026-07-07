@@ -59,8 +59,8 @@ class LiteralFactory
     /**
      * @brief Create a literal
      *
-     * @return RDF Literal object of the literal type of the closest ancestor
-     * of $datatype for which a literal type is known, containing the URI of
+     * @return RDF Literal object of the literal class of the closest ancestor
+     * of $datatype for which a literal class is known, containing the URI of
      * $datatype itself.
      */
     public function create(
@@ -71,7 +71,7 @@ class LiteralFactory
 
         /** If $value is an integer and $datatype is (derived from)
          *  `xsd:boolean`, accept any nonzero value as `true`. This differs
-         *  from the bahaviour of alcamo::rdf_literal::BooleanLiteral which
+         *  from the behaviour of alcamo::rdf_literal::BooleanLiteral which
          *  only accepts the lexical space of the boolean type (0,1, false and
          *  true). */
         if (
