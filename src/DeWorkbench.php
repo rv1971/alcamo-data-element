@@ -6,6 +6,7 @@ use alcamo\dom\schema\{Schema, SchemaFactory};
 use alcamo\dom\schema\component\SimpleTypeInterface;
 use alcamo\exception\DataValidationFailed;
 use alcamo\rdf_literal\LiteralInterface;
+use alcamo\rdf_literal_workbench\{LiteralFactory, LiteralTypeMap};
 use alcamo\uri\FileUriFactory;
 use Composer\InstalledVersions;
 

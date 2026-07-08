@@ -6,7 +6,7 @@
     "require": {
         "php": "7.3 - 8.0",
         "alcamo/input-stream": "^0.4",
-        "alcamo/dom": "0.16 - 0.18"
+        "alcamo/rdf-literal-workbench": "^0.1"
     },
     "autoload": {
 	"psr-4": {

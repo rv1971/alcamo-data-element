@@ -5,6 +5,7 @@ namespace alcamo\data_element;
 use alcamo\dom\schema\{Schema, SchemaFactory};
 use alcamo\exception\DataValidationFailed;
 use alcamo\rdf_literal\{IntegerLiteral, LanguageLiteral, StringLiteral};
+use alcamo\rdf_literal_workbench\{LiteralFactory, LiteralTypeMap};
 use alcamo\uri\FileUriFactory;
 use PHPUnit\Framework\TestCase;
 
