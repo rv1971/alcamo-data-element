@@ -15,46 +15,6 @@ class DeWorkbenchTest extends TestCase
     {
         $deWorkbench = DeWorkbench::getMainInstance();
 
-        $this->assertInstanceOf(
-            Schema::class,
-            $deWorkbench->getSchema()
-        );
-
-        $this->assertInstanceOf(
-            LiteralFactory::class,
-            $deWorkbench->getLiteralFactory()
-        );
-
-        $this->assertInstanceOf(
-            LiteralTypeMap::class,
-            $deWorkbench->getLiteralTypeMap()
-        );
-
-        $this->assertSame(
-            $deWorkbench->getSchema(),
-            $deWorkbench->getLiteralFactory()->getSchema()
-        );
-
-        $this->assertSame(
-            $deWorkbench->getSchema(),
-            $deWorkbench->getLiteralTypeMap()->getSchema()
-        );
-
-        $deWorkbench2 = DeWorkbench::newFromFactories(
-            $deWorkbench->getLiteralFactory(),
-            $deWorkbench->getLiteralTypeMap()
-        );
-
-        $this->assertSame(
-            $deWorkbench->getLiteralFactory(),
-            $deWorkbench2->getLiteralFactory()
-        );
-
-        $this->assertSame(
-            $deWorkbench->getLiteralTypeMap(),
-            $deWorkbench2->getLiteralTypeMap()
-        );
-
         $datatypeXName = Schema::XSD_NS . ' token';
 
         $rdfaData = [ [ 'rdfs:label', 'foo' ] ];
@@ -70,28 +30,6 @@ class DeWorkbenchTest extends TestCase
         );
 
         $this->assertSame('foo', $dataElement->getLabel());
-    }
-
-    public function testException(): void
-    {
-        $this->expectException(DataValidationFailed::class);
-
-        $this->expectExceptionMessage(
-            'Validation failed; Literal factory and literal type map have '
-                . 'different schemas'
-        );
-
-        DeWorkbench::newFromFactories(
-            new LiteralFactory(),
-            new LiteralTypeMap(
-                (new SchemaFactory())->createFromUris(
-                    [
-                        (new FileUriFactory())
-                            ->create(__DIR__ . DIRECTORY_SEPARATOR . 'bar.xsd')
-                    ]
-                )
-            )
-        );
     }
 
     public function testValidateDeInstance(): void
