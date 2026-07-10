@@ -10,8 +10,8 @@ use alcamo\rdf_literal\AbstractConstructedLiteral;
  * @brief Constructed data element instance containing data element instances
  * for subfields
  *
- * The ArrayAccess and Iterator interfaces gice access to the single data
- * elements.
+ * The ArrayAccess and Iterator interfaces give access to the single data
+ * element instances.
  *
  * @date Last reviewed 2026-05-05
  */

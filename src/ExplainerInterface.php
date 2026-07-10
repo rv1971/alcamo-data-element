@@ -16,8 +16,15 @@ interface ExplainerInterface
 
     public function getFlags(): int;
 
+    /// Data element label, taking into account language and flags
+    public function getDataElementLabel(
+        DataElementInterface $dataElement
+    ): ?string;
+
+    /// Literal label, e.g. if the literal is an enumerator
     public function getLiteralLabel(LiteralInterface $literal): ?string;
 
+    /// Create markdown text that explains the data element instance
     public function explainAsMarkdownText(
         DeInstanceInterface $deInstance
     ): MarkdownText;

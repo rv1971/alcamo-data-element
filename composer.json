@@ -1,7 +1,7 @@
 {
     "name": "alcamo/data-element",
-    "description": "Data element serialization",
-    "keywords": [ "data-element", "serialization" ],
+    "description": "Data elements",
+    "keywords": [ "data-element" ],
     "license": "Apache-2.0",
     "require": {
         "php": "7.3 - 8.5",

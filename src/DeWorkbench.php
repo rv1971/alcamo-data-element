@@ -2,13 +2,11 @@
 
 namespace alcamo\data_element;
 
-use alcamo\dom\schema\{Schema, SchemaFactory};
+use alcamo\dom\schema\SchemaFactory;
 use alcamo\dom\schema\component\SimpleTypeInterface;
 use alcamo\exception\DataValidationFailed;
 use alcamo\rdf_literal\LiteralInterface;
 use alcamo\rdf_literal_workbench\LiteralWorkbench;
-use alcamo\uri\FileUriFactory;
-use Composer\InstalledVersions;
 
 /**
  * @brief Create data elements and validate data element instances
@@ -28,7 +26,7 @@ class DeWorkbench extends LiteralWorkbench
     }
 
     public function createDataElementFromXName(
-        $datatypeXName,
+        string $datatypeXName,
         $rdfaData = null
     ): DataElementInterface {
         return new DataElement(
@@ -40,10 +38,10 @@ class DeWorkbench extends LiteralWorkbench
     public function validateDeInstance(
         DeInstanceInterface $deInstance
     ): SimpleTypeInterface {
-        $datatype = $this->validateLiteral($deInstance->getLiteral());
-
         $dataElementDatatypeXName =
             $deInstance->getDataElement()->getDatatype()->getXName();
+
+        $datatype = $this->validateLiteral($deInstance->getLiteral());
 
         if (!$datatype->isEqualToOrDerivedFrom($dataElementDatatypeXName)) {
             /** @throw alcamo::exception::DataValidationFailed if the literal

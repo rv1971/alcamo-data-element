@@ -47,6 +47,11 @@ class Explainer implements ExplainerInterface
         return $this->flags_;
     }
 
+    public function getDeWorkbench(): DeWorkbench
+    {
+        return $this->deWorkbench_;
+    }
+
     public function getDataElementLabel(
         DataElementInterface $dataElement
     ): ?string {
