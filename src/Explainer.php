@@ -4,6 +4,7 @@ namespace alcamo\data_element;
 
 use alcamo\binary_data\ImmutableBinaryString;
 use alcamo\dom\schema\component\EnumerationTypeInterface;
+use alcamo\markdown\MarkdownText;
 use alcamo\rdf_literal\{Lang, LiteralInterface};
 use alcamo\rdfa\HavingLabelInterface;
 
@@ -96,11 +97,11 @@ class Explainer implements ExplainerInterface
             $this->getDataElementLabel($deInstance->getDataElement());
 
         if ($deInstance instanceof ConstructedDeInstance) {
-            $result->appendLine($dataElementLabel);
+            $result->append($dataElementLabel);
 
             $i = 1;
             foreach ($deInstance as $item) {
-                $result->appendMarkdownText(
+                $result->append(
                     $this->explainAsMarkdownText($item)->toOrderedListItem($i++)
                 );
             }
@@ -111,11 +112,11 @@ class Explainer implements ExplainerInterface
         $literalLabel = $this->getLiteralLabel($deInstance->getLiteral());
 
         if (isset($literalLabel)) {
-            $result->appendLine("$dataElementLabel: $literalLabel");
+            $result->append("$dataElementLabel: $literalLabel");
             return $result;
         }
 
-        $result->appendLine($dataElementLabel);
+        $result->append($dataElementLabel);
 
         $datatype = $deInstance->getDataElement()->getDatatype();
 
@@ -134,7 +135,7 @@ class Explainer implements ExplainerInterface
                     $value = ImmutableBinaryString::newFromHex($value);
 
                     if ($literalValue->bitwiseAnd($value) == $value) {
-                        $result->appendLine(
+                        $result->append(
                             '* ' . $enumerator->getRdfaData()
                                 ->getLabel($this->lang_, $this->flags_)
                         );

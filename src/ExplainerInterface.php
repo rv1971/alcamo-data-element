@@ -2,6 +2,7 @@
 
 namespace alcamo\data_element;
 
+use alcamo\markdown\MarkdownText;
 use alcamo\rdf_literal\{Lang, LiteralInterface};
 
 /**
