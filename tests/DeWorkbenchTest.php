@@ -3,8 +3,15 @@
 namespace alcamo\data_element;
 
 use alcamo\dom\schema\{Schema, SchemaFactory};
+use alcamo\dom\schema\component\SimpleTypeInterface;
 use alcamo\exception\DataValidationFailed;
-use alcamo\rdf_literal\{IntegerLiteral, LanguageLiteral, StringLiteral};
+use alcamo\rdf_literal\{
+    ConstructedStringLiteral,
+    DurationLiteral,
+    IntegerLiteral,
+    LanguageLiteral,
+    StringLiteral
+};
 use alcamo\rdf_literal_workbench\{LiteralFactory, LiteralTypeMap};
 use alcamo\uri\FileUriFactory;
 use PHPUnit\Framework\TestCase;
@@ -71,5 +78,54 @@ class DeWorkbenchTest extends TestCase
                 new IntegerLiteral(42)
             )
         );
+    }
+
+    public function testValidateDeInstanceException(): void
+    {
+        $deWorkbench = DeWorkbench::getMainInstance();
+
+        $schema = $deWorkbench->getSchema();
+
+        $dataElement1 = new DataElement(
+            $schema->getGlobalType(Schema::XSD_NS . ' integer')
+        );
+
+        $dataElement2 = new DataElement(
+            $schema->getGlobalType(Schema::XSD_NS . ' string')
+        );
+
+        $dataElement = new ConstructedDataElement(
+            [ $dataElement1, $dataElement2 ]
+        );
+
+        $literal1 = new IntegerLiteral(42);
+        $literal2 = new StringLiteral('bar');
+        $literal3 = new DurationLiteral('P1Y');
+
+        $validDeInstance = new ConstructedDeInstance(
+            $dataElement,
+            new ConstructedStringLiteral([ $literal1, $literal2 ])
+        );
+
+        $this->assertInstanceOf(
+            SimpleTypeInterface::class,
+            $deWorkbench->validateDeInstance($validDeInstance)
+        );
+
+        $invalidDeInstance = new ConstructedDeInstance(
+            $dataElement,
+            new ConstructedStringLiteral([ $literal1, $literal3 ])
+        );
+
+        $this->expectException(DataValidationFailed::class);
+
+        $this->expectExceptionMessage(
+            'Validation failed; literal datatype '
+                . 'http://www.w3.org/2001/XMLSchema duration not derived '
+                . 'from data element datatype '
+                . 'http://www.w3.org/2001/XMLSchema string'
+        );
+
+        $deWorkbench->validateDeInstance($invalidDeInstance);
     }
 }

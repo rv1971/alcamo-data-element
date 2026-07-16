@@ -56,6 +56,12 @@ class DeWorkbench extends LiteralWorkbench
             );
         }
 
+        if ($deInstance instanceof ConstructedDeInstance) {
+            foreach ($deInstance as $item) {
+                $this->validateDeInstance($item);
+            }
+        }
+
         return $datatype;
     }
 }
