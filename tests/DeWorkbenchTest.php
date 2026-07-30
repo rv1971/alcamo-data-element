@@ -4,7 +4,7 @@ namespace alcamo\data_element;
 
 use alcamo\dom\schema\{Schema, SchemaFactory};
 use alcamo\dom\schema\component\SimpleTypeInterface;
-use alcamo\exception\DataValidationFailed;
+use alcamo\exception\InvalidType;
 use alcamo\rdf_literal\{
     ConstructedStringLiteral,
     DurationLiteral,
@@ -63,13 +63,11 @@ class DeWorkbenchTest extends TestCase
             $type
         );
 
-        $this->expectException(DataValidationFailed::class);
+        $this->expectException(InvalidType::class);
 
         $this->expectExceptionMessage(
-            'Validation failed; literal datatype '
-                . 'http://www.w3.org/2001/XMLSchema integer not derived '
-                . 'from data element datatype '
-                . 'http://www.w3.org/2001/XMLSchema string'
+            'Invalid type "http://www.w3.org/2001/XMLSchema integer", '
+                . 'expected one of "derived from http://www.w3.org/2001/X..."'
         );
 
         $deWorkbench->validateDeInstance(
@@ -117,13 +115,11 @@ class DeWorkbenchTest extends TestCase
             new ConstructedStringLiteral([ $literal1, $literal3 ])
         );
 
-        $this->expectException(DataValidationFailed::class);
+        $this->expectException(InvalidType::class);
 
         $this->expectExceptionMessage(
-            'Validation failed; literal datatype '
-                . 'http://www.w3.org/2001/XMLSchema duration not derived '
-                . 'from data element datatype '
-                . 'http://www.w3.org/2001/XMLSchema string'
+            'Invalid type "http://www.w3.org/2001/XMLSchema dura...", '
+                . 'expected one of "derived from http://www.w3.org/2001/X..."'
         );
 
         $deWorkbench->validateDeInstance($invalidDeInstance);

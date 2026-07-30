@@ -4,7 +4,6 @@ namespace alcamo\data_element;
 
 use alcamo\dom\schema\SchemaFactory;
 use alcamo\dom\schema\component\SimpleTypeInterface;
-use alcamo\exception\DataValidationFailed;
 use alcamo\rdf_literal\LiteralInterface;
 use alcamo\rdf_literal_workbench\LiteralWorkbench;
 
@@ -43,18 +42,7 @@ class DeWorkbench extends LiteralWorkbench
 
         $datatype = $this->validateLiteral($deInstance->getLiteral());
 
-        if (!$datatype->isEqualToOrDerivedFrom($dataElementDatatypeXName)) {
-            /** @throw alcamo::exception::DataValidationFailed if the literal
-             *  datatype is not derived from (or equal to) the data element's
-             *  datatype. */
-            throw (new DataValidationFailed())->setMessageContext(
-                [
-                    'extraMessage' => "literal datatype {$datatype->getXName()}"
-                        . " not derived from data element datatype "
-                        . $dataElementDatatypeXName
-                ]
-            );
-        }
+        $datatype->throwUnlessEqualToOrDerivedFrom($dataElementDatatypeXName);
 
         if ($deInstance instanceof ConstructedDeInstance) {
             foreach ($deInstance as $item) {
