@@ -14,14 +14,13 @@ use alcamo\rdf_literal_workbench\LiteralWorkbench;
  */
 class DeWorkbench extends LiteralWorkbench
 {
-    private static $mainInstance_; ///< self
-
     public static function getMainInstance(): LiteralWorkbench
     {
-        return self::$mainInstance_ ?? (
-            self::$mainInstance_ =
-                static::newFromSchema((new SchemaFactory())->getMainSchema())
-        );
+        static $instance;
+
+        return $instance ??
+            ($instance =
+             self::newFromSchema((new SchemaFactory())->getMainSchema()));
     }
 
     public function createDataElementFromXName(
