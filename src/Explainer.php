@@ -71,8 +71,12 @@ class Explainer implements ExplainerInterface
         $datatype = $this->deWorkbench_->validateLiteral($literal);
 
         if ($datatype instanceof EnumerationTypeInterface) {
-            return $datatype->getEnumerators()[(string)$literal]
-            ->getRdfaData()->getLabel($this->lang_, $this->flags_);
+            if (isset($datatype->getEnumerators()[(string)$literal])) {
+                return $datatype->getEnumerators()[(string)$literal]
+                ->getRdfaData()->getLabel($this->lang_, $this->flags_);
+            } else {
+                return "unknown enumerator $literal";
+            }
         }
 
         $enumerationType = $datatype->getEnumerationType();
