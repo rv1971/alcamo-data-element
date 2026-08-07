@@ -7,6 +7,7 @@ use alcamo\dom\schema\component\EnumerationTypeInterface;
 use alcamo\markdown\MarkdownText;
 use alcamo\rdf_literal\{Lang, LiteralInterface};
 use alcamo\rdfa\HavingLabelInterface;
+use Ds\Set;
 
 /**
  * @brief Class that explains a data element instance
@@ -129,6 +130,20 @@ class Explainer implements ExplainerInterface
 
         $datatype = $deInstance->getDataElement()->getDatatype();
 
+        /** If the data type is derived from `xsd:hexBinary` and has a link to
+         *  an enumeration type, the enumerators in the latter are considered
+         *  to represent bits or sets of bits that may be present in a data
+         *  element instance. For each enumerator, if all of its 1-bits are
+         *  set in the instance, it is listed as machting enumerator in the
+         *  output.
+         *
+         * The enumerators are tested in XSD document order. An enumerator is
+         * discarded when it has bits in common with an already tested
+         * matching enumerator. For example, given the enumerators 08, 04, 03,
+         * 02 and 01, in that order, for an instance value 0B, the
+         * explanations of the enumerators 08 and 03 will be listed, but not
+         * 02 and 01. This allows to document cases where a group of bits is
+         * considered as a subfield having enumerators. */
         if (
             $datatype->getPrimitiveType()->getXName()->getLocalName()
                 == 'hexBinary'
@@ -138,16 +153,26 @@ class Explainer implements ExplainerInterface
             if (isset($enumerationType)) {
                 $literalValue = $deInstance->getLiteral()->getValue();
 
+                $usedValues = new Set();
+
                 foreach (
                     $enumerationType->getEnumerators() as $value => $enumerator
                 ) {
                     $value = ImmutableBinaryString::newFromHex($value);
+
+                    foreach ($usedValues as $usedValue) {
+                        if (!$value->bitwiseAnd($usedValue)->isZero()) {
+                            continue 2;
+                        }
+                    }
 
                     if ($literalValue->bitwiseAnd($value) == $value) {
                         $result->append(
                             '* ' . $enumerator->getRdfaData()
                                 ->getLabel($this->lang_, $this->flags_)
                         );
+
+                        $usedValues->add($value);
                     }
                 }
             }

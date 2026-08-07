@@ -166,7 +166,6 @@ class ExplainerTest extends TestCase
                 "Q.u.u.x.\n"
                 . "* foo-baz\n"
                 . "* bar\n"
-                . "* baz\n"
                 . "* qux"
             ],
             [
