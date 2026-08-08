@@ -9,7 +9,7 @@ use alcamo\rdf_literal\LiteralInterface;
  *
  * @date Last reviewed 2026-05-04
  */
-interface DeInstanceInterface
+interface DeInstanceInterface extends PossiblyHavingChildrenInterface
 {
     public function getDataElement(): DataElementInterface;
 

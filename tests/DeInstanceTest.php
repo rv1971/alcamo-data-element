@@ -31,6 +31,10 @@ class DeInstanceTest extends TestCase
         $this->assertSame($dataElement, $deInstance1->getDataElement());
 
         $this->assertSame($literal, $deInstance1->getLiteral());
+
+        $this->assertFalse($deInstance1->hasChildren());
+
+        $this->assertNull($deInstance1->getChildren());
     }
 
     /**

@@ -37,30 +37,36 @@ class ConstructedDeInstanceTest extends TestCase
 
         $literal = new ConstructedStringLiteral([ $literal1, $literal2 ]);
 
-        $deInstance = new ConstructedDeInstance($dataElement, $literal);
+        $deInstance = new DeInstance($dataElement, $literal);
 
-        $this->assertSame(2, count($deInstance));
+        $this->assertSame(2, count($deInstance->getChildren()));
 
-        $this->assertEquals($dataElement1, $deInstance['i']->getDataElement());
+        $this->assertEquals(
+            $dataElement1,
+            $deInstance->getChildren()['i']->getDataElement()
+        );
 
-        $this->assertEquals($dataElement2, $deInstance['s']->getDataElement());
+        $this->assertEquals(
+            $dataElement2,
+            $deInstance->getChildren()['s']->getDataElement()
+        );
 
-        $this->assertEquals($literal1, $deInstance['i']->getLiteral());
+        $this->assertEquals(
+            $literal1,
+            $deInstance->getChildren()['i']->getLiteral()
+        );
 
-        $this->assertEquals($literal2, $deInstance['s']->getLiteral());
+        $this->assertEquals(
+            $literal2,
+            $deInstance->getChildren()['s']->getLiteral()
+        );
     }
 
-    public function testContructorException(): void
+    public function testGetChildrenException(): void
     {
         $schema = (new SchemaFactory())->getMainSchema();
 
-        $this->expectException(DataValidationFailed::class);
-        $this->expectExceptionMessage(
-            'Validation failed; literal count 2 does not match '
-                . 'data element count 1'
-        );
-
-        new ConstructedDeInstance(
+        $deInstance = new DeInstance(
             new ConstructedDataElement(
                 [
                     new DataElement(
@@ -75,5 +81,13 @@ class ConstructedDeInstanceTest extends TestCase
                 ]
             )
         );
+
+        $this->expectException(DataValidationFailed::class);
+        $this->expectExceptionMessage(
+            'Validation failed; literal count 2 does not match '
+                . 'data element count 1'
+        );
+
+        $deInstance->getChildren();
     }
 }

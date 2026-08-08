@@ -43,8 +43,8 @@ class DeWorkbench extends LiteralWorkbench
 
         $datatype->throwUnlessEqualToOrDerivedFrom($dataElementDatatypeXName);
 
-        if ($deInstance instanceof ConstructedDeInstance) {
-            foreach ($deInstance as $item) {
+        if ($deInstance->hasChildren()) {
+            foreach ($deInstance->getChildren() as $item) {
                 $this->validateDeInstance($item);
             }
         }

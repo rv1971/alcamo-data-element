@@ -106,11 +106,11 @@ class Explainer implements ExplainerInterface
         $dataElementLabel =
             $this->getDataElementLabel($deInstance->getDataElement());
 
-        if ($deInstance instanceof ConstructedDeInstance) {
+        if ($deInstance->hasChildren()) {
             $result->append($dataElementLabel);
 
             $i = 1;
-            foreach ($deInstance as $item) {
+            foreach ($deInstance->getChildren() as $item) {
                 $result->append(
                     $this->explainAsMarkdownText($item)->toOrderedListItem($i++)
                 );

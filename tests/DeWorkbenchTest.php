@@ -100,7 +100,7 @@ class DeWorkbenchTest extends TestCase
         $literal2 = new StringLiteral('bar');
         $literal3 = new DurationLiteral('P1Y');
 
-        $validDeInstance = new ConstructedDeInstance(
+        $validDeInstance = new DeInstance(
             $dataElement,
             new ConstructedStringLiteral([ $literal1, $literal2 ])
         );
@@ -110,7 +110,7 @@ class DeWorkbenchTest extends TestCase
             $deWorkbench->validateDeInstance($validDeInstance)
         );
 
-        $invalidDeInstance = new ConstructedDeInstance(
+        $invalidDeInstance = new DeInstance(
             $dataElement,
             new ConstructedStringLiteral([ $literal1, $literal3 ])
         );

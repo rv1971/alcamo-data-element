@@ -169,7 +169,7 @@ class ExplainerTest extends TestCase
                 . "* qux"
             ],
             [
-                new ConstructedDeInstance(
+                new DeInstance(
                     $constructedDataElement,
                     new ConstructedStringLiteral(
                         [
