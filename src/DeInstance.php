@@ -19,6 +19,39 @@ class DeInstance implements DeInstanceInterface
     private $literal_;          ///< LiteralInterface
     private $children_ = false; ///< ?CollectionInterface
 
+    public static function createChildren(
+        DataElementInterface $dataElement,
+        LiteralInterface $literal
+    ): CollectionInterface {
+        if (count($literal) != count($dataElement)) {
+            /** @todo throw alcamo::exception::DataValidationFailed if the
+             *  literal count does not match the data element count. */
+            throw (new DataValidationFailed())->setMessageContext(
+                [
+                    'extraMessage' => 'literal count '
+                        . count($literal)
+                        . ' does not match data element count '
+                        . count($dataElement)
+                ]
+            );
+        }
+
+        $children = [];
+
+        $literal->rewind();
+
+        foreach ($dataElement as $key => $dataElementItem) {
+            $children[$key] = new DeInstance(
+                $dataElementItem,
+                $literal->current()
+            );
+
+            $literal->next();
+        }
+
+        return new ReadonlyCollection($children);
+    }
+
     public function __construct(
         DataElementInterface $dataElement,
         LiteralInterface $literal
@@ -46,38 +79,9 @@ class DeInstance implements DeInstanceInterface
     public function getChildren(): ?CollectionInterface
     {
         if ($this->children_ === false) {
-            if ($this->hasChildren()) {
-                if (count($this->literal_) != count($this->dataElement_)) {
-                    /** @todo throw alcamo::exception::DataValidationFailed if
-                     *  the literal count does not match the data element
-                     *  count. */
-                    throw (new DataValidationFailed())->setMessageContext(
-                        [
-                            'extraMessage' => 'literal count '
-                                . count($this->literal_)
-                                . ' does not match data element count '
-                                . count($this->dataElement_)
-                        ]
-                    );
-                }
-
-                $children = [];
-
-                $this->literal_->rewind();
-
-                foreach ($this->dataElement_ as $key => $dataElementItem) {
-                    $children[$key] = new DeInstance(
-                        $dataElementItem,
-                        $this->literal_->current()
-                    );
-
-                    $this->literal_->next();
-                }
-
-                $this->children_ = new ReadonlyCollection($children);
-            } else {
-                $this->children_ = null;
-            }
+            return $this->children_ = $this->hasChildren()
+                ? static::createChildren($this->dataElement_, $this->literal_)
+                : null;
         }
 
         return $this->children_;
