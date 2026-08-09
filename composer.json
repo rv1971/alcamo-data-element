@@ -6,7 +6,7 @@
     "require": {
         "php": "7.3 - 8.5",
         "alcamo/markdown": "^0.1",
-        "alcamo/rdf-literal-workbench": "^0.1"
+        "alcamo/rdf-literal-workbench": "^0.2"
     },
     "autoload": {
 	"psr-4": {

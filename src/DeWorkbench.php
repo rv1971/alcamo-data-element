@@ -18,9 +18,7 @@ class DeWorkbench extends LiteralWorkbench
     {
         static $instance;
 
-        return $instance ??
-            ($instance =
-             self::newFromSchema((new SchemaFactory())->getMainSchema()));
+        return $instance ?? ($instance = new self());
     }
 
     public function createDataElementFromXName(
