@@ -20,9 +20,10 @@ class ExplainerTest extends TestCase
     public function testExplainAsMarkdownText(
         $deInstance,
         $lang,
+        $flags,
         $expectedText
     ): void {
-        $explainer = new Explainer($lang);
+        $explainer = new Explainer($lang, $flags);
 
         $this->assertSame(
             $expectedText,
@@ -57,7 +58,13 @@ class ExplainerTest extends TestCase
 
         $fooBarBazQuxDataElement = new DataElement(
             $fooBarBazQuxType,
-            [ [ 'rdfs:label', 'FBBQ' ] ]
+            [
+                [ 'rdfs:label', 'FBBQ' ],
+                [
+                    'dc:identifier',
+                    'urn:uuid:d27c1c82-7040-47f6-b2d8-92fbc6edae16'
+                ]
+            ]
         );
 
         $quuxType = $schema->getGlobalType(self::FOO_NS . ' Quux');
@@ -81,6 +88,7 @@ class ExplainerTest extends TestCase
                     new StringLiteral('foofoo', $myTokenUri)
                 ),
                 null,
+                null,
                 "My token"
             ],
             [
@@ -89,7 +97,8 @@ class ExplainerTest extends TestCase
                     new StringLiteral('barbar', $myTokenUri)
                 ),
                 'de-BE',
-                "Mein Token"
+                Explainer::SHOW_DATATYPE_XNAME,
+                "Mein Token\nType: http://foo.example.org/ MyToken"
             ],
             [
                 new DeInstance(
@@ -97,6 +106,7 @@ class ExplainerTest extends TestCase
                     new StringLiteral('FOO', $fooBarUri)
                 ),
                 'de',
+                Explainer::SHOW_IDENTIFIER,
                 "Foo/bar: Foo"
             ],
             [
@@ -105,6 +115,7 @@ class ExplainerTest extends TestCase
                     new StringLiteral('FOO', $fooBarUri)
                 ),
                 'it',
+                null,
                 'Foo/bar: il valore "Foo"'
             ],
             [
@@ -112,6 +123,7 @@ class ExplainerTest extends TestCase
                     $fooBarDataElement,
                     new StringLiteral('BAR', $fooBarUri)
                 ),
+                null,
                 null,
                 'Foo/bar'
             ],
@@ -121,6 +133,7 @@ class ExplainerTest extends TestCase
                     new StringLiteral('FOO', $fooBarBazQuxUri)
                 ),
                 'it-IS',
+                null,
                 'FBBQ: il valore "Foo"'
             ],
             [
@@ -129,13 +142,17 @@ class ExplainerTest extends TestCase
                     new StringLiteral('BAZ', $fooBarBazQuxUri)
                 ),
                 null,
-                'FBBQ: Baz'
+                 Explainer::SHOW_IDENTIFIER |  Explainer::SHOW_DATATYPE_XNAME,
+                "FBBQ: Baz\n"
+                . "Type: http://foo.example.org/ FooBarBazQux\n"
+                . "ID: urn:uuid:d27c1c82-7040-47f6-b2d8-92fbc6edae16"
             ],
             [
                 new DeInstance(
                     $fooBarBazQuxDataElement,
                     new StringLiteral('QUX', $fooBarBazQuxUri)
                 ),
+                null,
                 null,
                 'FBBQ'
             ],
@@ -145,6 +162,7 @@ class ExplainerTest extends TestCase
                     new HexBinaryLiteral('2000', $quuxUri)
                 ),
                 null,
+                null,
                 'Q.u.u.x.: baz'
             ],
             [
@@ -152,6 +170,7 @@ class ExplainerTest extends TestCase
                     $quuxDataElement,
                     new HexBinaryLiteral('6000', $quuxUri)
                 ),
+                null,
                 null,
                 "Q.u.u.x.\n"
                 . "* bar\n"
@@ -162,6 +181,7 @@ class ExplainerTest extends TestCase
                     $quuxDataElement,
                     new HexBinaryLiteral('E400', $quuxUri)
                 ),
+                null,
                 null,
                 "Q.u.u.x.\n"
                 . "* foo-baz\n"
@@ -180,6 +200,7 @@ class ExplainerTest extends TestCase
                         ]
                     )
                 ),
+                null,
                 null,
                 "string\n"
                 . " 1. My token\n"

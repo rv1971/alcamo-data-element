@@ -16,6 +16,12 @@ use Ds\Set;
  */
 class Explainer implements ExplainerInterface
 {
+    /// Whether to show the extended name of type
+    public const SHOW_DATATYPE_XNAME = 0x100;
+
+    /// Whether to show dc:identifier
+    public const SHOW_IDENTIFIER = 0x200;
+
     public const DEFAULT_FLAGS =
         HavingLabelInterface::FALLBACK_TO_DIFFERENT_LANG;
 
@@ -59,6 +65,22 @@ class Explainer implements ExplainerInterface
         return $dataElement->getLabel($this->lang_, $this->flags_);
     }
 
+    public function getDataTypeXName(
+        DataElementInterface $dataElement
+    ): string {
+        return 'Type: ' . $dataElement->getDatatype()->getXName();
+    }
+
+    public function getDataElementIdentifier(
+        DataElementInterface $dataElement
+    ): ?string {
+        return isset($dataElement->getRdfaData()['dc:identifier'])
+            ? ('ID: '
+               . $dataElement->getRdfaData()
+               ->getFirstValueOrUri('dc:identifier'))
+            : null;
+    }
+
     /** The label for the literal value taken based on the literal data type
      *  may be richer than that from the datatype type since it is possible
      *  that the latter is an enumeration while the former is not.
@@ -100,15 +122,36 @@ class Explainer implements ExplainerInterface
     ): MarkdownText {
         $result = new MarkdownText();
 
+        $dataElement = $deInstance->getDataElement();
+
         /** Use the label taken from the data element, which may be richer
          *  than that from the literal type since the former may have
          *  additional RDFa data. */
-        $dataElementLabel =
-            $this->getDataElementLabel($deInstance->getDataElement());
+        $dataElementLabel = $this->getDataElementLabel($dataElement);
+
+        if (!$deInstance->hasChildren()) {
+            $literalLabel = $this->getLiteralLabel($deInstance->getLiteral());
+        }
+
+        if (isset($literalLabel)) {
+            $result->append("$dataElementLabel: $literalLabel");
+        } else {
+            $result->append($dataElementLabel);
+        }
+
+        if ($this->flags_ & self::SHOW_DATATYPE_XNAME) {
+            $result->append($this->getDataTypeXName($dataElement));
+        }
+
+        if ($this->flags_ & self::SHOW_IDENTIFIER) {
+            $result->append($this->getDataElementIdentifier($dataElement));
+        }
+
+        if (isset($literalLabel)) {
+            return $result;
+        }
 
         if ($deInstance->hasChildren()) {
-            $result->append($dataElementLabel);
-
             $i = 1;
             foreach ($deInstance->getChildren() as $item) {
                 $result->append(
@@ -119,16 +162,7 @@ class Explainer implements ExplainerInterface
             return $result;
         }
 
-        $literalLabel = $this->getLiteralLabel($deInstance->getLiteral());
-
-        if (isset($literalLabel)) {
-            $result->append("$dataElementLabel: $literalLabel");
-            return $result;
-        }
-
-        $result->append($dataElementLabel);
-
-        $datatype = $deInstance->getDataElement()->getDatatype();
+        $datatype = $dataElement->getDatatype();
 
         /** If the data type is derived from `xsd:hexBinary` and has a link to
          *  an enumeration type, the enumerators in the latter are considered
