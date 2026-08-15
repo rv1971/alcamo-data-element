@@ -132,22 +132,23 @@ class DeWorkbenchTest extends TestCase implements NamespaceConstantsInterface
     }
 
     /**
-     * @dataProvider createDeInstanceProvider
+     * @dataProvider createLiteralForDataElementProvider
      */
-    public function testCreateDeInstance($value, $expectedDeInstance): void {
+    public function testCreateLiteralForDataElement(
+        $value,
+        $dataElement,
+        $expectedLiteral
+    ): void {
         $deWorkbench = DeWorkbench::getMainInstance();
 
         $this->assertTrue(
-            $expectedDeInstance->equals(
-                $deWorkbench->createDeInstance(
-                    $value,
-                    $expectedDeInstance->getDataElement()
-                )
+            $expectedLiteral->equals(
+                $deWorkbench->createLiteralForDataElement($value, $dataElement)
             )
         );
     }
 
-    public function createDeInstanceProvider(): array
+    public function createLiteralForDataElementProvider(): array
     {
         $deWorkbench = DeWorkbench::getMainInstance();
 
@@ -156,81 +157,75 @@ class DeWorkbenchTest extends TestCase implements NamespaceConstantsInterface
         return [
             [
                 42,
-                new DeInstance(
-                    $deWorkbench->createDataElementFromXName(
-                        self::XSD_NS . ' unsignedShort'
-                    ),
-                    new IntegerLiteral(
-                        42,
-                        $schema->getGlobalType(self::XSD_NS . ' unsignedShort')
-                            ->getUri()
-                    )
+                $deWorkbench->createDataElementFromXName(
+                    self::XSD_NS . ' unsignedShort'
+                ),
+                new IntegerLiteral(
+                    42,
+                    $schema->getGlobalType(self::XSD_NS . ' unsignedShort')
+                        ->getUri()
                 )
             ],
             [
                 [ 'a' => 'foo', 'b' => true ],
-                new DeInstance(
-                    new ConstructedDataElement(
-                        [
-                            'a' => $deWorkbench->createDataElementFromXName(
-                                self::XSD_NS . ' NCName'
-                            ),
-                            'b' => $deWorkbench->createDataElementFromXName(
-                                self::XSD_NS . ' boolean'
-                            ),
-                            'c' => $deWorkbench->createDataElementFromXName(
-                                self::XSD_NS . ' unsignedLong'
-                            ),
-                            'd' => $deWorkbench->createDataElementFromXName(
-                                self::XSD_NS . ' duration'
-                            )
-                        ]
-                    ),
-                    new ConstructedStringLiteral(
-                        [
-                            'a' => new StringLiteral(
-                                'foo',
-                                $schema->getGlobalType(self::XSD_NS . ' NCName')
-                                    ->getUri()
-                            ),
-                            'b' => new BooleanLiteral(true),
-                            'c' => new IntegerLiteral(
-                                0,
-                                $schema
-                                    ->getGlobalType(
-                                        self::XSD_NS . ' unsignedLong'
-                                    )
-                                    ->getUri()
-                            ),
-                            'd' => new DurationLiteral('P0D')
-                        ]
-                    )
+                new ConstructedDataElement(
+                    [
+                        'a' => $deWorkbench->createDataElementFromXName(
+                            self::XSD_NS . ' NCName'
+                        ),
+                        'b' => $deWorkbench->createDataElementFromXName(
+                            self::XSD_NS . ' boolean'
+                        ),
+                        'c' => $deWorkbench->createDataElementFromXName(
+                            self::XSD_NS . ' unsignedLong'
+                        ),
+                        'd' => $deWorkbench->createDataElementFromXName(
+                            self::XSD_NS . ' duration'
+                        )
+                    ]
+                ),
+                new ConstructedStringLiteral(
+                    [
+                        'a' => new StringLiteral(
+                            'foo',
+                            $schema->getGlobalType(self::XSD_NS . ' NCName')
+                                ->getUri()
+                        ),
+                        'b' => new BooleanLiteral(true),
+                        'c' => new IntegerLiteral(
+                            0,
+                            $schema
+                                ->getGlobalType(
+                                    self::XSD_NS . ' unsignedLong'
+                                )
+                                ->getUri()
+                        ),
+                        'd' => new DurationLiteral('P0D')
+                    ]
                 )
             ],
             [
                 [ 'ab', 'https://example.com', 'bar:baz' ],
-                new DeInstance(
-                    new ConstructedDataElement(
-                        [
-                            $deWorkbench->createDataElementFromXName(
-                                self::XSD_NS . ' hexBinary'
-                            ),
-                            $deWorkbench->createDataElementFromXName(
-                                self::XSD_NS . ' anyURI'
-                            ),
-                            $deWorkbench->createDataElementFromXName(
-                                self::XSD_NS . ' QName'
-                            )
-                        ],
-                        $schema->getGlobalType(self::XSD_NS . ' hexBinary')
-                    ),
-                    new ConstructedHexBinaryLiteral(
-                        [
-                            new HexBinaryLiteral('AB'),
-                            new AnyUriLiteral('https://example.com'),
-                            new QNameLiteral('bar:baz')
-                        ]
-                    )
+                new ConstructedDataElement(
+                    [
+                        $deWorkbench->createDataElementFromXName(
+                            self::XSD_NS . ' hexBinary'
+                        ),
+                        $deWorkbench->createDataElementFromXName(
+                            self::XSD_NS . ' anyURI'
+                        ),
+                        $deWorkbench->createDataElementFromXName(
+                            self::XSD_NS . ' QName'
+                        )
+                    ],
+                    $schema->getGlobalType(self::XSD_NS . ' hexBinary')
+                ),
+                new ConstructedHexBinaryLiteral(
+                    [
+                        new HexBinaryLiteral('AB'),
+                        new AnyUriLiteral('https://example.com'),
+                        new QNameLiteral('bar:baz')
+                    ]
                 )
             ]
         ];

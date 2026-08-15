@@ -54,15 +54,12 @@ class DeWorkbench extends LiteralWorkbench
         return $datatype;
     }
 
-    public function createDeInstance(
+    public function createLiteralForDataElement(
         $value,
         DataElementInterface $dataElement
-    ): DeInstanceInterface {
+    ): LiteralInterface {
         if (!($dataElement instanceof ConstructedDataElement)) {
-            return new DeInstance(
-                $dataElement,
-                $this->createLiteral($value, $dataElement->getDatatype())
-            );
+            return $this->createLiteral($value, $dataElement->getDatatype());
         }
 
         $childLiterals = [];
@@ -70,18 +67,18 @@ class DeWorkbench extends LiteralWorkbench
         $dataElement->rewind();
 
         foreach ($value as $key => $childValue) {
-            $childLiterals[$key] = $this->createLiteral(
+            $childLiterals[$key] = $this->createLiteralForDataElement(
                 $childValue,
-                $dataElement->current()->getDatatype()
+                $dataElement->current()
             );
 
             $dataElement->next();
         }
 
         while ($dataElement->current()) {
-            $childLiterals[] = $this->createLiteral(
+            $childLiterals[] = $this->createLiteralForDataElement(
                 null,
-                $dataElement->current()->getDatatype()
+                $dataElement->current()
             );
 
             $dataElement->next();
@@ -92,6 +89,6 @@ class DeWorkbench extends LiteralWorkbench
             ? ConstructedHexBinaryLiteral::class
             : ConstructedStringLiteral::class;
 
-        return new DeInstance($dataElement, new $class($childLiterals));
+        return new $class($childLiterals);
     }
 }
