@@ -4,7 +4,11 @@ namespace alcamo\data_element;
 
 use alcamo\dom\schema\SchemaFactory;
 use alcamo\dom\schema\component\SimpleTypeInterface;
-use alcamo\rdf_literal\LiteralInterface;
+use alcamo\rdf_literal\{
+    ConstructedHexBinaryLiteral,
+    ConstructedStringLiteral,
+    LiteralInterface
+};
 use alcamo\rdf_literal_workbench\LiteralWorkbench;
 
 /**
@@ -48,5 +52,46 @@ class DeWorkbench extends LiteralWorkbench
         }
 
         return $datatype;
+    }
+
+    public function createDeInstance(
+        $value,
+        DataElementInterface $dataElement
+    ): DeInstanceInterface {
+        if (!($dataElement instanceof ConstructedDataElement)) {
+            return new DeInstance(
+                $dataElement,
+                $this->createLiteral($value, $dataElement->getDatatype())
+            );
+        }
+
+        $childLiterals = [];
+
+        $dataElement->rewind();
+
+        foreach ($value as $key => $childValue) {
+            $childLiterals[$key] = $this->createLiteral(
+                $childValue,
+                $dataElement->current()->getDatatype()
+            );
+
+            $dataElement->next();
+        }
+
+        while ($dataElement->current()) {
+            $childLiterals[] = $this->createLiteral(
+                null,
+                $dataElement->current()->getDatatype()
+            );
+
+            $dataElement->next();
+        }
+
+        $class = $dataElement->getDatatype()
+            ->isEqualToOrDerivedFrom(self::XSD_NS . ' hexBinary')
+            ? ConstructedHexBinaryLiteral::class
+            : ConstructedStringLiteral::class;
+
+        return new DeInstance($dataElement, new $class($childLiterals));
     }
 }
